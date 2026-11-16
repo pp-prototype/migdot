@@ -15,6 +15,8 @@ test('허브와 문서 페이지의 이동·검색·새로고침', async ({ page
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'MIG DOT', exact: true })).toBeVisible()
   await expect(page.locator('main a.card')).toHaveCount(3)
+  await expect(page.getByText('첫 번째 앱을 연결할 공간이에요')).toBeVisible()
+  await expect(page.locator('.recent-list a')).toHaveCount(4)
   await page.screenshot({ path: 'docs/previews/hub-desktop.png', fullPage: true })
   for (const item of pages) {
     await page.locator('main a.card').filter({ hasText: item.title }).click()
@@ -52,4 +54,25 @@ test('모바일에서 모든 메뉴와 문서가 화면 안에 표시된다', as
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
     await page.screenshot({ path: `docs/previews/${item.path === '/' ? 'hub' : item.path.slice(1)}-mobile.png`, fullPage: true })
   }
+})
+
+
+test('최근 기록의 본문 이동과 모바일 문서 목록 접기', async ({ page }) => {
+  await page.goto('/')
+  const record = page.locator('.recent-list a').first()
+  const title = await record.locator('.record-title').innerText()
+  await record.click()
+  await expect(page.locator('article.markdown h1')).toHaveText(title)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/documentations')
+  const toggle = page.getByRole('button', { name: '문서 목록' })
+  await expect(page.locator('#document-list')).toBeHidden()
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+  await page.getByRole('searchbox').fill('MIG DOT 시작하기')
+  await page.getByRole('button', { name: 'MIG DOT 시작하기', exact: true }).click()
+  await expect(page.locator('#document-list')).toBeHidden()
+  await expect(page.locator('article.markdown h1')).toHaveText('MIG DOT 시작하기')
+  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '메인', exact: true }).click()
+  await expect(page).toHaveURL('/')
 })
