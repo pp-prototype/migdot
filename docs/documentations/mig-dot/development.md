@@ -11,12 +11,12 @@
 ## 모듈 추가
 
 1. `src/modules/<모듈명>/`에 기본 export 페이지를 작성합니다.
-2. `src/shell/modules.ts`에 고유 ID, 제목, 설명, 경로와 `lazy` import를 등록합니다.
+2. `src/shell/modules.ts`에 고유 ID, 제목, 설명, 경로와 `lazy` import를 등록합니다. 기능 앱은 `kind: app`, 기록 페이지는 `kind: records`로 구분합니다.
 3. `docs/documentations/<모듈명>/`에 현재 제공 기능과 사용법을 작성합니다.
 4. 주요 결정은 `docs/meetings/`, 변경 결과는 `docs/updates/`에 기록합니다.
 5. `npm run check`로 검증합니다.
 
-등록된 페이지는 홈 카드와 라우트에 반영되며 지연 로딩 및 오류 경계가 적용됩니다. 모듈끼리 내부 코드를 직접 참조하지 말고 공통 기능은 `shared/`로 추출합니다. Routine, Game, Finance는 설계 문서의 예시이며 아직 구현하지 않았습니다.
+등록된 기능 앱은 내 앱 카드와 하위 경로 라우트에, 기록 페이지는 안내 카드와 공통 메뉴에 반영되며 지연 로딩 및 오류 경계가 적용됩니다. 모듈끼리 내부 코드를 직접 참조하지 말고 공통 기능은 `shared/`로 추출합니다. Routine, Game, Finance는 설계 문서의 예시이며 아직 구현하지 않았습니다.
 
 ## 문서 작성
 
