@@ -12,6 +12,15 @@ npm run dev
 
 터미널에 출력되는 로컬 주소를 엽니다. Supabase 설정 없이 홈과 문서 조회를 사용할 수 있습니다.
 
+## 메인 허브와 경로
+
+- `/`: MIG DOT 제목, 개인용 앱 영역, 기록과 안내 바로가기, 최근 기록을 표시합니다. 개인용 앱을 이식하기 전에는 빈 상태를 표시합니다. 최근 기록을 누르면 해당 문서 본문으로 이동합니다.
+- `/meetings`: `docs/meetings/`의 회의록 조회
+- `/updates`: `docs/updates/`의 개발업데이트 조회
+- `/documentations`: `docs/documentations/`의 사용 문서 조회
+
+데스크톱에서는 상단 메뉴, 모바일에서는 하단 고정 메뉴로 페이지를 전환할 수 있습니다. 각 문서 페이지에서 제목·본문을 검색하고 목록에서 문서를 선택합니다. 모바일에서는 본문 위의 ‘문서 목록’을 눌러 검색과 목록을 펼칩니다. 문서를 선택하면 목록은 접힙니다. 선택한 문서는 URL의 `doc` 매개변수로 유지됩니다.
+
 ## 현재 제공하는 기능
 
 - 공통 홈 및 내비게이션
@@ -45,4 +54,10 @@ Git 저장소를 연결할 때 빌드 명령은 `npm run build`, 출력 디렉�
 
 - Node 버전 오류: `nvm use` 후 `npm ci`로 다시 설치합니다.
 - Supabase 미설정 표시: `.env.local`의 두 값을 확인하고 서버를 재시작합니다.
-- 문서가 보이지 않음: `docs/documentation/`, `docs/meetings/`, `docs/updates/` 아래 `.md` 파일인지 확인합니다.
+- 문서가 보이지 않음: `docs/documentations/`, `docs/meetings/`, `docs/updates/` 아래 `.md` 파일인지 확인합니다.
+
+## 브라우저 검증
+
+Google Chrome이 설치된 환경에서 `npm run test:ui`를 실행합니다. Playwright가 로컬 5175 포트의 서버를 실행하거나 실행 중인 서버를 사용합니다. 데스크톱·모바일 스크린샷은 `docs/previews/`에 저장됩니다.
+
+의존성 설치 후 개발 서버에서 빈 화면과 `Outdated Optimize Dep` 오류가 발생하면 서버를 종료하고 `npm run dev -- --force`로 캐시를 갱신합니다.

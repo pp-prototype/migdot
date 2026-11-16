@@ -1,6 +1,9 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 
+const ReportsPage = lazy(() => import('../modules/reports/ReportsPage'))
 type Module = { id: string; title: string; description: string; path: string; component: LazyExoticComponent<ComponentType> }
 export const modules: Module[] = [
-  { id: 'reports', title: '기록과 문서', description: '회의록, 개발 업데이트, 현재 기능의 사용 설명서', path: '/reports', component: lazy(() => import('../modules/reports/ReportsPage')) },
+  { id: 'meetings', title: '회의록', description: '프로젝트 논의와 의사결정의 배경을 확인합니다.', path: '/meetings', component: ReportsPage },
+  { id: 'updates', title: '개발업데이트', description: '기능 변경과 개발 진행 내용을 확인합니다.', path: '/updates', component: ReportsPage },
+  { id: 'documentations', title: '문서', description: 'MIG DOT와 모듈 앱의 사용 방법을 확인합니다.', path: '/documentations', component: ReportsPage },
 ]
