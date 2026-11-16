@@ -14,7 +14,7 @@ test('허브와 문서 페이지의 이동·검색·새로고침', async ({ page
   page.on('response', response => { if (response.status() >= 400) console.log('HTTP error:', response.status(), response.url()) })
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'MIG DOT', exact: true })).toBeVisible()
-  await expect(page.locator('main a.card')).toHaveCount(4)
+  await expect(page.locator('main a.card')).toHaveCount(5)
   await expect(page.locator('.apps-section').getByRole('link', { name: /포스트잇 러너/ })).toBeVisible()
   await expect(page.locator('.recent-list a')).toHaveCount(4)
   await page.screenshot({ path: 'docs/previews/hub-desktop.png', fullPage: true })

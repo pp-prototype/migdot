@@ -7,4 +7,5 @@ export const modules: Module[] = [
   { kind: 'records', id: 'updates', title: '개발업데이트', description: '기능 변경과 개발 진행 내용을 확인합니다.', path: '/updates', component: ReportsPage },
   { kind: 'records', id: 'documentations', title: '문서', description: 'MIG DOT와 모듈 앱의 사용 방법을 확인합니다.', path: '/documentations', component: ReportsPage },
   { kind: 'app', id: 'post-it-learner', title: '포스트잇 러너', description: '학습 대상과 작은 배움을 보드에서 살펴보세요.', path: '/post-it-learner', component: lazy(() => import('../modules/post-it-learner/LearnerPage')) },
+  { kind: 'app', id: 'execution-tracker', title: '실행 트래커', description: '오늘의 과업과 루틴, 쌓이는 실천 기록을 살펴보세요.', path: '/execution-tracker', component: lazy(() => import('../modules/execution-tracker/TrackerPage')) },
 ]
