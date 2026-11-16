@@ -19,8 +19,8 @@ npm run dev
 
 개발 환경: Node.js 22.12 이상, npm. Supabase 설정 없이 홈과 문서를 확인할 수 있습니다.
 
-- [시작하기 및 배포 설정](docs/documentation/mig-dot/getting-started.md)
-- [모듈 개발 안내](docs/documentation/mig-dot/development.md)
+- [시작하기 및 배포 설정](docs/documentations/mig-dot/getting-started.md)
+- [모듈 개발 안내](docs/documentations/mig-dot/development.md)
 - 검증: `npm run check` / 빌드 출력: `dist/`
 
 현재 구현: 개발 기반, 공통 셸, 모듈 등록·라우팅·오류 경계, 기본 Markdown 문서 조회·검색.

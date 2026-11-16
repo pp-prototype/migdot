@@ -12,7 +12,7 @@
 
 1. `src/modules/<모듈명>/`에 기본 export 페이지를 작성합니다.
 2. `src/shell/modules.ts`에 고유 ID, 제목, 설명, 경로와 `lazy` import를 등록합니다.
-3. `docs/documentation/<모듈명>/`에 현재 제공 기능과 사용법을 작성합니다.
+3. `docs/documentations/<모듈명>/`에 현재 제공 기능과 사용법을 작성합니다.
 4. 주요 결정은 `docs/meetings/`, 변경 결과는 `docs/updates/`에 기록합니다.
 5. `npm run check`로 검증합니다.
 
