@@ -1,0 +1,79 @@
+import { expect, test } from '@playwright/test'
+import { boardPage, notePosition } from '../src/modules/post-it-learner/board-layout'
+
+test('학습 미리보기의 홈 진입·검색·상세 URL·뒤로가기', async ({ page }) => {
+  const errors: string[] = []
+  const cloudRequests: string[] = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('request', request => { if (request.url().includes('supabase.co')) cloudRequests.push(request.url()) })
+  await page.goto('/')
+  await page.locator('.apps-section').getByRole('link', { name: /포스트잇 러너/ }).click()
+  await expect(page).toHaveURL('/post-it-learner')
+  await expect(page.getByText('예시 데이터로 둘러보는 화면입니다.', { exact: false })).toBeVisible()
+  const storageBefore = await page.evaluate(() => JSON.stringify({ ...localStorage }))
+  await expect(page.getByRole('link', { name: /보드 열기/ })).toHaveCount(3)
+  await page.getByRole('searchbox', { name: '학습 대상 검색' }).fill('영어')
+  await expect(page.getByRole('link', { name: /보드 열기/ })).toHaveCount(1)
+  await page.getByRole('searchbox', { name: '학습 대상 검색' }).fill('존재하지않음987')
+  await expect(page.getByText('일치하는 학습 대상이 없습니다.')).toBeVisible()
+  await page.getByRole('searchbox', { name: '학습 대상 검색' }).fill('')
+  await page.screenshot({ path: 'docs/previews/learner-desktop.png', fullPage: true })
+  await page.getByRole('link', { name: /React 깊이 알아가기.*보드 열기/ }).click()
+  await expect(page).toHaveURL('/post-it-learner/topics/react')
+  await expect(page.getByRole('region', { name: /코르크 보드/ }).getByRole('button')).toHaveCount(4)
+  await page.getByRole('button', { name: /컴포넌트는 작은 레고 블록/ }).click()
+  await expect(page.getByRole('dialog', { name: '컴포넌트는 작은 레고 블록' })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('dialog', { name: '컴포넌트는 작은 레고 블록' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.getByRole('searchbox', { name: '포스트잇 검색' }).fill('상태는 React에게')
+  await expect(page.getByRole('region', { name: /코르크 보드/ }).getByRole('button')).toHaveCount(1)
+  await page.getByRole('searchbox', { name: '포스트잇 검색' }).fill('존재하지않음987')
+  await expect(page.getByText('일치하는 기록이 없습니다.')).toBeVisible()
+  await page.getByRole('searchbox', { name: '포스트잇 검색' }).fill('')
+  await page.screenshot({ path: 'docs/previews/learner-board-desktop.png', fullPage: true })
+  await page.getByRole('link', { name: '← 학습 대상 목록' }).click()
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: 'React 깊이 알아가기' })).toBeVisible()
+  expect(await page.evaluate(() => JSON.stringify({ ...localStorage }))).toBe(storageBefore)
+  expect(cloudRequests).toEqual([])
+  expect(errors).toEqual([])
+  await page.goto('/post-it-learner/topics/missing')
+  await expect(page.getByRole('heading', { name: '학습 대상을 찾을 수 없습니다.' })).toBeVisible()
+  await page.getByRole('link', { name: '← MIG DOT 메인' }).click()
+  await expect(page.getByRole('heading', { name: 'MIG DOT', exact: true })).toBeVisible()
+})
+
+test('모바일 보드와 상세, 공통 메뉴가 유지된다', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/post-it-learner')
+  await page.screenshot({ path: 'docs/previews/learner-mobile.png', fullPage: true })
+  await page.getByRole('link', { name: /React 깊이 알아가기.*보드 열기/ }).click()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: 'docs/previews/learner-board-mobile.png', fullPage: true })
+  await page.getByRole('button', { name: /컴포넌트는 작은 레고 블록/ }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('button', { name: '닫기', exact: true }).click()
+  await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '메인', exact: true }).click()
+  await expect(page).toHaveURL('/')
+})
+
+test('이식한 보드 페이지 계산은 기록을 누락하지 않는다', () => {
+  const notes = Array.from({ length: 1000 }, (_, id) => id)
+  const found: number[] = []
+  for (let page = 0; page < 84; page++) {
+    const result = boardPage(notes, page)
+    expect(result.notes.length).toBeLessThanOrEqual(12)
+    found.push(...result.notes)
+    for (let i = 0; i < result.notes.length; i++) {
+      const position = notePosition(i)
+      for (const key of ['--x', '--y', '--mobile-x', '--mobile-y']) {
+        expect(position[key]).toBeGreaterThanOrEqual(0)
+        expect(position[key]).toBeLessThanOrEqual(1)
+      }
+    }
+  }
+  expect(found).toEqual(notes)
+  expect(boardPage([], 2)).toEqual({ page: 0, pages: 1, notes: [] })
+})
