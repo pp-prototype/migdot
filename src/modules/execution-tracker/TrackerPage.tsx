@@ -6,12 +6,18 @@ import styles from './tracker.module.css'
 
 import { createJournal } from './model'
 import Experience from './Experience'
+import { useAuth } from '../../shared/auth/context'
+import CloudTracker from './CloudTracker'
 
 const root = '/execution-tracker'
 function TaskList({ items }: { items: Task[] }) {
   return items.length ? <ul className={styles.taskList}>{items.map((task, index) => <li key={task.id}><span className={`${styles.taskMark} ${task.done ? styles.complete : ''}`} aria-hidden="true">{task.done ? '✓' : String(index + 1).padStart(2, '0')}</span><div><span className={styles.itemLabel}>{task.done ? '완료' : '미완료'}</span><h3 className={task.done ? styles.doneTitle : ''}>{task.title}</h3></div><span className={`${styles.state} ${task.done ? styles.complete : ''}`}>{task.done ? '완료' : '예정'}</span></li>)}</ul> : <p className={styles.empty}>이 날짜에는 등록한 과업이 없습니다.</p>
 }
 export default function TrackerPage() {
+  const auth = useAuth()
+  return auth.status === 'preview' ? <PreviewTracker /> : <CloudTracker />
+}
+function PreviewTracker() {
   const [journal, setJournal] = useState(createJournal)
   const { records, tasks } = journal
   const { '*': subpath = '' } = useParams()

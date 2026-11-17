@@ -35,7 +35,7 @@ npm run dev
 
 `.env.example`을 `.env.local`로 복사하고 프로젝트 URL 및 publishable key를 설정한 뒤 개발 서버를 재시작합니다. 이 키는 클라이언트에 포함되는 공개용 키입니다. secret key 또는 service_role key를 입력하지 않습니다.
 
-공통 Google 로그인·모듈 접근 제한과 권한 SQL이 준비되어 있습니다. 실제 OAuth 공급자와 프로젝트 연결, 마이그레이션 적용 및 첫 운영자 지정은 저장소의 `supabase/README.md`를 따릅니다. 앱의 업무 데이터 저장은 아직 연결하지 않았습니다.
+공통 Google 로그인·모듈 접근 제한과 권한 SQL이 준비되어 있습니다. 실제 OAuth 공급자와 프로젝트 연결, 마이그레이션 적용 및 첫 운영자 지정은 저장소의 `supabase/README.md`를 따릅니다. 익스큐셔너 개인 데이터 저장은 추가 마이그레이션 `202611170002_executioner_workspace.sql` 적용 후 사용할 수 있습니다. 포스트잇 러너는 예시 데이터입니다.
 
 ## 검증 및 빌드
 
@@ -58,6 +58,6 @@ Git 저장소를 연결할 때 빌드 명령은 `npm run build`, 출력 디렉�
 
 ## 브라우저 검증
 
-Google Chrome이 설치된 환경에서 `npm run test:ui`를 실행합니다. Playwright가 로컬 5175 포트의 서버를 실행하거나 실행 중인 서버를 사용합니다. 데스크톱·모바일 스크린샷은 `docs/previews/`에 저장됩니다.
+Google Chrome이 설치된 환경에서 `npm run test:ui`를 실행합니다. Playwright가 설정 없는 체험 서버 5177, 테스트 인증 서버 5176, 배포 빌드 서버 4175를 실행합니다. 실제 계정으로 사용하는 5175 서버와 분리합니다. 익스큐셔너 저장 테스트는 실제 마이그레이션을 실행한 로컬 PostgreSQL 엔진(PGlite)에 연결하며 원격 업무 기록을 변경하지 않습니다. 데스크톱·모바일 스크린샷은 `docs/previews/`에 저장됩니다.
 
 의존성 설치 후 개발 서버에서 빈 화면과 `Outdated Optimize Dep` 오류가 발생하면 서버를 종료하고 `npm run dev -- --force`로 캐시를 갱신합니다.
