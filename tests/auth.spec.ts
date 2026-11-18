@@ -47,6 +47,7 @@ test('비로그인은 홈에서 보호 모듈을 보지 못하고 직접 주소�
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '로그인하고 나의 앱을 확인하세요' })).toBeVisible()
   await expect(page.locator('main a.card')).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: '내 앱' })).toHaveCount(0)
   await expect(page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link')).toHaveCount(1)
   await page.goto('/post-it-learner')
   await expect(page).toHaveURL('/login?next=%2Fpost-it-learner')
@@ -86,13 +87,18 @@ test('승인 대기, 권한 조회 실패와 계정 불일치는 차단 상태�
 
 test('권한 확인 전에는 콘텐츠가 노출되지 않고 회수 후에는 모듈이 해제된다', async ({ page }) => {
   const control = await mockAuth(page, { delay: 400 })
+  const appNav = page.getByRole('navigation', { name: '내 앱' })
   await page.goto('/post-it-learner')
   await expect(page.getByRole('status')).toHaveText('접근 권한을 확인하는 중입니다…')
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너'])
+  await expect(appNav.getByRole('link')).toHaveAttribute('aria-current', 'page')
   control.moduleIds = []
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
 })
 

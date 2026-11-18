@@ -76,3 +76,21 @@ test('최근 기록의 본문 이동과 모바일 문서 목록 접기', async (
   await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '메인', exact: true }).click()
   await expect(page).toHaveURL('/')
 })
+
+test('앱 탭은 데스크톱과 모바일에서 상단에 고정되고 앱으로 이동한다', async ({ page }) => {
+  const appNav = page.getByRole('navigation', { name: '내 앱' })
+  const learner = appNav.getByRole('link', { name: '포스트잇 러너' })
+
+  for (const width of [1440, 320]) {
+    await page.setViewportSize({ width, height: 600 })
+    await page.goto('/')
+    await expect(appNav.getByRole('link')).toHaveCount(2)
+    expect((await appNav.boundingBox())!.y).toBeGreaterThan(0)
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    await expect.poll(() => appNav.evaluate(nav => nav.getBoundingClientRect().top)).toBe(0)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width)
+    await learner.click()
+    await expect(page).toHaveURL('/post-it-learner')
+    await expect(learner).toHaveAttribute('aria-current', 'page')
+  }
+})
