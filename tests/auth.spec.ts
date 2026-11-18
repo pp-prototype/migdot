@@ -74,7 +74,7 @@ test('승인·모듈 권한·운영자 권한은 사용자 메타데이터와 �
 test('승인 대기, 권한 조회 실패와 계정 불일치는 차단 상태를 유지한다', async ({ page }) => {
   const control = await mockAuth(page, { approved: false })
   await page.goto('/post-it-learner')
-  await expect(page.getByText('로그인은 완료되었지만 이용 승인을 기다리고 있습니다.')).toBeVisible()
+  await expect(page.getByText(/운영자가 권한 관리 화면에서 계정을 확인하고 승인할 수 있습니다/)).toBeVisible()
   control.approved = true; control.fail = true
   await page.getByRole('button', { name: '권한 다시 확인' }).click()
   await expect(page.getByRole('heading', { name: '접근 권한을 확인하지 못했습니다.' })).toBeVisible()
