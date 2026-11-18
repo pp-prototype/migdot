@@ -10,7 +10,7 @@ npm ci
 npm run dev
 ```
 
-터미널에 출력되는 로컬 주소를 엽니다. Supabase 설정 없이 홈과 문서 조회를 사용할 수 있습니다.
+터미널에 출력되는 로컬 주소를 엽니다. Supabase 설정이 전혀 없는 개발 서버는 안내와 함께 예시 체험으로 실행됩니다. 배포 빌드에서 보호 모듈을 이용하려면 공통 로그인 설정이 필요합니다.
 
 ## 메인 허브와 경로
 
@@ -35,7 +35,7 @@ npm run dev
 
 `.env.example`을 `.env.local`로 복사하고 프로젝트 URL 및 publishable key를 설정한 뒤 개발 서버를 재시작합니다. 이 키는 클라이언트에 포함되는 공개용 키입니다. secret key 또는 service_role key를 입력하지 않습니다.
 
-현재는 공통 클라이언트만 준비되어 있으며 로그인, 접근 제한, DB 저장 기능은 없습니다. 개인 데이터 기능을 추가하기 전에 인증 및 RLS를 구현하고 검증해야 합니다.
+공통 Google 로그인·모듈 접근 제한과 권한 SQL이 준비되어 있습니다. 실제 OAuth 공급자와 프로젝트 연결, 마이그레이션 적용 및 첫 운영자 지정은 저장소의 `supabase/README.md`를 따릅니다. 앱의 업무 데이터 저장은 아직 연결하지 않았습니다.
 
 ## 검증 및 빌드
 
@@ -44,7 +44,7 @@ npm run check
 npm run preview
 ```
 
-`check`는 ESLint, TypeScript 검사, Vite 프로덕션 빌드를 실행합니다. 빌드 결과는 `dist/`에 생성됩니다. GitHub Actions에서도 같은 검사를 실행합니다.
+`check`는 ESLint, TypeScript 검사, Vite 프로덕션 빌드를 실행합니다. `npm run test:access`는 임시 메모리 PostgreSQL에서 권한 SQL을 검증합니다. 빌드 결과는 `dist/`에 생성됩니다. GitHub Actions에서도 같은 검사를 실행합니다.
 
 ## Cloudflare Pages 설정
 

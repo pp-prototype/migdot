@@ -17,14 +17,16 @@ npm ci
 npm run dev
 ```
 
-개발 환경: Node.js 22.12 이상, npm. Supabase 설정 없이 홈과 문서를 확인할 수 있습니다.
+개발 환경: Node.js 22.12 이상, npm. Supabase 설정이 전혀 없는 개발 서버에서는 안내와 함께 로컬 예시 체험을 제공합니다. 배포 빌드는 인증 설정 없이 보호 모듈을 열지 않습니다.
 
 - [시작하기 및 배포 설정](docs/documentations/mig-dot/getting-started.md)
 - [모듈 개발 안내](docs/documentations/mig-dot/development.md)
+- [로그인·모듈 권한 안내](docs/documentations/mig-dot/login-and-access.md)
+- [Supabase 초기 설정·첫 운영자 지정](supabase/README.md)
 - 검증: `npm run check` / 빌드 출력: `dist/`
 
 현재 구현: 개발 기반, 공통 셸, 모듈 등록·라우팅·오류 경계, 기본 Markdown 문서 조회·검색, 포스트잇 러너 읽기 전용 예시와 익스큐셔너의 메모리 기반 과업·회고 체험.
-공통 인증·인가, 기존 앱의 운영 기능과 데이터 이관, 문서 계층형 탐색 및 실제 배포 검증은 후속 작업입니다. 아래 1.0 체크리스트는 전체 요구사항의 완료 시점에 갱신합니다.
+공통 로그인·모듈 권한의 로컬 구현과 SQL은 준비됐으며 실제 Google/Supabase 연결·검증, 기존 앱의 운영 기능과 데이터 이관, 문서 계층형 탐색 및 실제 배포 검증은 후속 작업입니다. 아래 1.0 체크리스트는 전체 요구사항의 완료 시점에 갱신합니다.
 
 ---
 
