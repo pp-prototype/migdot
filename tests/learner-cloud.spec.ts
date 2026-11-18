@@ -72,17 +72,62 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await editor.getByLabel('설명 (선택)').fill('키보드 탐색 기록')
   const png = await page.evaluate(() => {
     const canvas = document.createElement('canvas')
-    canvas.getContext('2d')?.fillRect(0, 0, canvas.width, canvas.height)
+    canvas.width = 300
+    canvas.height = 900
+    const context = canvas.getContext('2d')!
+    context.fillStyle = '#f00'
+    context.fillRect(0, 0, 300, 300)
+    context.fillStyle = '#0f0'
+    context.fillRect(0, 300, 300, 300)
+    context.fillStyle = '#00f'
+    context.fillRect(0, 600, 300, 300)
     return canvas.toDataURL('image/png').split(',')[1]
   })
   const thumbnail = Buffer.from(png, 'base64')
   await editor.getByLabel('썸네일 (선택)').setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: thumbnail })
-  await expect(editor.getByRole('img', { name: '등록할 썸네일 미리보기' })).toBeVisible()
+  const preview = editor.getByRole('img', { name: '등록할 썸네일 미리보기' })
+  await expect(preview).toBeVisible()
+  await expect(editor.getByRole('radio', { name: '전체 사진' })).toBeChecked()
+  const previewPixel = (x: number, y: number) => preview.evaluate((node, point) =>
+    Array.from((node as HTMLCanvasElement).getContext('2d')!.getImageData(point.x, point.y, 1, 1).data), { x, y })
+  await expect.poll(() => previewPixel(30, 135)).toEqual([255, 255, 255, 255])
+  expect(await previewPixel(240, 10)).toEqual([255, 0, 0, 255])
+  expect(await previewPixel(240, 260)).toEqual([0, 0, 255, 255])
+
+  await editor.getByRole('radio', { name: '직접 자르기' }).check()
+  const zoom = editor.getByRole('slider', { name: '확대' })
+  await zoom.press('End')
+  await expect(zoom).toHaveValue('3')
+  const vertical = editor.getByRole('slider', { name: '세로 위치' })
+  await vertical.press('Home')
+  await expect.poll(() => previewPixel(240, 135)).toEqual([0, 0, 255, 255])
+
+  await preview.scrollIntoViewIfNeeded()
+  const bounds = (await preview.boundingBox())!
+  const x = bounds.x + bounds.width / 2
+  const y = bounds.y + bounds.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x, y + 30)
+  await page.mouse.up()
+  await expect(vertical).not.toHaveValue('-1')
   await editor.getByRole('button', { name: '저장', exact: true }).click()
   await expect(page.getByText('키보드 탐색 기록')).toBeVisible()
   await page.getByRole('link', { name: '포스트잇 러너', exact: true }).click()
   const topicCard = page.getByRole('link', { name: /웹 접근성/ })
-  await expect(topicCard.locator('img')).toHaveAttribute('src', /^data:image\/jpeg;base64,/)
+  const coverImage = topicCard.locator('img')
+  await expect(coverImage).toHaveAttribute('src', /^data:image\/jpeg;base64,/)
+  const savedPixel = await coverImage.evaluate(async node => {
+    const image = node as HTMLImageElement
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = image.naturalWidth
+    canvas.height = image.naturalHeight
+    const context = canvas.getContext('2d')!
+    context.drawImage(image, 0, 0)
+    return Array.from(context.getImageData(240, 135, 1, 1).data)
+  })
+  expect(savedPixel[2]).toBeGreaterThan(240)
   await topicCard.click()
 
   await page.getByRole('button', { name: '새 포스트잇' }).click()

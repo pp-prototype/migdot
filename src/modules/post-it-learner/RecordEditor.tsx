@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { RecordChanged, type LearningRecords, type NoteRecord, type TopicRecord } from './records'
-import { prepareImage, thumbnailUrl } from './thumbnail'
+import { decodeImage, encodeCover, preparePhoto, thumbnailUrl, type Crop } from './thumbnail'
+import CoverPreview from './CoverPreview'
 import styles from './cloud.module.css'
 
 export type Draft =
@@ -18,6 +19,8 @@ export default function RecordEditor({ records, draft, cancel, done }: {
   const [body, setBody] = useState(draft.kind === 'note' ? draft.record?.body ?? '' : draft.record?.description ?? '')
   const [tag, setTag] = useState(draft.kind === 'note' ? draft.record?.tag ?? '' : '')
   const [image, setImage] = useState<string | null | undefined>()
+  const [cover, setCover] = useState<ImageBitmap | null>(null)
+  const [crop, setCrop] = useState<Crop | null>(null)
   const [savedImage, setSavedImage] = useState(draft.kind === 'topic' ? draft.record?.thumbnail_jpeg : draft.record?.photo_jpeg)
   const visibleImage = image === undefined ? savedImage : image
   const imageLabel = note ? '사진' : '썸네일'
@@ -45,6 +48,8 @@ export default function RecordEditor({ records, draft, cancel, done }: {
     }
   }, [])
 
+  useEffect(() => () => cover?.close(), [cover])
+
   async function run(action: () => Promise<void>, onSuccess: () => void) {
     if (busy.current) return
     busy.current = true
@@ -69,8 +74,16 @@ export default function RecordEditor({ records, draft, cancel, done }: {
     setProcessingImage(true)
     setImageError('')
     try {
-      const jpeg = await prepareImage(file, note ? 'photo' : 'cover')
-      if (active.current) setImage(jpeg)
+      if (note) {
+        const jpeg = await preparePhoto(file)
+        if (active.current) setImage(jpeg)
+      } else {
+        const bitmap = await decodeImage(file)
+        if (active.current) {
+          setCover(bitmap)
+          setCrop(null)
+        } else bitmap.close()
+      }
     } catch {
       if (active.current) setImageError('이미지를 불러올 수 없습니다. 10 MB 이하의 JPG, PNG, WebP 파일을 선택해 주세요.')
     } finally {
@@ -85,9 +98,18 @@ export default function RecordEditor({ records, draft, cancel, done }: {
       setError(note ? '제목과 내용을 입력해 주세요.' : '학습 주제 이름을 입력해 주세요.')
       return
     }
+    let thumbnail = image
+    if (cover) {
+      try {
+        thumbnail = encodeCover(cover, crop)
+      } catch {
+        setImageError('썸네일을 압축할 수 없습니다. 다른 사진을 선택해 주세요.')
+        return
+      }
+    }
     const fields = note
       ? { title: title.trim(), body: body.trim(), tag: tag.trim(), ...(image !== undefined && { photo_jpeg: image }) }
-      : { name: title.trim(), description: body.trim(), ...(image !== undefined && { thumbnail_jpeg: image }) }
+      : { name: title.trim(), description: body.trim(), ...(thumbnail !== undefined && { thumbnail_jpeg: thumbnail }) }
     const topic = draft.kind === 'note' ? draft.topic : undefined
     void run(
       () => records.saveRecord({ id: draft.id, version, topic, fields }),
@@ -120,10 +142,14 @@ export default function RecordEditor({ records, draft, cancel, done }: {
             if (file) void selectImage(file)
           }} />
         </label>
-        {visibleImage && <>
-          <img src={thumbnailUrl(visibleImage)} className={note ? styles.photoPreview : undefined} alt={`등록할 ${imageLabel} 미리보기`} />
-          <button type="button" disabled={pending || processingImage} onClick={() => { setImage(null); setImageError('') }}>{imageLabel} 제거</button>
-        </>}
+        {cover
+          ? <CoverPreview image={cover} crop={crop} onCrop={setCrop} disabled={pending || processingImage} />
+          : visibleImage && <img src={thumbnailUrl(visibleImage)} className={note ? styles.photoPreview : undefined} alt={`등록할 ${imageLabel} 미리보기`} />}
+        {(cover || visibleImage) && <button type="button" disabled={pending || processingImage} onClick={() => {
+          setCover(null)
+          setImage(null)
+          setImageError('')
+        }}>{imageLabel} 제거</button>}
         {processingImage && <p role="status">이미지를 준비하는 중입니다.</p>}
         {imageError && <p role="alert">{imageError}</p>}
       </div>

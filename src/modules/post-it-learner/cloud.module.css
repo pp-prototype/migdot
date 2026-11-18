@@ -299,3 +299,69 @@ button.danger, .learner [role="alert"], .dialog [role="alert"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.coverEditor {
+  display: grid;
+  gap: 10px;
+  width: min(100%, 480px);
+}
+
+.coverEditor canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  outline: 1px solid #d7e0da;
+  outline-offset: -1px;
+}
+
+.draggableCover {
+  cursor: grab;
+  touch-action: none;
+}
+
+.draggableCover:active {
+  cursor: grabbing;
+}
+
+.coverModes, .cropControls {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.coverModes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 16px;
+}
+
+.coverModes label {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.coverModes input[type="radio"] {
+  width: 16px;
+  min-height: 0;
+  accent-color: #196847;
+}
+
+.cropControls p {
+  color: #526057;
+  font-size: .875rem;
+}
+
+.cropControls label {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  align-items: center;
+}
+
+.cropControls input[type="range"] {
+  accent-color: #196847;
+  padding: 0;
+}
