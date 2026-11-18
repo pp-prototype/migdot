@@ -1,0 +1,64 @@
+button.action.action {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid #586864;
+  border-radius: 50%;
+  background: #293935;
+  color: #eef4eb;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+
+button.action svg {
+  width: 18px;
+  height: 18px;
+}
+
+button.action[data-tone="primary"] {
+  background: #b9d8ad;
+  border-color: #b9d8ad;
+  color: #17271d;
+}
+
+button.action[data-tone="danger"] {
+  background: #3d2e31;
+  border-color: #865d63;
+  color: #ffd1cd;
+}
+
+button.action[aria-pressed="true"] {
+  background: #39594a;
+  border-color: #a8cfad;
+  color: #e0f4d7;
+}
+
+button.action:enabled:hover {
+  background: #415750;
+  border-color: #a8cfad;
+}
+
+button.action[data-tone="primary"]:enabled:hover {
+  background: #d3ecc6;
+  border-color: #d3ecc6;
+}
+
+button.action[data-tone="danger"]:enabled:hover {
+  background: #5b3d42;
+  border-color: #ed9a9a;
+}
+
+button.action:focus-visible {
+  outline: 3px solid #d7eeb5;
+  outline-offset: 3px;
+}
+
+button.action:disabled {
+  opacity: .45;
+  cursor: default;
+}
