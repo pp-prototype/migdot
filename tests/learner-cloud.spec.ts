@@ -80,7 +80,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await expect(editor.getByRole('img', { name: '등록할 썸네일 미리보기' })).toBeVisible()
   await editor.getByRole('button', { name: '저장', exact: true }).click()
   await expect(page.getByText('키보드 탐색 기록')).toBeVisible()
-  await page.getByRole('link', { name: '포스트잇 러너', exact: true }).click()
+  await page.locator('main').getByRole('link', { name: '포스트잇 러너', exact: true }).click()
   const topicCard = page.getByRole('link', { name: /웹 접근성/ })
   await expect(topicCard.locator('img')).toHaveAttribute('src', /^data:image\/jpeg;base64,/)
   await topicCard.click()
