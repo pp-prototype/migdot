@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Link, NavLink, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { modules } from './modules'
 import { ModuleBoundary } from '../shared/ModuleBoundary'
 import { Icon } from '../shared/Icon'
@@ -11,6 +11,11 @@ import AccessAdminPage from '../modules/account/AccessAdminPage'
 
 function Home() {
   const auth = useAuth()
+  const { search } = useLocation()
+  // Supabase can return a PKCE code to the configured Site URL.
+  if (new URLSearchParams(search).has('code')) {
+    return <Navigate to={{ pathname: '/auth/callback', search }} replace />
+  }
   const apps = modules.filter(module => module.kind === 'app' && auth.canAccess(module.id))
   const recordModules = modules.filter(module => module.kind === 'records' && auth.canAccess(module.id))
   const recent = documents.filter(doc => (doc.category === 'meetings' || doc.category === 'updates') && auth.canAccess(doc.category)).slice(0, 4)

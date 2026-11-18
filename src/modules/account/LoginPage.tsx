@@ -4,6 +4,8 @@ import { useAuth } from '../../shared/auth/context'
 import { safeReturnPath } from '../../shared/auth/access'
 import { supabase } from '../../shared/lib/supabase'
 
+const oauthReturnPathKey = 'migdot-oauth-return-path'
+
 export default function LoginPage() {
   const auth = useAuth()
   const [params] = useSearchParams()
@@ -16,7 +18,7 @@ export default function LoginPage() {
     setPending(true); setError('')
     try {
       const redirect = new URL('/auth/callback', window.location.origin)
-      redirect.searchParams.set('next', next)
+      window.sessionStorage.setItem(oauthReturnPathKey, next)
       const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirect.toString() } })
       if (error) throw error
     } catch { setError('Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.'); setPending(false) }
@@ -31,7 +33,12 @@ export default function LoginPage() {
 
 export function AuthCallbackPage() {
   const [params] = useSearchParams()
-  const [input] = useState(() => ({ code: params.get('code'), failed: params.has('error') || (params.has('sb_flow_id') && !/^[a-zA-Z0-9_-]{8,64}$/.test(params.get('sb_flow_id') ?? '')), flowId: params.get('sb_flow_id'), next: safeReturnPath(params.get('next')) }))
+  const [input] = useState(() => ({
+    code: params.get('code'),
+    failed: params.has('error') || params.has('error_code') || (params.has('sb_flow_id') && !/^[a-zA-Z0-9_-]{8,64}$/.test(params.get('sb_flow_id') ?? '')),
+    flowId: params.get('sb_flow_id'),
+    next: safeReturnPath(params.get('next') ?? window.sessionStorage.getItem(oauthReturnPathKey)),
+  }))
   const exchange = useRef<ReturnType<NonNullable<typeof supabase>['auth']['exchangeCodeForSession']> | null>(null)
   const [failed, setFailed] = useState(false)
   const { refresh } = useAuth()
@@ -39,7 +46,8 @@ export function AuthCallbackPage() {
   useEffect(() => {
     let cancelled = false
     // Never retain OAuth codes or provider errors in browser history.
-    window.history.replaceState(null, '', '/auth/callback')
+    window.history.replaceState(window.history.state, '', '/auth/callback')
+    window.sessionStorage.removeItem(oauthReturnPathKey)
     if (!supabase || !input.code || input.failed) return
     exchange.current ??= supabase.auth.exchangeCodeForSession(input.code, input.flowId ? { flowId: input.flowId } : undefined)
     void exchange.current.then(async ({ error }) => {
