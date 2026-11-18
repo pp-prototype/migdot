@@ -12,7 +12,7 @@ Google OAuth(PKCE), 공통 세션, 모듈 보호 경로, 홈/메뉴 필터링, �
 2. SQL Editor에서 위 마이그레이션 전체를 한 번 실행합니다. 전체가 트랜잭션으로 처리되며 기존 이름과 충돌하면 적용하지 않고 조사합니다.
 3. Google Cloud에서 웹 OAuth 클라이언트를 준비하고 Supabase Auth의 Google 공급자에 ID와 비밀값을 설정합니다. 비밀값은 Supabase 관리 화면에만 넣고 `VITE_` 환경 변수에 넣지 않습니다.
 4. Google의 승인된 redirect URI는 Supabase가 안내하는 `https://<프로젝트>.supabase.co/auth/v1/callback`입니다. 앱의 `/auth/callback`과 구분합니다.
-5. Supabase URL Configuration의 Site URL을 실제 앱 origin으로 지정하고, 앱의 `/auth/callback`을 허용합니다. `next`와 SDK의 `sb_flow_id` 쿼리가 유지되도록 실제 소유 도메인의 `/auth/callback**` 패턴 등을 공식 문서에 따라 검토합니다. 전체 인터넷 도메인에 대한 wildcard는 사용하지 않습니다.
+5. Supabase의 Authentication → URL Configuration에서 Site URL을 실제 운영 주소(예: `https://app.example.com`)로 지정합니다. Redirect URLs에는 운영 주소의 `https://app.example.com/auth/callback`을 등록합니다. Vercel Preview에서도 로그인하려면 접속할 Preview 도메인의 콜백 주소를 별도로 등록합니다. 브라우저는 로그인을 시작한 도메인에 PKCE 검증 정보를 저장하므로 해당 도메인으로 돌아와야 합니다.
 6. `.env.example`을 `.env.local`로 복사하고 URL과 publishable key만 입력합니다. 개발 서버를 재시작합니다.
 7. 앱에서 Google로 로그인합니다. 첫 사용자는 자동 운영자가 되지 않으며 승인 대기 상태입니다.
 8. Auth의 사용자 ID를 확인하고 아래 SQL로 첫 운영자를 지정합니다.

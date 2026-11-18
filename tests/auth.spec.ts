@@ -166,23 +166,31 @@ test('리디렉션과 권한 응답 검증', () => {
   expect(() => parseAccess({ user_id: userId, approved: false, role: null, module_ids: ['meetings'] }, userId)).toThrow()
 })
 
-test('Google 로그인 시작은 PKCE와 제한된 앱 콜백 주소를 사용한다', async ({ page }) => {
-  await mockAuth(page, { signedIn: false })
-  await page.goto('/login?next=%2Fpost-it-learner')
-  await page.getByRole('button', { name: 'Google로 계속하기' }).click()
-  await expect(page).toHaveURL(/http:\/\/127\.0\.0\.1:54329\/auth\/v1\/authorize/)
-  const request = new URL(page.url())
-  expect(request.searchParams.get('provider')).toBe('google')
-  expect(request.searchParams.get('code_challenge_method')).toBe('s256')
-  expect(request.searchParams.get('code_challenge')).toBeTruthy()
-  const redirect = new URL(request.searchParams.get('redirect_to')!)
-  expect(redirect.origin).toBe('http://127.0.0.1:5176')
-  expect(redirect.pathname).toBe('/auth/callback')
-  expect(redirect.searchParams.get('next')).toBe('/post-it-learner')
-  // Flow IDs are opt-in in the SDK; both legacy and explicit-flow callbacks are supported.
-  const flowId = redirect.searchParams.get('sb_flow_id')
-  if (flowId !== null) expect(flowId).toMatch(/^[a-zA-Z0-9_-]{8,64}$/)
-})
+for (const callbackPath of ['/auth/callback', '/']) {
+  test(`Google 로그인은 ${callbackPath} 복귀 후 원래 요청한 화면을 연다`, async ({ page }) => {
+    const control = await mockAuth(page, { signedIn: false })
+    await page.goto('/login?next=%2Fpost-it-learner')
+    await page.getByRole('button', { name: 'Google로 계속하기' }).click()
+    await expect(page).toHaveURL(/http:\/\/127\.0\.0\.1:54329\/auth\/v1\/authorize/)
+    const request = new URL(page.url())
+    expect(request.searchParams.get('provider')).toBe('google')
+    expect(request.searchParams.get('code_challenge_method')).toBe('s256')
+    expect(request.searchParams.get('code_challenge')).toBeTruthy()
+    const redirect = new URL(request.searchParams.get('redirect_to')!)
+    expect(redirect.origin).toBe('http://127.0.0.1:5176')
+    expect(redirect.pathname).toBe('/auth/callback')
+    expect(redirect.search).toBe('')
+    redirect.pathname = callbackPath
+    redirect.searchParams.set('code', 'test-code')
+    await page.goto(redirect.toString())
+    await expect(page).toHaveURL('/post-it-learner')
+    await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+    expect(control.exchanges).toBe(1)
+    expect(control.verifier).toBeTruthy()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+  })
+}
 
 test('같은 브라우저의 다른 탭도 로그아웃을 수신해 보호 화면을 해제한다', async ({ page }) => {
   await mockAuth(page)
