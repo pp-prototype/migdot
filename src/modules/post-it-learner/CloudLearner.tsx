@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import RecordEditor, { type Draft } from './RecordEditor'
+import TopicCard from './TopicCard'
 import { type LearningRecords, type NoteRecord, type TopicRecord } from './records'
 import { thumbnailUrl } from './thumbnail'
 import defaultCover from './assets/design.svg'
 import styles from './cloud.module.css'
+
+const paperTones = ['yellow', 'mint', 'peach', 'blue'] as const
 
 const dateFormat = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' })
 
@@ -24,6 +27,10 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
   const [status, setStatus] = useState('')
   const [revision, setRevision] = useState(0)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const detail = useRef<HTMLElement>(null)
+  const opener = useRef<HTMLButtonElement | null>(null)
+  const pendingFocus = useRef<string | null>(null)
+  const addNote = useRef<HTMLButtonElement>(null)
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
   const query = params.get('q') ?? ''
@@ -60,6 +67,32 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
     return () => { current = false }
   }, [records, topicId, invalid, revision])
 
+  useEffect(() => {
+    if (noteId && pendingFocus.current === noteId) {
+      pendingFocus.current = null
+      detail.current?.focus({ preventScroll: true })
+      detail.current?.scrollIntoView({ block: 'start' })
+    }
+  }, [noteId])
+
+  function openNote(id: string, button: HTMLButtonElement) {
+    opener.current = button
+    if (noteId === id) {
+      detail.current?.focus({ preventScroll: true })
+      detail.current?.scrollIntoView({ block: 'start' })
+      return
+    }
+    pendingFocus.current = id
+    updateParam('note', id)
+  }
+
+  function closeNote(deleted = false) {
+    updateParam('note', '', true)
+    const target = !deleted && opener.current?.isConnected ? opener.current : addNote.current
+    target?.focus()
+    opener.current = null
+  }
+
   function updateParam(key: string, value: string, replace = false) {
     setParams(previous => {
       const next = new URLSearchParams(previous)
@@ -75,7 +108,7 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
       navigate(`${root}/topics/${createdTopic}`)
       return
     }
-    if (deleted) updateParam('note', '', true)
+    if (deleted) closeNote(true)
     setStatus(message)
     refresh()
   }
@@ -124,10 +157,12 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
             <button onClick={refresh}>새로고침</button>
           </div>
           {noteId && (
-            <section className={styles.detail} aria-label="포스트잇 상세">
-              <button onClick={() => updateParam('note', '', true)}>목록으로</button>
+            <section key={noteId} ref={detail} id="learning-note-detail" className={styles.detail} aria-label="포스트잇 상세" tabIndex={-1}>
+              <div className={styles.detailHeading}>
+                {selected && <h2>{selected.title}</h2>}
+                <button className={styles.backToBoard} onClick={() => closeNote()}><span aria-hidden="true">← </span>목록으로</button>
+              </div>
               {selected ? <>
-                <h2>{selected.title}</h2>
                 {selected.photo_jpeg && <img className={styles.detailPhoto} src={thumbnailUrl(selected.photo_jpeg)} alt="포스트잇 첨부 사진" />}
                 <p className={styles.body}>{selected.body}</p>
                 <p className={styles.meta}>{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
@@ -138,31 +173,41 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
           {topic ? (
             <ul className={styles.board} aria-label="포스트잇 보드">
               <li>
-                <button className={styles.addNote} aria-label="새 포스트잇" onClick={() => setDraft({ kind: 'note', id: crypto.randomUUID(), topic: topic.id })}>
-                  <span aria-hidden="true">+</span>
+                <button ref={addNote} className={styles.addNote} onClick={() => setDraft({ kind: 'note', id: crypto.randomUUID(), topic: topic.id })}>
+                  <span className={styles.addSymbol} aria-hidden="true">+</span>
+                  <span>새 포스트잇</span>
                 </button>
               </li>
               {visibleNotes.map(note => <li key={note.id}>
-                <button className={styles.note} aria-current={noteId === note.id ? 'true' : undefined} onClick={() => updateParam('note', note.id)}>
-                  {note.photo_jpeg && <img src={thumbnailUrl(note.photo_jpeg)} alt="" />}
+                <button
+                  className={styles.note}
+                  data-tone={paperTones[Number.parseInt(note.id.slice(-1), 16) % paperTones.length]}
+                  aria-current={noteId === note.id ? 'true' : undefined}
+                  aria-controls={noteId === note.id ? 'learning-note-detail' : undefined}
+                  onClick={event => openNote(note.id, event.currentTarget)}
+                >
+                  <span className={styles.pin} aria-hidden="true" />
+                  {note.photo_jpeg && <img className={styles.notePhoto} src={thumbnailUrl(note.photo_jpeg)} alt="" />}
                   <strong>{note.title}</strong>
+                  {!note.photo_jpeg && <span className={styles.noteExcerpt} aria-hidden="true">{note.body}</span>}
                   <span className={styles.meta}>{dateFormat.format(new Date(note.created_at))}{note.tag && ` · #${note.tag}`}</span>
                 </button>
               </li>)}
             </ul>
           ) : (
-            <ul className={styles.grid}>
-              {visibleTopics.map(item => <li key={item.id}>
-                <Link className={styles.topic} to={`${root}/topics/${item.id}`}>
-                  <img className={styles.cover} src={item.thumbnail_jpeg ? thumbnailUrl(item.thumbnail_jpeg) : defaultCover} alt="" />
-                  <div className={styles.topicText}>
-                    <strong>{item.name}</strong>
-                    {item.description && <p>{item.description}</p>}
-                    <span aria-hidden="true">보드 열기 ↗</span>
-                  </div>
-                </Link>
-              </li>)}
-            </ul>
+            <section className={styles.topicList} aria-labelledby="learning-topic-list">
+              <h2 id="learning-topic-list">학습 대상 <span>{visibleTopics.length}개</span></h2>
+              <ul className={styles.grid}>
+                {visibleTopics.map(item => <li key={item.id}>
+                  <TopicCard
+                    to={`${root}/topics/${item.id}`}
+                    cover={item.thumbnail_jpeg ? thumbnailUrl(item.thumbnail_jpeg) : defaultCover}
+                    name={item.name}
+                    description={item.description}
+                  />
+                </li>)}
+              </ul>
+            </section>
           )}
           {(topic ? visibleNotes.length === 0 : visibleTopics.length === 0) &&
             <div className={styles.feedback}>

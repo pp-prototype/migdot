@@ -1,0 +1,109 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid #dbe6df;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 6px #2448350d;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.image {
+  overflow: hidden;
+  background: #edf5ef;
+}
+
+.image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  transition: transform .24s ease;
+}
+
+.content {
+  display: grid;
+  flex: 1;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.content h3 {
+  font-size: 1.0625rem;
+  overflow-wrap: anywhere;
+}
+
+.content p {
+  margin-top: 6px;
+  color: #526057;
+  font-size: .875rem;
+  overflow-wrap: anywhere;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e5ebe7;
+  color: #526057;
+  font-size: .8125rem;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #17694e;
+  background: #edf6ef;
+  font-weight: 650;
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.arrow {
+  transition: transform .18s ease;
+}
+
+.card:focus-visible {
+  outline: 3px solid #17694e;
+  outline-offset: 3px;
+}
+
+.card:focus-visible .action, .card:active .action {
+  color: #fff;
+  background: #17694e;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: #74a78f;
+    box-shadow: 0 9px 20px #2448351f;
+    transform: translateY(-3px);
+  }
+
+  .card:hover .image img {
+    transform: scale(1.035);
+  }
+
+  .card:hover .action {
+    color: #fff;
+    background: #17694e;
+  }
+
+  .card:hover .arrow {
+    transform: translate(2px, -2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover, .card:hover .image img, .card:hover .arrow {
+    transform: none;
+  }
+}
