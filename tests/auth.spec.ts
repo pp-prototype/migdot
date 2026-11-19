@@ -156,6 +156,8 @@ test('비로그인은 홈에서 보호 모듈을 보지 못하고 직접 주소�
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '로그인하고 나의 앱을 확인하세요' })).toBeVisible()
   await expect(page.locator('main a.card:not([href="/meta-wallet"])')).toHaveCount(0)
+  await expect(page.locator('main a.card')).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: '내 앱' })).toHaveCount(0)
   await expect(page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link')).toHaveCount(1)
   await page.goto('/post-it-learner')
   await expect(page).toHaveURL('/login?next=%2Fpost-it-learner')
@@ -195,13 +197,18 @@ test('승인 대기, 권한 조회 실패와 계정 불일치는 차단 상태�
 
 test('권한 확인 전에는 콘텐츠가 노출되지 않고 회수 후에는 모듈이 해제된다', async ({ page }) => {
   const control = await mockAuth(page, { delay: 400 })
+  const appNav = page.getByRole('navigation', { name: '내 앱' })
   await page.goto('/post-it-learner')
   await expect(page.getByRole('status')).toHaveText('접근 권한을 확인하는 중입니다…')
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너'])
+  await expect(appNav.getByRole('link')).toHaveAttribute('aria-current', 'page')
   control.moduleIds = []
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
 })
 
@@ -275,23 +282,31 @@ test('리디렉션과 권한 응답 검증', () => {
   expect(() => parseAccess({ user_id: userId, approved: false, role: null, module_ids: ['meetings'] }, userId)).toThrow()
 })
 
-test('Google 로그인 시작은 PKCE와 제한된 앱 콜백 주소를 사용한다', async ({ page }) => {
-  await mockAuth(page, { signedIn: false })
-  await page.goto('/login?next=%2Fpost-it-learner')
-  await page.getByRole('button', { name: 'Google로 계속하기' }).click()
-  await expect(page).toHaveURL(/http:\/\/127\.0\.0\.1:54329\/auth\/v1\/authorize/)
-  const request = new URL(page.url())
-  expect(request.searchParams.get('provider')).toBe('google')
-  expect(request.searchParams.get('code_challenge_method')).toBe('s256')
-  expect(request.searchParams.get('code_challenge')).toBeTruthy()
-  const redirect = new URL(request.searchParams.get('redirect_to')!)
-  expect(redirect.origin).toBe('http://127.0.0.1:5176')
-  expect(redirect.pathname).toBe('/auth/callback')
-  expect(redirect.searchParams.get('next')).toBe('/post-it-learner')
-  // Flow IDs are opt-in in the SDK; both legacy and explicit-flow callbacks are supported.
-  const flowId = redirect.searchParams.get('sb_flow_id')
-  if (flowId !== null) expect(flowId).toMatch(/^[a-zA-Z0-9_-]{8,64}$/)
-})
+for (const callbackPath of ['/auth/callback', '/']) {
+  test(`Google 로그인은 ${callbackPath} 복귀 후 원래 요청한 화면을 연다`, async ({ page }) => {
+    const control = await mockAuth(page, { signedIn: false })
+    await page.goto('/login?next=%2Fpost-it-learner')
+    await page.getByRole('button', { name: 'Google로 계속하기' }).click()
+    await expect(page).toHaveURL(/http:\/\/127\.0\.0\.1:54329\/auth\/v1\/authorize/)
+    const request = new URL(page.url())
+    expect(request.searchParams.get('provider')).toBe('google')
+    expect(request.searchParams.get('code_challenge_method')).toBe('s256')
+    expect(request.searchParams.get('code_challenge')).toBeTruthy()
+    const redirect = new URL(request.searchParams.get('redirect_to')!)
+    expect(redirect.origin).toBe('http://127.0.0.1:5176')
+    expect(redirect.pathname).toBe('/auth/callback')
+    expect(redirect.search).toBe('')
+    redirect.pathname = callbackPath
+    redirect.searchParams.set('code', 'test-code')
+    await page.goto(redirect.toString())
+    await expect(page).toHaveURL('/post-it-learner')
+    await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+    expect(control.exchanges).toBe(1)
+    expect(control.verifier).toBeTruthy()
+    await page.reload()
+    await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+  })
+}
 
 test('같은 브라우저의 다른 탭도 로그아웃을 수신해 보호 화면을 해제한다', async ({ page }) => {
   await mockAuth(page)
