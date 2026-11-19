@@ -314,12 +314,6 @@
   align-items: center;
   gap: .65rem;
 }
-.autumn-next p {
-  padding: .25rem .65rem;
-  border-radius: 4px;
-  background: #2d242ce6;
-  color: #fff0d4;
-}
 .autumn-walk-control {
   display: grid;
   place-items: center;
@@ -592,3 +586,221 @@
 @keyframes autumn-lock-zoom {
   from { opacity: .3; transform: scale(.32); }
 }
+
+.autumn-scene-forest .autumn-clouds i {
+  height: 17%;
+  background: linear-gradient(176deg, #b2adb499, #776f7ddd 54%, #4d4c5bcf);
+  opacity: .83;
+  animation-name: autumn-forest-clouds;
+}
+@keyframes autumn-forest-clouds {
+  from { left: -55%; }
+  to { left: 108%; }
+}
+
+.autumn-scene-forest .autumn-canopy {
+  animation: autumn-forest-wind 4.3s ease-in-out infinite;
+}
+@keyframes autumn-forest-wind {
+  23% { transform: skewX(-1.2deg); }
+  42% { transform: skewX(-2.6deg); }
+  62% { transform: skewX(-.7deg); }
+  79% { transform: skewX(-1.85deg); }
+}
+
+.autumn-scene-forest .autumn-falling i {
+  animation-name: autumn-forest-leaf;
+}
+@keyframes autumn-forest-leaf {
+  from { top: -8%; transform: translateX(-20cqw) rotate(0); }
+  23% { top: 27%; transform: translateX(-4cqw) rotate(135deg) scaleX(.6); }
+  49% { top: 42%; transform: translateX(25cqw) rotate(345deg); }
+  65% { top: 39%; transform: translateX(48cqw) rotate(440deg) scaleX(.5); }
+  82% { top: 65%; transform: translateX(70cqw) rotate(570deg); }
+  to { top: 103%; transform: translateX(88cqw) rotate(735deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autumn-scene-forest .autumn-clouds i { left: var(--cloud-position); }
+}
+
+.autumn-next .autumn-walk-back { color: #fff; }
+.autumn-walk-back .autumn-steps { rotate: 194deg; }
+
+.autumn-phone-ground {
+  position: absolute;
+  top: 76%;
+  left: 67%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border: 0;
+  background: transparent;
+}
+.autumn-phone-icon {
+  display: block;
+  width: 16px;
+  height: 25px;
+  border: 2px solid #111019;
+  border-radius: 4px;
+  background: #14131c;
+}
+.autumn-phone-ground .autumn-phone-icon {
+  position: relative;
+  width: 19px;
+  height: 29px;
+  transform: rotate(-67deg) skewX(-12deg) scaleX(.62);
+  transform-origin: center;
+  background: #111019;
+  box-shadow: -2px 3px 2px #17131cc4;
+  animation: autumn-phone-buzz 4.6s linear infinite;
+}
+.autumn-phone-ground .autumn-phone-icon::before {
+  position: absolute;
+  inset: 2px 1px 3px;
+  border-radius: 2px;
+  background: linear-gradient(155deg, #f4f2f4, #8dafdc 54%, #475486);
+  box-shadow: 0 0 5px #c5dfffaa;
+  opacity: .86;
+  animation: autumn-phone-wake 4.6s linear infinite;
+  content: "";
+}
+@keyframes autumn-phone-buzz {
+  0%, 47%, 61%, 100% { translate: 0 0; }
+  48%, 52%, 56%, 60% { translate: -1.5px .4px; }
+  50%, 54%, 58% { translate: 1.5px -.4px; }
+}
+@keyframes autumn-phone-wake {
+  0%, 33%, 88%, 100% { opacity: 0; }
+  43%, 70% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-phone-ground .autumn-phone-icon::before { animation: none; }
+}
+.autumn-walk-items .autumn-phone-icon { box-shadow: inset 0 0 0 1px #716267; }
+
+.autumn-phone-dialog {
+  width: min(14rem, var(--letter-width) - 2rem);
+  overflow: visible;
+}
+.autumn-phone {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: min(20rem, var(--letter-height) - 1.5rem);
+  padding: 1.45rem .55rem .2rem;
+  border: 2px solid #474451;
+  border-radius: 24px;
+  background: #191820;
+  box-shadow: inset 0 0 0 2px #07070b, 0 12px 30px #1a121ac0;
+}
+.autumn-phone-camera {
+  position: absolute;
+  top: .65rem;
+  left: 50%;
+  width: 24px;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  background: #5c575f;
+}
+.autumn-phone-close {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: .13rem;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #5b4c55;
+  text-shadow: 0 0 3px #fff2db;
+  font-size: 1.2rem;
+}
+.autumn-phone-screen {
+  display: grid;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: radial-gradient(ellipse at top, #f5e7cc, #c3ab9f);
+  color: #3b2c34;
+  touch-action: none;
+  user-select: none;
+}
+.autumn-phone-page {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: .7rem .85rem;
+  animation: autumn-phone-slide .25s ease-out both;
+}
+.autumn-phone-page h2 { margin-bottom: .45rem; color: inherit; }
+.autumn-phone-page p { font-size: .94rem; line-height: 1.55; word-break: keep-all; }
+.autumn-phone-portrait { height: 100%; min-height: 0; }
+.autumn-phone-portrait canvas { width: 100%; height: 100%; object-fit: contain; }
+.autumn-phone-pages { display: flex; justify-content: center; }
+.autumn-phone-pages button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 32px;
+}
+.autumn-phone-pages button::before {
+  width: 7px;
+  height: 7px;
+  border: 1px solid #d3bfa9;
+  border-radius: 50%;
+  content: "";
+}
+.autumn-phone-pages button[aria-current="page"]::before { background: #ffe0b0; }
+@keyframes autumn-phone-slide {
+  from { opacity: .45; transform: translateX(10px); }
+}
+
+.autumn-phone-page:has(.autumn-phone-passcode) { padding: .25rem; }
+.autumn-phone-passcode {
+  display: grid;
+  justify-items: center;
+  gap: .15rem;
+  width: 100%;
+}
+.autumn-phone-passcode h2 {
+  margin: 0;
+  font-size: .97rem;
+  line-height: 1.2;
+}
+.autumn-phone-stars {
+  display: flex;
+  gap: .5rem;
+  color: #81727d;
+  font: 700 1.26rem / 1 system-ui, sans-serif;
+}
+.autumn-phone-stars [data-filled="true"] { color: #2c2030; }
+.autumn-phone-passcode .autumn-phone-passcode-error {
+  min-height: 1.05rem;
+  color: #7e2339;
+  font-size: .75rem;
+  line-height: 1.05rem;
+}
+.autumn-phone-keypad {
+  --key-size: clamp(27px, calc(var(--letter-height) * .113), 40px);
+  display: grid;
+  grid-template-columns: repeat(3, var(--key-size));
+  gap: 3px 8px;
+}
+.autumn-phone-keypad button {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f8ebdbad;
+  color: #302735;
+  font: 600 .95rem / 1 system-ui, sans-serif;
+}
+.autumn-phone-keypad button:is(:hover, :active) { background: #fff3e3; }
+.autumn-phone-keypad button:nth-child(10) { grid-column: 2; }
+.autumn-phone-keypad .autumn-phone-erase { background: transparent; }
+.autumn-phone-pages button { width: min(20%, 44px); }
