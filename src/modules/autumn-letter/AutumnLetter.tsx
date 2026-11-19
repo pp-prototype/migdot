@@ -32,6 +32,9 @@ export default function AutumnLetter({ progress, save }: {
   const lockFound = progress.discoveries.includes(leafPileLockId)
   const firstLetterAcquired = progress.letters.acquired.includes(firstLetterId)
   const digits = progress.puzzles.leafPileLock
+  const [lockView, setLockView] = useState<'chest' | 'dial' | null>(null)
+  const [turnedDials, setTurnedDials] = useState<number[]>([])
+  const firstDial = useRef<HTMLButtonElement>(null)
   const lockDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -47,12 +50,20 @@ export default function AutumnLetter({ progress, save }: {
     dialog.current?.showModal()
   }
 
+  useEffect(() => {
+    if (!lockView) return
+    lockDialog.current?.showModal()
+    if (lockView === 'dial') firstDial.current?.focus()
+  }, [lockView])
+
   function openLock() {
     save({ type: 'discover', id: leafPileLockId })
-    lockDialog.current?.showModal()
+    setTurnedDials([])
+    setLockView('dial')
   }
 
   function rotateDial(index: number) {
+    setTurnedDials(current => current.includes(index) ? current : [...current, index])
     save({ type: 'rotate-lock-dial', index })
   }
 
@@ -77,7 +88,7 @@ export default function AutumnLetter({ progress, save }: {
           onClick={openLetter}><Person /></button>}
         {walking && <button type="button" className="autumn-lock-pile"
           style={{ left: `${lockPile.x / sceneWidth * 100}%`, top: `${lockPile.y / sceneHeight * 100}%` }}
-          aria-label="낙엽 더미 살펴보기" onClick={openLock} />}
+          aria-label="낙엽 더미 살펴보기" onClick={() => setLockView('chest')} />}
       </section>
       {walking && <>
         <div className="autumn-walk-fade" aria-hidden="true" />
@@ -117,21 +128,34 @@ export default function AutumnLetter({ progress, save }: {
       </div>
     </dialog>
 
-    <dialog ref={lockDialog} className="autumn-dialog autumn-lock-dialog" aria-label="네 자리 다이얼 자물쇠"
+    <dialog ref={lockDialog}
+      className={`autumn-dialog autumn-lock-dialog ${lockView === 'chest' ? 'autumn-chest-dialog' : ''}`}
+      aria-label={lockView === 'chest' ? '낙엽 아래 숨겨진 상자' : '네 자리 다이얼 자물쇠'}
+      onClose={() => setLockView(null)}
       onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
-      <div className="autumn-lock">
+      {lockView === 'chest' && <div className="autumn-chest">
+        <div className="autumn-chest-lid" aria-hidden="true" />
+        <div className="autumn-chest-front" aria-hidden="true" />
+        <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
+          <span className="autumn-chest-shackle" aria-hidden="true" />
+          <span className="autumn-chest-padlock" aria-hidden="true"><i /><i /><i /><i /></span>
+        </button>
+      </div>}
+      {lockView === 'dial' && <div className="autumn-lock">
         <div className="autumn-lock-shackle" aria-hidden="true" />
         <div className="autumn-lock-body">
           <div className="autumn-lock-wheels">
             {digits.map((digit, index) => <button key={index} type="button" className="autumn-lock-wheel"
+              ref={index === 0 ? firstDial : undefined}
               aria-label={`${index + 1}번째 다이얼, 현재 ${digit}`} onClick={() => rotateDial(index)}>
-              <span aria-hidden="true">{(digit + 9) % 10}</span>
-              <strong aria-hidden="true" key={digit}>{digit}</strong>
-              <span aria-hidden="true">{(digit + 1) % 10}</span>
+              <span className={`autumn-lock-drum ${turnedDials.includes(index) ? 'autumn-lock-drum-turning' : ''}`}
+                aria-hidden="true" key={digit}>
+                {[-2, -1, 0, 1].map(offset => <span key={offset}>{(digit + 10 + offset) % 10}</span>)}
+              </span>
             </button>)}
           </div>
         </div>
-      </div>
+      </div>}
     </dialog>
   </main>
 }
