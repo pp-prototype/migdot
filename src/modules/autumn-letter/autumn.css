@@ -867,3 +867,44 @@
   0%, 32% { opacity: 1; }
   100% { opacity: 0; }
 }
+
+.autumn-scene-lakeside .autumn-falling i {
+  animation-name: autumn-lakeside-leaf;
+}
+@keyframes autumn-lakeside-leaf {
+  from { top: var(--leaf-origin); opacity: 0; transform: translateX(0) rotate(0); }
+  8% { opacity: var(--leaf-alpha); }
+  32% { transform: translateX(calc(2.5cqw * var(--leaf-direction))) rotate(65deg) scaleX(.75); }
+  64% { transform: translateX(calc(1.5cqw * var(--leaf-direction))) rotate(112deg); }
+  89% { opacity: var(--leaf-alpha); }
+  to { top: 98%; opacity: 0; transform: translateX(calc(5cqw * var(--leaf-direction))) rotate(185deg); }
+}
+
+.autumn-lake-lamp {
+  position: absolute;
+  width: 8.3%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.autumn-lake-lamp i {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle, #ffd38fbf, #ffd38f00 67%);
+  animation: autumn-lake-lamp-flash linear infinite;
+}
+.autumn-lake-lamp i::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10%;
+  height: 13%;
+  transform: translate(-50%, -50%);
+  background: #ffe3a4;
+  content: "";
+}
+@keyframes autumn-lake-lamp-flash {
+  0%, 2.25%, 100% { opacity: 0; }
+  .35%, 1.55% { opacity: 1; }
+}

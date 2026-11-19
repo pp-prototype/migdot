@@ -2,6 +2,16 @@ import type { MapId } from './progress'
 
 export const sceneWidth = 480
 export const sceneHeight = 270
+const lakesideLampScale = .83
+const lakesideBlinkingLampBase = { x: 193, y: 207 }
+export const lakesideBlinkingLamp = {
+  x: lakesideBlinkingLampBase.x,
+  y: lakesideBlinkingLampBase.y - 37 * lakesideLampScale,
+}
+export const lakesideForegroundTrees = [
+  { x: 13, y: 265, size: 1.78, ginkgo: false },
+  { x: 486, y: 264, size: 1.71, ginkgo: true },
+]
 const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
@@ -14,6 +24,7 @@ export const lockPile = {
 export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
+  const lakeside = map === 'fourth-trail'
   const backgroundContext = canvas.getContext('2d')
   const foliageContext = canopy.getContext('2d')
   if (!backgroundContext || !foliageContext) return
@@ -34,7 +45,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(color, x - half, y + row, half * 2 + 1, 1)
     }
   }
-  let seed = forest ? 173 : walking ? 94 : 48
+  let seed = lakeside ? 511 : forest ? 173 : walking ? 94 : 48
   const random = () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
     return seed / 4294967296
@@ -49,12 +60,24 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   }
 
   const sky = background.createLinearGradient(0, 0, 0, 170)
-  sky.addColorStop(0, forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
-  sky.addColorStop(.52, forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
-  sky.addColorStop(1, forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
+  sky.addColorStop(0, lakeside ? '#10162d' : forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
+  sky.addColorStop(.52, lakeside ? '#242c49' : forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
+  sky.addColorStop(1, lakeside ? '#4a4260' : forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
   background.fillStyle = sky
   background.fillRect(0, 0, sceneWidth, sceneHeight)
-  if (!forest) {
+  if (lakeside) {
+    for (let i = 0; i < 235; i++) {
+      const x = random() * sceneWidth
+      const y = 6 + random() * 126
+      const color = i % 9 === 0 ? '#faf1d2' : i % 3 === 0 ? '#aab2c9' : '#68748d'
+      block(color, x, y, 1, 1)
+      if (i % 23 === 0) {
+        block('#7783a2', x - 1, y, 3, 1)
+        block('#7783a2', x, y - 1, 1, 3)
+        block('#fff4d9', x, y, 1, 1)
+      }
+    }
+  } else if (!forest) {
     const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
     const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
     glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
@@ -65,9 +88,9 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   }
 
   const ridges = [
-    { color: forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
-    { color: forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
-    { color: forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
+    { color: lakeside ? '#333a53' : forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
+    { color: lakeside ? '#2a3349' : forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
+    { color: lakeside ? '#242d40' : forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
   ]
   ridges.forEach(({ color, height, scale }, i) => {
     for (let x = 0; x < sceneWidth; x++) {
@@ -91,7 +114,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   const ochre = ['#815044', '#ab6547', '#c6804d', '#e1a75d', '#f7c67b']
   const scarlet = ['#603a46', '#90444a', '#b55647', '#d57851', '#ed9a60']
   const distant = ['#78505c', '#935f60', '#a77169', '#bd856e', '#d49a79']
-  function tree(x: number, y: number, size: number, colors: string[], wood: string, moving = false) {
+  function tree(x: number, y: number, size: number, colors: string[], wood: string, moving = false, ginkgo = false) {
     const crownY = y - 86 * size
     oval('#50383f', x + 7 * size, y + 2, 19 * size, Math.max(1, 3 * size))
     if (walking && size >= .55) {
@@ -111,7 +134,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       branch(wood, elbowX, elbowY, tipX + 11 * size, tipY - 11 * size, 2 * size)
     }
     if (moving) ctx = foliage
-    const maple = new Path2D('M0 6 L-.6 2 L-4 2 L-6 -.2 L-3.2 .1 L-5 -3 L-2 -2 L-1 -5 L0 -3 L1.6 -7 L2.5 -3 L4.5 -4 L3.9 -1 L6 -1.5 L5 1 L1 2 L.6 6 Z')
+    const leafShape = new Path2D(ginkgo ? 'M0 6 L-.4 1 Q-6 0 -5 -5 Q-2 -6 0 -4 Q2 -6 5 -5 Q6 0 .5 1 L.5 6 Z' : 'M0 6 L-.6 2 L-4 2 L-6 -.2 L-3.2 .1 L-5 -3 L-2 -2 L-1 -5 L0 -3 L1.6 -7 L2.5 -3 L4.5 -4 L3.9 -1 L6 -1.5 L5 1 L1 2 L.6 6 Z')
     for (const [dx, dy] of arms) {
       const tipX = x + dx * size
       const tipY = crownY + dy * size
@@ -126,7 +149,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
         ctx.rotate((random() - .5) * 2.7)
         ctx.scale(leafSize, leafSize)
         ctx.fillStyle = colors[Math.max(0, Math.min(4, Math.floor(random() * 4 + (oy < 0 ? 1 : 0))))]
-        ctx.fill(maple)
+        ctx.fill(leafShape)
         if (i % 12 === 0 && size > 1) {
           ctx.strokeStyle = '#f6be77a0'
           ctx.lineWidth = .5
@@ -136,6 +159,97 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       }
     }
     ctx = background
+  }
+
+  if (lakeside) {
+    const shoreline = (x: number) => 195 + Math.sin(x / 103) * 8 + Math.sin(x / 38) * 2
+    const water = background.createLinearGradient(0, 157, 0, 211)
+    water.addColorStop(0, '#232e47')
+    water.addColorStop(1, '#3c5169')
+    background.fillStyle = water
+    background.fillRect(0, 157, sceneWidth, 60)
+    for (let i = 0; i < 250; i++) {
+      const x = random() * sceneWidth
+      const y = 159 + random() * 52
+      if (y < shoreline(x)) {
+        block(i % 4 === 0 ? '#65778b' : '#485e76', x, y, 2 + random() * (y - 152) / 3, 1)
+      }
+    }
+    for (let x = 0; x < sceneWidth; x++) {
+      const y = shoreline(x)
+      block('#77808b', x, y, 1, 2)
+      block('#4a424b', x, y + 2, 1, sceneHeight - y)
+    }
+    for (let y = 212; y < sceneHeight; y++) {
+      const width = 30 + (y - 212) * 1.65
+      const center = 241 + (y - 212) * .48
+      block('#635461', center - width - 3, y, width * 2 + 6, 1)
+      block('#81737b', center - width, y, width * 2, 1)
+    }
+    for (let i = 0; i < 425; i++) {
+      const x = random() * sceneWidth
+      const y = 207 + random() * 63
+      block(i % 3 === 0 ? '#9f754d' : '#554a54', x, y, 1 + random() * 3, 1)
+    }
+
+    const ginkgoGold = ['#47333e', '#64503e', '#806442', '#a28650', '#b9a265']
+    // Keep a clearing around the benches and lamps, with denser groves at its edges.
+    const banks = [
+      { y: 156, left: [1, 15, 31, 48, 63, 79], right: [404, 419, 437, 451, 466, 480], size: .23 },
+      { y: 207, left: [3, 19, 33, 49, 65, 80], right: [419, 435, 452, 467, 482], size: .36 },
+      { y: 226, left: [6, 23, 40, 58, 73], right: [432, 447, 462, 477], size: .48 },
+      { y: 245, left: [2, 23, 48, 70], right: [436, 451, 470, 483], size: .59 },
+    ]
+    for (const { y, left, right, size } of banks) {
+      for (const [index, x] of [...left, ...right].entries()) {
+        const ginkgo = index % 3 === 1
+        tree(x, y + random() * 3, size + random() * .12, ginkgo ? ginkgoGold : crimson, '#302634', false, ginkgo)
+      }
+    }
+    tree(46, 251, 1.12, crimson, '#312533')
+    tree(453, 248, 1.08, ginkgoGold, '#352933', false, true)
+    for (const { x, y, size, ginkgo } of lakesideForegroundTrees) {
+      tree(x, y, size, ginkgo ? ginkgoGold : crimson, ginkgo ? '#352933' : '#312533', true, ginkgo)
+    }
+
+    for (const [x, y] of [[143, 208], [331, 207], [395, 214]]) {
+      background.save()
+      background.translate(x, y)
+      background.scale(.79, .79)
+      background.translate(-x, -y)
+      oval('#382d39', x, y + 1, 17, 3)
+      block('#292431', x - 11, y - 14, 2, 14)
+      block('#292431', x + 9, y - 14, 2, 14)
+      block('#bd9573', x - 13, y - 16, 26, 3)
+      block('#9c765d', x - 13, y - 12, 26, 3)
+      block('#c7a17d', x - 15, y - 8, 30, 3)
+      block('#705448', x - 15, y - 5, 30, 2)
+      background.restore()
+    }
+    for (const [x, y] of [[110, 207], [lakesideBlinkingLampBase.x, lakesideBlinkingLampBase.y], [366, 211]]) {
+      background.save()
+      background.translate(x, y)
+      background.scale(lakesideLampScale, lakesideLampScale)
+      background.translate(-x, -y)
+      const lampY = y - 37
+      const flickers = x === lakesideBlinkingLamp.x
+      if (!flickers) {
+        const halo = background.createRadialGradient(x, lampY, 3, x, lampY, 24)
+        halo.addColorStop(0, '#ffd68f9e')
+        halo.addColorStop(1, '#ffd68f00')
+        background.fillStyle = halo
+        background.fillRect(x - 24, lampY - 24, 48, 48)
+      }
+      oval('#695557', x, y, 9, 2)
+      block('#302b37', x - 1, lampY + 3, 3, 34)
+      block('#63505a', x - 1, lampY + 5, 1, 29)
+      block(flickers ? '#775841' : '#e5ad6b', x - 4, lampY - 3, 8, 8)
+      block(flickers ? '#9d7856' : '#ffe4a4', x - 2, lampY - 2, 4, 6)
+      block('#473745', x - 5, lampY - 5, 10, 2)
+      block('#473745', x - 3, lampY - 7, 6, 2)
+      background.restore()
+    }
+    return
   }
 
   const distantCount = forest ? 57 : walking ? 37 : 19
