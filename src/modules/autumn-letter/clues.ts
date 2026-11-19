@@ -17,3 +17,5 @@ export const firstLetterBack = `우리가 함께 걷지 못한 가을 한 가운
 
 export const secondLetter = '걸어오면서 숨겨둔 물건과 편지는 읽어보았니? 아니라면 다시 살펴봐~'
 export const phoneHint = '이 산책로에서 첫 번째 숫자를 알아낼 수 있어.'
+
+export const phoneDaytimeMessage = '따뜻한 낮의 풍경도 보여주고 싶었는데 우린 자꾸 밤에 만나니까 낙엽 흩날리는 밤의 가을 풍경만 보여줬던게 생각나.'

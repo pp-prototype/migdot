@@ -194,6 +194,6 @@ export default function AutumnLetter({ progress, save }: {
         </div>
       </div>}
     </dialog>
-    <AutumnPhone dialog={phoneDialog} save={save} discoveries={progress.discoveries} />
+    <AutumnPhone dialog={phoneDialog} save={save} />
   </main>
 }

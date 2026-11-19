@@ -804,3 +804,66 @@
 .autumn-phone-keypad button:nth-child(10) { grid-column: 2; }
 .autumn-phone-keypad .autumn-phone-erase { background: transparent; }
 .autumn-phone-pages button { width: min(20%, 44px); }
+
+.autumn-phone-power {
+  position: absolute;
+  z-index: 2;
+  top: 20%;
+  left: calc(100% - 5px);
+  width: 34px;
+  height: 54px;
+  border: 0;
+  background: transparent;
+}
+.autumn-phone-power::before {
+  position: absolute;
+  top: 6px;
+  left: 5px;
+  width: 8px;
+  height: 42px;
+  border: 1px solid #24212b;
+  border-radius: 0 5px 5px 0;
+  background: linear-gradient(90deg, #1a1820, #27242e 67%, #121017);
+  box-shadow: 1px 2px 3px #16111d8c;
+  content: "";
+}
+.autumn-phone-power:active::before { translate: -2px; }
+.autumn-phone-page article p + p { margin-top: .65rem; }
+.autumn-phone-pages[inert] { visibility: hidden; }
+.autumn-phone-wallpaper {
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-height: 0;
+  isolation: isolate;
+  overflow: hidden;
+  background: #100d14;
+}
+.autumn-phone-wallpaper img {
+  position: absolute;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.autumn-phone-wallpaper p {
+  padding: .85rem .25rem .9rem;
+  background: linear-gradient(transparent, #382439dd);
+  color: #fff3ee;
+  font-size: .98rem;
+  font-weight: 700;
+}
+.autumn-phone-wallpaper p span { color: #ffa4ae; }
+.autumn-phone-wallpaper::after {
+  position: absolute;
+  inset: 0;
+  background: #09080c;
+  opacity: 0;
+  animation: autumn-phone-screen-off .46s ease-out both;
+  pointer-events: none;
+  content: "";
+}
+@keyframes autumn-phone-screen-off {
+  0%, 32% { opacity: 1; }
+  100% { opacity: 0; }
+}
