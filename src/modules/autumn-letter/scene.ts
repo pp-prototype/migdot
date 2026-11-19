@@ -2,6 +2,33 @@ import type { MapId } from './progress'
 
 export const sceneWidth = 480
 export const sceneHeight = 270
+const lakesideLampScale = .83
+const lakesideBlinkingLampBase = { x: 193, y: 207 }
+export const lakesideBlinkingLamp = {
+  x: lakesideBlinkingLampBase.x,
+  y: lakesideBlinkingLampBase.y - 37 * lakesideLampScale,
+}
+const closeupLampBase = { x: 158, y: 228 }
+const closeupLampScale = 1.48
+const closeupLampHeight = 64
+export const lakesideLetter = { x: 268, y: 211 }
+export const lakesideCloseupLamp = {
+  x: closeupLampBase.x,
+  y: closeupLampBase.y - closeupLampHeight * closeupLampScale,
+}
+export const lakesideSilhouette = {
+  x: closeupLampBase.x + 18,
+  y: closeupLampBase.y,
+}
+export const lakesideForegroundTrees = [
+  { x: 13, y: 265, size: 1.78, ginkgo: false },
+  { x: 486, y: 264, size: 1.71, ginkgo: true },
+]
+export const dogTrailTrees = [
+  [197, 165, .32], [286, 169, .37], [139, 180, .56], [335, 181, .59],
+  [88, 198, .76], [382, 201, .84], [59, 229, 1.33], [453, 238, 1.55],
+  [3, 260, 2.03], [487, 260, 2.01],
+] as const
 const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
@@ -11,9 +38,46 @@ export const lockPile = {
   y: lockPileY - 6,
 }
 
+function seededRandom(seed: number) {
+  return () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+    return seed / 4294967296
+  }
+}
+
+function drawLakeSky(ctx: CanvasRenderingContext2D, closeup: boolean, random: () => number, height: number, exposure = 5) {
+  const sky = ctx.createLinearGradient(0, 0, 0, 170)
+  sky.addColorStop(0, '#10162d')
+  sky.addColorStop(.52, '#242c49')
+  sky.addColorStop(1, '#4a4260')
+  ctx.fillStyle = sky
+  ctx.fillRect(0, 0, sceneWidth, height)
+  const density = [0, 8, 22, 43, 69, 100][exposure]
+  for (let i = 0; i < (closeup ? 315 : 235); i++) {
+    const x = Math.round(random() * sceneWidth)
+    const y = Math.round(6 + random() * (closeup ? 140 : 126))
+    if ((i * 37) % 100 >= density) continue
+    if (i % 23 === 0) {
+      ctx.fillStyle = '#7783a2'
+      ctx.fillRect(x - 1, y, 3, 1)
+      ctx.fillRect(x, y - 1, 1, 3)
+    }
+    ctx.fillStyle = i % 23 === 0 ? '#fff4d9' : i % 9 === 0 ? '#faf1d2' : i % 3 === 0 ? '#aab2c9' : '#68748d'
+    ctx.fillRect(x, y, 1, 1)
+  }
+}
+
+export function drawLakeCameraSky(canvas: HTMLCanvasElement, exposure: number) {
+  const ctx = canvas.getContext('2d')
+  if (ctx) drawLakeSky(ctx, true, seededRandom(514), canvas.height, exposure)
+}
+
 export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
+  const closeup = map === 'lakeside-bench'
+  const dogTrail = map === 'fifth-trail'
+  const lakeside = map === 'fourth-trail' || closeup
   const backgroundContext = canvas.getContext('2d')
   const foliageContext = canopy.getContext('2d')
   if (!backgroundContext || !foliageContext) return
@@ -34,11 +98,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(color, x - half, y + row, half * 2 + 1, 1)
     }
   }
-  let seed = forest ? 173 : walking ? 94 : 48
-  const random = () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
-    return seed / 4294967296
-  }
+  const random = seededRandom(dogTrail ? 819 : closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48)
   const branch = (color: string, x: number, y: number, endX: number, endY: number, width: number) => {
     const steps = Math.ceil(Math.hypot(endX - x, endY - y))
     for (let step = 0; step <= steps; step++) {
@@ -48,26 +108,41 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     }
   }
 
-  const sky = background.createLinearGradient(0, 0, 0, 170)
-  sky.addColorStop(0, forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
-  sky.addColorStop(.52, forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
-  sky.addColorStop(1, forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
-  background.fillStyle = sky
-  background.fillRect(0, 0, sceneWidth, sceneHeight)
-  if (!forest) {
-    const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
-    const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
-    glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
-    glow.addColorStop(1, '#ffe2a600')
-    background.fillStyle = glow
-    background.fillRect(0, 0, sceneWidth, 170)
-    oval(walking ? '#fff1b5' : '#ffe1ab', light.x, light.y, light.radius, light.radius)
+  if (lakeside) {
+    drawLakeSky(background, closeup, random, sceneHeight)
+  } else {
+    const sky = background.createLinearGradient(0, 0, 0, 170)
+    sky.addColorStop(0, dogTrail ? '#171a32' : forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
+    sky.addColorStop(.52, dogTrail ? '#252840' : forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
+    sky.addColorStop(1, dogTrail ? '#413647' : forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
+    background.fillStyle = sky
+    background.fillRect(0, 0, sceneWidth, sceneHeight)
+    if (dogTrail) {
+      const moonX = 257
+      const moonY = 48
+      const glow = background.createRadialGradient(moonX, moonY, 9, moonX, moonY, 57)
+      glow.addColorStop(0, '#d1d9f477')
+      glow.addColorStop(1, '#d1d9f400')
+      background.fillStyle = glow
+      background.fillRect(moonX - 57, moonY - 57, 114, 114)
+      oval('#e5def0', moonX, moonY, 17, 17)
+      oval('#c7c0d7', moonX - 5, moonY + 4, 5, 3)
+      oval('#cbc4dc', moonX + 5, moonY - 4, 4, 2)
+    } else if (!forest) {
+      const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
+      const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
+      glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
+      glow.addColorStop(1, '#ffe2a600')
+      background.fillStyle = glow
+      background.fillRect(0, 0, sceneWidth, 170)
+      oval(walking ? '#fff1b5' : '#ffe1ab', light.x, light.y, light.radius, light.radius)
+    }
   }
 
   const ridges = [
-    { color: forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
-    { color: forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
-    { color: forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
+    { color: dogTrail ? '#292637' : lakeside ? '#333a53' : forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
+    { color: dogTrail ? '#232231' : lakeside ? '#2a3349' : forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
+    { color: dogTrail ? '#1d1d2c' : lakeside ? '#242d40' : forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
   ]
   ridges.forEach(({ color, height, scale }, i) => {
     for (let x = 0; x < sceneWidth; x++) {
@@ -91,7 +166,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   const ochre = ['#815044', '#ab6547', '#c6804d', '#e1a75d', '#f7c67b']
   const scarlet = ['#603a46', '#90444a', '#b55647', '#d57851', '#ed9a60']
   const distant = ['#78505c', '#935f60', '#a77169', '#bd856e', '#d49a79']
-  function tree(x: number, y: number, size: number, colors: string[], wood: string, moving = false) {
+  function tree(x: number, y: number, size: number, colors: string[], wood: string, moving = false, ginkgo = false) {
     const crownY = y - 86 * size
     oval('#50383f', x + 7 * size, y + 2, 19 * size, Math.max(1, 3 * size))
     if (walking && size >= .55) {
@@ -111,7 +186,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       branch(wood, elbowX, elbowY, tipX + 11 * size, tipY - 11 * size, 2 * size)
     }
     if (moving) ctx = foliage
-    const maple = new Path2D('M0 6 L-.6 2 L-4 2 L-6 -.2 L-3.2 .1 L-5 -3 L-2 -2 L-1 -5 L0 -3 L1.6 -7 L2.5 -3 L4.5 -4 L3.9 -1 L6 -1.5 L5 1 L1 2 L.6 6 Z')
+    const leafShape = new Path2D(ginkgo ? 'M0 6 L-.4 1 Q-6 0 -5 -5 Q-2 -6 0 -4 Q2 -6 5 -5 Q6 0 .5 1 L.5 6 Z' : 'M0 6 L-.6 2 L-4 2 L-6 -.2 L-3.2 .1 L-5 -3 L-2 -2 L-1 -5 L0 -3 L1.6 -7 L2.5 -3 L4.5 -4 L3.9 -1 L6 -1.5 L5 1 L1 2 L.6 6 Z')
     for (const [dx, dy] of arms) {
       const tipX = x + dx * size
       const tipY = crownY + dy * size
@@ -126,7 +201,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
         ctx.rotate((random() - .5) * 2.7)
         ctx.scale(leafSize, leafSize)
         ctx.fillStyle = colors[Math.max(0, Math.min(4, Math.floor(random() * 4 + (oy < 0 ? 1 : 0))))]
-        ctx.fill(maple)
+        ctx.fill(leafShape)
         if (i % 12 === 0 && size > 1) {
           ctx.strokeStyle = '#f6be77a0'
           ctx.lineWidth = .5
@@ -136,6 +211,174 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       }
     }
     ctx = background
+  }
+
+  function drawBench(x: number, y: number, scale: number, hasLetter = false) {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(scale, scale)
+    oval('#382d39', 0, 1, 17, 3)
+    block('#292431', -11, -14, 2, 14)
+    block('#292431', 9, -14, 2, 14)
+    block('#bd9573', -13, -16, 26, 3)
+    block('#9c765d', -13, -12, 26, 3)
+    block('#c7a17d', -15, -8, 30, 3)
+    block('#705448', -15, -5, 30, 2)
+    if (hasLetter) {
+      ctx.save()
+      ctx.translate(0, -8)
+      ctx.rotate(-.18)
+      ctx.scale(.78, .49)
+      block('#694d46', -7, -3, 14, 7)
+      block('#ebd5aa', -7, -4, 14, 7)
+      branch('#b89b79', -6, -4, 0, 0, 1)
+      branch('#b89b79', 6, -4, 0, 0, 1)
+      oval('#8e434b', 0, 0, 1.5, 1.5)
+      ctx.restore()
+    }
+    ctx.restore()
+  }
+
+  function drawLamp(x: number, y: number, scale: number, flickers: boolean, height = 37) {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(scale, scale)
+    if (!flickers) {
+      const halo = ctx.createRadialGradient(0, -37, 3, 0, -37, 24)
+      halo.addColorStop(0, '#ffd68f9e')
+      halo.addColorStop(1, '#ffd68f00')
+      ctx.fillStyle = halo
+      ctx.fillRect(-24, -61, 48, 48)
+    }
+    oval('#695557', 0, 0, 9, 2)
+    block('#302b37', -1, -height + 3, 3, height - 3)
+    block('#63505a', -1, -height + 5, 1, height - 8)
+    ctx.translate(0, 37 - height)
+    block(flickers ? '#775841' : '#e5ad6b', -4, -40, 8, 8)
+    block(flickers ? '#9d7856' : '#ffe4a4', -2, -39, 4, 6)
+    block('#473745', -5, -42, 10, 2)
+    block('#473745', -3, -44, 6, 2)
+    ctx.restore()
+  }
+
+  if (dogTrail) {
+    block('#30252c', 0, 155, sceneWidth, 115)
+    const roadCenter = (y: number) => 241 + Math.sin((y - 155) / 94) * 12
+    const roadWidth = (y: number) => 6 + (y - 154) * 1.96
+    for (let y = 155; y < sceneHeight; y++) {
+      const center = roadCenter(y)
+      const width = roadWidth(y)
+      block('#6b473d', center - width - 5, y, width * 2 + 10, 1)
+      block(y < 180 ? '#5d4b48' : '#7e6053', center - width, y, width * 2, 1)
+    }
+    for (let i = 0; i < 1200; i++) {
+      const x = random() * sceneWidth
+      const y = 158 + random() * 112
+      const onRoad = Math.abs(x - roadCenter(y)) < roadWidth(y)
+      const colors = onRoad ? ['#6d514a', '#936755', '#6b5150'] : ['#58343a', '#9a4739', '#b47046', '#764047']
+      block(colors[i % colors.length], x, y, 1 + random() * (y - 155) / 25, 1)
+    }
+    const lamps = [
+      [222, 161, .32], [271, 171, .49], [179, 181, .62],
+      [339, 200, .85], [120, 220, 1.14], [416, 237, 1.38],
+    ]
+    dogTrailTrees.forEach(([x, y, size], index) => {
+      tree(x, y, size, index % 3 ? crimson : copper, '#281c28', size > 1.5)
+    })
+    for (const [x, y, size] of lamps) {
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.scale(size, size)
+      oval('#b7895b4b', 0, 1, 33, 8)
+      ctx.restore()
+      drawLamp(x, y, size, false)
+    }
+    return
+  }
+
+  if (closeup) {
+    const water = background.createLinearGradient(0, 155, 0, 210)
+    water.addColorStop(0, '#202b44')
+    water.addColorStop(1, '#445971')
+    background.fillStyle = water
+    background.fillRect(0, 155, sceneWidth, 57)
+    for (let i = 0; i < 190; i++) {
+      const x = random() * sceneWidth
+      const y = 157 + random() * 53
+      block(i % 5 ? '#455a72' : '#677c90', x, y, 2 + random() * (y - 152) / 3, 1)
+    }
+    for (let x = 0; x < sceneWidth; x++) {
+      const edge = 208 + Math.sin(x / 104) * 4
+      block('#7b7d87', x, edge, 1, 2)
+      block('#4c444e', x, edge + 2, 1, sceneHeight - edge)
+    }
+    for (let y = 232; y < sceneHeight; y++) {
+      block(y % 6 === 0 ? '#746772' : '#7d7079', 0, y, sceneWidth, 1)
+    }
+    ctx = foliage
+    drawBench(lakesideLetter.x, 230, 2.35, true)
+    drawLamp(closeupLampBase.x, closeupLampBase.y, closeupLampScale, true, closeupLampHeight)
+    return
+  }
+
+  if (lakeside) {
+    const shoreline = (x: number) => 195 + Math.sin(x / 103) * 8 + Math.sin(x / 38) * 2
+    const water = background.createLinearGradient(0, 157, 0, 211)
+    water.addColorStop(0, '#232e47')
+    water.addColorStop(1, '#3c5169')
+    background.fillStyle = water
+    background.fillRect(0, 157, sceneWidth, 60)
+    for (let i = 0; i < 250; i++) {
+      const x = random() * sceneWidth
+      const y = 159 + random() * 52
+      if (y < shoreline(x)) {
+        block(i % 4 === 0 ? '#65778b' : '#485e76', x, y, 2 + random() * (y - 152) / 3, 1)
+      }
+    }
+    for (let x = 0; x < sceneWidth; x++) {
+      const y = shoreline(x)
+      block('#77808b', x, y, 1, 2)
+      block('#4a424b', x, y + 2, 1, sceneHeight - y)
+    }
+    for (let y = 212; y < sceneHeight; y++) {
+      const width = 30 + (y - 212) * 1.65
+      const center = 241 + (y - 212) * .48
+      block('#635461', center - width - 3, y, width * 2 + 6, 1)
+      block('#81737b', center - width, y, width * 2, 1)
+    }
+    for (let i = 0; i < 425; i++) {
+      const x = random() * sceneWidth
+      const y = 207 + random() * 63
+      block(i % 3 === 0 ? '#9f754d' : '#554a54', x, y, 1 + random() * 3, 1)
+    }
+
+    const ginkgoGold = ['#47333e', '#64503e', '#806442', '#a28650', '#b9a265']
+    // Keep a clearing around the benches and lamps, with denser groves at its edges.
+    const banks = [
+      { y: 156, left: [1, 15, 31, 48, 63, 79], right: [404, 419, 437, 451, 466, 480], size: .23 },
+      { y: 207, left: [3, 19, 33, 49, 65, 80], right: [419, 435, 452, 467, 482], size: .36 },
+      { y: 226, left: [6, 23, 40, 58, 73], right: [432, 447, 462, 477], size: .48 },
+      { y: 245, left: [2, 23, 48, 70], right: [436, 451, 470, 483], size: .59 },
+    ]
+    for (const { y, left, right, size } of banks) {
+      for (const [index, x] of [...left, ...right].entries()) {
+        const ginkgo = index % 3 === 1
+        tree(x, y + random() * 3, size + random() * .12, ginkgo ? ginkgoGold : crimson, '#302634', false, ginkgo)
+      }
+    }
+    tree(46, 251, 1.12, crimson, '#312533')
+    tree(453, 248, 1.08, ginkgoGold, '#352933', false, true)
+    for (const { x, y, size, ginkgo } of lakesideForegroundTrees) {
+      tree(x, y, size, ginkgo ? ginkgoGold : crimson, ginkgo ? '#352933' : '#312533', true, ginkgo)
+    }
+
+    for (const [x, y] of [[143, 208], [331, 207], [395, 214]]) {
+      drawBench(x, y, .79)
+    }
+    for (const [x, y] of [[110, 207], [lakesideBlinkingLampBase.x, lakesideBlinkingLampBase.y], [366, 211]]) {
+      drawLamp(x, y, lakesideLampScale, x === lakesideBlinkingLampBase.x)
+    }
+    return
   }
 
   const distantCount = forest ? 57 : walking ? 37 : 19
