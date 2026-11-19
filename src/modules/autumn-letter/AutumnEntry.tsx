@@ -2,13 +2,14 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import AutumnLetter from './AutumnLetter'
 import { entryCode } from './clues'
+import { useAutumnProgress } from './progress'
 import quokkaSeal from './quokka-seal.png'
 import './entry.css'
 
 const nicknames = ['곰찌', '깨비', '오깨', '곰카']
 
 export default function AutumnEntry() {
-  const [admitted, setAdmitted] = useState(false)
+  const { progress, save } = useAutumnProgress()
   const [answer, setAnswer] = useState('')
   const [wrong, setWrong] = useState(false)
 
@@ -18,10 +19,10 @@ export default function AutumnEntry() {
       setWrong(true)
       return
     }
-    setAdmitted(true)
+    save({ type: 'admit' })
   }
 
-  if (admitted) return <AutumnLetter />
+  if (progress.admitted) return <AutumnLetter progress={progress} save={save} />
 
   return <main className="autumn-entry">
     <form className="autumn-entry-card" onSubmit={enter}>

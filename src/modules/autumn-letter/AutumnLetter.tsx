@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { firstLetter, firstLetterBack } from './clues'
+import type { Progress, ProgressAction } from './progress'
 import { drawPerson, drawScene, lockPile, sceneHeight, sceneWidth } from './scene'
 import './autumn.css'
 
@@ -18,12 +19,19 @@ function Person() {
   }} />
 }
 
-export default function AutumnLetter() {
+const firstLetterId = 'first-letter'
+const leafPileLockId = 'leaf-pile-lock'
+
+export default function AutumnLetter({ progress, save }: {
+  progress: Progress
+  save: (action: ProgressAction) => void
+}) {
   const [letterBack, setLetterBack] = useState(false)
-  const [walking, setWalking] = useState(false)
+  const walking = progress.currentMap === 'second-trail'
   const [nextRequested, setNextRequested] = useState(false)
-  const [lockFound, setLockFound] = useState(false)
-  const [digits, setDigits] = useState([0, 0, 0, 0])
+  const lockFound = progress.discoveries.includes(leafPileLockId)
+  const firstLetterAcquired = progress.letters.acquired.includes(firstLetterId)
+  const digits = progress.puzzles.leafPileLock
   const lockDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -34,22 +42,23 @@ export default function AutumnLetter() {
   }, [walking])
 
   function openLetter() {
+    save({ type: 'read-letter', id: firstLetterId, side: 'front' })
     setLetterBack(false)
     dialog.current?.showModal()
   }
 
   function openLock() {
-    setLockFound(true)
+    save({ type: 'discover', id: leafPileLockId })
     lockDialog.current?.showModal()
   }
 
   function rotateDial(index: number) {
-    setDigits(current => current.map((digit, position) => position === index ? (digit + 1) % 10 : digit))
+    save({ type: 'rotate-lock-dial', index })
   }
 
   function startWalking() {
     dialog.current?.close()
-    setWalking(true)
+    save({ type: 'visit-map', id: 'second-trail' })
   }
 
   return <main className="autumn">
@@ -73,9 +82,9 @@ export default function AutumnLetter() {
       {walking && <>
         <div className="autumn-walk-fade" aria-hidden="true" />
         <div className="autumn-walk-items">
-          <button className="autumn-walk-control" type="button" aria-label="첫 편지 다시 읽기" onClick={openLetter}>
+          {firstLetterAcquired && <button className="autumn-walk-control" type="button" aria-label="첫 편지 다시 읽기" onClick={openLetter}>
             <span className="autumn-envelope" aria-hidden="true" />
-          </button>
+          </button>}
           {lockFound && <button className="autumn-walk-control" type="button" aria-label="자물쇠 다시 열기" onClick={openLock}>
             <span className="autumn-lock-icon" aria-hidden="true" />
           </button>}
@@ -100,7 +109,10 @@ export default function AutumnLetter() {
           <p className="autumn-letter-face" key={String(letterBack)}>{letterBack ? firstLetterBack : firstLetter}</p>
         </article>
         {!walking && <button className="autumn-return" onClick={startWalking}>영상이랑 걷기</button>}
-        {walking && <button className="autumn-page-corner" type="button" onClick={() => setLetterBack(back => !back)}
+        {walking && <button className="autumn-page-corner" type="button" onClick={() => {
+          if (!letterBack) save({ type: 'read-letter', id: firstLetterId, side: 'back' })
+          setLetterBack(!letterBack)
+        }}
           aria-label={letterBack ? '편지 앞면 보기' : '편지 뒷면 보기'} />}
       </div>
     </dialog>
