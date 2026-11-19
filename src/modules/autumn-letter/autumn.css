@@ -1027,3 +1027,130 @@
   border-radius: 7px;
   background: #f6e6d2;
 }
+
+.autumn-phone-camera-dialog { width: min(42rem, var(--letter-width) - 1.5rem); }
+.autumn-camera-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(53px, 12%, 78px);
+  height: min(21rem, var(--letter-height) - 1.5rem);
+  padding: .35rem;
+  overflow: hidden;
+  border: 2px solid #494650;
+  border-radius: 23px;
+  background: #111017;
+  box-shadow: inset 0 0 0 2px #07070c, 0 13px 32px #151019c9;
+  color: #fff;
+}
+.autumn-camera-preview {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 15px;
+  background: #000;
+}
+.autumn-camera-preview canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.autumn-camera-settings {
+  position: absolute;
+  top: .3rem;
+  right: .3rem;
+  display: flex;
+  gap: .15rem;
+}
+.autumn-camera-settings button, .autumn-camera-back {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: #0e101bbf;
+}
+.autumn-camera-back {
+  position: absolute;
+  top: .3rem;
+  left: .3rem;
+  font-size: 1.35rem;
+}
+.autumn-camera-settings button[aria-pressed="true"] { color: #ffe187; }
+.autumn-camera-flash {
+  width: 16px;
+  height: 22px;
+  background: currentColor;
+  clip-path: polygon(53% 0, 12% 57%, 45% 57%, 39% 100%, 91% 39%, 57% 39%, 69% 0);
+}
+.autumn-camera-night {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: -4px 3px 0 0 currentColor;
+  translate: 2px -1px;
+}
+.autumn-camera-live {
+  width: 19px;
+  height: 19px;
+  border: 2px dotted currentColor;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px #171521, inset 0 0 0 3.5px currentColor;
+}
+.autumn-camera-rail { display: grid; place-items: center; }
+.autumn-camera-shutter {
+  width: clamp(42px, 75%, 56px);
+  aspect-ratio: 1;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 3px #171521;
+}
+.autumn-camera-shutter:active { scale: .92; }
+.autumn-camera-exposure {
+  position: absolute;
+  inset: 0;
+  background: #080913;
+  pointer-events: none;
+  animation: autumn-camera-exposure .3s ease-out both;
+}
+.autumn-camera-exposure[data-flash="true"] { background: #fff; }
+@keyframes autumn-camera-exposure {
+  from { opacity: .75; }
+  to { opacity: 0; }
+}
+
+.autumn-camera-preview[data-white="true"] { background: #fff; }
+.autumn-camera-preview canvas {
+  opacity: var(--sky-exposure, 1);
+  transition: opacity .28s ease;
+}
+.autumn-camera-settings button:disabled { opacity: .52; cursor: default; }
+.autumn-camera-gauge {
+  position: absolute;
+  bottom: .55rem;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: min(80%, 14rem);
+  padding: .3rem .6rem;
+  transform: translateX(-50%);
+  border-radius: 8px;
+  background: #101019dc;
+}
+.autumn-camera-gauge input { width: 100%; min-width: 0; accent-color: #ffe187; }
+.autumn-camera-gauge span, .autumn-camera-gauge output { flex: none; }
+.autumn-camera-rail { position: relative; }
+.autumn-camera-saved {
+  position: absolute;
+  bottom: .4rem;
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid #a795bd;
+  border-radius: 5px;
+  background: radial-gradient(#403c66, #171b38);
+  color: #fff0c3;
+}

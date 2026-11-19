@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent, RefObject } from 'react'
+import { useSoundEffect } from './useSoundEffect'
+import cameraErrorSound from './audio/bgm-camera-error.mp3'
+import AutumnCamera from './AutumnCamera'
 import Person from './Person'
 import { phoneDaytimeMessage, phoneHint, secondLetter } from './clues'
 import type { ProgressAction } from './progress'
@@ -8,16 +11,19 @@ import lockWallpaper from './phone-lock-wallpaper.jpg'
 const pages = ['인물', '두 번째 편지', '숫자 힌트', '비밀번호']
 const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 const phonePasscode = '0047'
+const skyPhotoId = 'lakeside-clear-star-photo'
 const unlockId = 'phone-passcode-unlocked'
 
-export default function AutumnPhone({ dialog, save, cameraAvailable }: {
+export default function AutumnPhone({ dialog, save, cameraAvailable, cameraActive, discoveries }: {
   dialog: RefObject<HTMLDialogElement | null>
   cameraAvailable: boolean
+  cameraActive: boolean
+  discoveries: string[]
   save: (action: ProgressAction) => void
 }) {
   const [page, setPage] = useState(0)
   const [screenLocked, setScreenLocked] = useState(false)
-  const [cameraPermission, setCameraPermission] = useState<'idle' | 'prompt' | 'allowed'>('idle')
+  const [cameraPermission, setCameraPermission] = useState<'idle' | 'prompt' | 'ready' | 'open'>('idle')
   const [code, setCode] = useState('')
   const [wrong, setWrong] = useState(false)
   const [showHint, setShowHint] = useState(false)
@@ -29,6 +35,13 @@ export default function AutumnPhone({ dialog, save, cameraAvailable }: {
     const timer = window.setTimeout(() => setShowHint(false), 3500)
     return () => window.clearTimeout(timer)
   }, [showHint])
+
+  const { audioRef: cameraErrorAudio, play: playCameraError } = useSoundEffect(1250)
+
+  function openCamera() {
+    if (!cameraActive) playCameraError()
+    setCameraPermission('open')
+  }
 
   function goTo(next: number) {
     if (next < 0 || next >= visiblePages.length || next === page) return
@@ -68,10 +81,14 @@ export default function AutumnPhone({ dialog, save, cameraAvailable }: {
     }
   }
 
-  return <dialog ref={dialog} className="autumn-dialog autumn-phone-dialog" aria-label="발견한 스마트폰"
+  return <dialog ref={dialog} className={`autumn-dialog autumn-phone-dialog ${cameraPermission === 'open' ? 'autumn-phone-camera-dialog' : ''}`} aria-label="발견한 스마트폰"
     onClose={() => { setPage(0); setScreenLocked(false); setCameraPermission('idle'); setShowHint(false); setCode(''); setWrong(false); gesture.current = null }}
     onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
-    <div className="autumn-phone">
+    <audio ref={cameraErrorAudio} src={cameraErrorSound} preload="auto" />
+    {cameraPermission === 'open' ? <AutumnCamera
+      active={cameraActive} savedPhoto={discoveries.includes(skyPhotoId)}
+      onCapture={() => save({ type: 'discover', id: skyPhotoId })}
+      onError={playCameraError} onClose={() => setCameraPermission('ready')} /> : <div className="autumn-phone">
       <div className="autumn-phone-camera" aria-hidden="true" />
       <button className="autumn-phone-power" type="button"
         aria-label={screenLocked ? '스마트폰 슬라이드로 돌아가기' : '스마트폰 잠금화면 보기'}
@@ -119,12 +136,14 @@ export default function AutumnPhone({ dialog, save, cameraAvailable }: {
               <span className="autumn-phone-camera-icon" aria-hidden="true" />
               <p>카메라 앱의 사용을 허가하겠습니까?</p>
               <div className="autumn-phone-permission-actions">
-                <button type="button" onClick={() => setCameraPermission('allowed')}>예</button>
+                <button type="button" onClick={openCamera}>예</button>
                 <button type="button" onClick={() => setCameraPermission('idle')}>아니오</button>
               </div>
-            </section> : cameraPermission === 'allowed'
-              ? <p role="status">카메라 사용 허용을 선택했어.</p>
-              : <button className="autumn-phone-camera-open" type="button" onClick={() => setCameraPermission('prompt')}>카메라 열기</button>
+            </section> : <button className="autumn-phone-camera-open" type="button"
+              onClick={() => {
+                if (cameraPermission === 'ready') openCamera()
+                else setCameraPermission('prompt')
+              }}>카메라 열기</button>
           )}
         </div>}
       </div>
@@ -132,6 +151,6 @@ export default function AutumnPhone({ dialog, save, cameraAvailable }: {
         {visiblePages.map((label, index) => <button key={label} type="button" aria-label={label}
           aria-current={page === index ? 'page' : undefined} onClick={() => goTo(index)} />)}
       </div>
-    </div>
+    </div>}
   </dialog>
 }

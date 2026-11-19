@@ -261,6 +261,6 @@ export default function AutumnLetter({ progress, save }: {
         </div>
       </div>}
     </dialog>
-    <AutumnPhone dialog={phoneDialog} save={save} cameraAvailable={thirdLetterAcquired} />
+    <AutumnPhone dialog={phoneDialog} save={save} cameraAvailable={thirdLetterAcquired} cameraActive={closeup} discoveries={progress.discoveries} />
   </main>
 }

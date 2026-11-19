@@ -29,6 +29,40 @@ export const lockPile = {
   y: lockPileY - 6,
 }
 
+function seededRandom(seed: number) {
+  return () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+    return seed / 4294967296
+  }
+}
+
+function drawLakeSky(ctx: CanvasRenderingContext2D, closeup: boolean, random: () => number, height: number, exposure = 5) {
+  const sky = ctx.createLinearGradient(0, 0, 0, 170)
+  sky.addColorStop(0, '#10162d')
+  sky.addColorStop(.52, '#242c49')
+  sky.addColorStop(1, '#4a4260')
+  ctx.fillStyle = sky
+  ctx.fillRect(0, 0, sceneWidth, height)
+  const density = [0, 8, 22, 43, 69, 100][exposure]
+  for (let i = 0; i < (closeup ? 315 : 235); i++) {
+    const x = Math.round(random() * sceneWidth)
+    const y = Math.round(6 + random() * (closeup ? 140 : 126))
+    if ((i * 37) % 100 >= density) continue
+    if (i % 23 === 0) {
+      ctx.fillStyle = '#7783a2'
+      ctx.fillRect(x - 1, y, 3, 1)
+      ctx.fillRect(x, y - 1, 1, 3)
+    }
+    ctx.fillStyle = i % 23 === 0 ? '#fff4d9' : i % 9 === 0 ? '#faf1d2' : i % 3 === 0 ? '#aab2c9' : '#68748d'
+    ctx.fillRect(x, y, 1, 1)
+  }
+}
+
+export function drawLakeCameraSky(canvas: HTMLCanvasElement, exposure: number) {
+  const ctx = canvas.getContext('2d')
+  if (ctx) drawLakeSky(ctx, true, seededRandom(514), canvas.height, exposure)
+}
+
 export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
@@ -54,11 +88,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(color, x - half, y + row, half * 2 + 1, 1)
     }
   }
-  let seed = closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48
-  const random = () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
-    return seed / 4294967296
-  }
+  const random = seededRandom(closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48)
   const branch = (color: string, x: number, y: number, endX: number, endY: number, width: number) => {
     const steps = Math.ceil(Math.hypot(endX - x, endY - y))
     for (let step = 0; step <= steps; step++) {
@@ -68,32 +98,24 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     }
   }
 
-  const sky = background.createLinearGradient(0, 0, 0, 170)
-  sky.addColorStop(0, lakeside ? '#10162d' : forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
-  sky.addColorStop(.52, lakeside ? '#242c49' : forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
-  sky.addColorStop(1, lakeside ? '#4a4260' : forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
-  background.fillStyle = sky
-  background.fillRect(0, 0, sceneWidth, sceneHeight)
   if (lakeside) {
-    for (let i = 0; i < (closeup ? 315 : 235); i++) {
-      const x = random() * sceneWidth
-      const y = 6 + random() * (closeup ? 140 : 126)
-      const color = i % 9 === 0 ? '#faf1d2' : i % 3 === 0 ? '#aab2c9' : '#68748d'
-      block(color, x, y, 1, 1)
-      if (i % 23 === 0) {
-        block('#7783a2', x - 1, y, 3, 1)
-        block('#7783a2', x, y - 1, 1, 3)
-        block('#fff4d9', x, y, 1, 1)
-      }
+    drawLakeSky(background, closeup, random, sceneHeight)
+  } else {
+    const sky = background.createLinearGradient(0, 0, 0, 170)
+    sky.addColorStop(0, forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
+    sky.addColorStop(.52, forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
+    sky.addColorStop(1, forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
+    background.fillStyle = sky
+    background.fillRect(0, 0, sceneWidth, sceneHeight)
+    if (!forest) {
+      const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
+      const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
+      glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
+      glow.addColorStop(1, '#ffe2a600')
+      background.fillStyle = glow
+      background.fillRect(0, 0, sceneWidth, 170)
+      oval(walking ? '#fff1b5' : '#ffe1ab', light.x, light.y, light.radius, light.radius)
     }
-  } else if (!forest) {
-    const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
-    const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
-    glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
-    glow.addColorStop(1, '#ffe2a600')
-    background.fillStyle = glow
-    background.fillRect(0, 0, sceneWidth, 170)
-    oval(walking ? '#fff1b5' : '#ffe1ab', light.x, light.y, light.radius, light.radius)
   }
 
   const ridges = [
