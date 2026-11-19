@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { firstLetter, firstLetterBack, skyPhotoId, thirdLetter } from './clues'
+import { firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
 import type { Progress, ProgressAction } from './progress'
-import { dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
+import { dogTrailLetter, dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
 import AutumnDogWalk from './AutumnDogWalk'
 import AutumnPhone from './AutumnPhone'
 import Person from './Person'
@@ -37,7 +37,14 @@ const lampPulses = lampPattern.flatMap((count, second) =>
 
 const firstLetterId = 'first-letter'
 const thirdLetterId = 'third-letter'
-type LetterId = typeof firstLetterId | typeof thirdLetterId
+const fourthLetterId = 'fourth-letter'
+const letters = {
+  [firstLetterId]: { title: '첫 편지', text: firstLetter },
+  [thirdLetterId]: { title: '세 번째 편지', text: thirdLetter },
+  [fourthLetterId]: { title: '네 번째 편지', text: fourthLetter },
+}
+const letterOrder = [firstLetterId, thirdLetterId, fourthLetterId] as const
+type LetterId = keyof typeof letters
 const leafPileLockId = 'leaf-pile-lock'
 const phoneId = 'trail-phone'
 
@@ -46,7 +53,7 @@ export default function AutumnLetter({ progress, save }: {
   save: (action: ProgressAction) => void
 }) {
   const [activeLetter, setActiveLetter] = useState<LetterId>(firstLetterId)
-  const showingThird = activeLetter === thirdLetterId
+  const showingFirst = activeLetter === firstLetterId
   const [letterBack, setLetterBack] = useState(false)
   const map = progress.currentMap
   const walking = map !== 'first-trail'
@@ -62,6 +69,11 @@ export default function AutumnLetter({ progress, save }: {
   const lockFound = progress.discoveries.includes(leafPileLockId)
   const firstLetterAcquired = progress.letters.acquired.includes(firstLetterId)
   const thirdLetterAcquired = progress.letters.acquired.includes(thirdLetterId)
+  const collectedLetters = letterOrder.filter(id => progress.letters.acquired.includes(id))
+  const currentLetterIndex = collectedLetters.indexOf(activeLetter)
+  const previousLetter = collectedLetters[currentLetterIndex - 1]
+  const nextLetter = collectedLetters[currentLetterIndex + 1]
+  const canBrowseLetters = collectedLetters.length > 1
   const digits = progress.puzzles.leafPileLock
   const [lockView, setLockView] = useState<'chest' | 'dial' | null>(null)
   const [turnedDials, setTurnedDials] = useState<number[]>([])
@@ -169,7 +181,7 @@ export default function AutumnLetter({ progress, save }: {
         {!closeup && <div className="autumn-falling" aria-hidden="true">
           {fallingLeaves(forest, lakeside, dogTrail).map((style, i) => <i key={i} style={style as CSSProperties} />)}
         </div>}
-        {closeup && <button className="autumn-bench-letter" type="button" aria-label="벤치 위 편지 읽기"
+        {closeup && <button className="autumn-scene-letter" type="button" aria-label="벤치 위 편지 읽기"
           style={{ left: `${lakesideLetter.x / sceneWidth * 100}%`, top: `${lakesideLetter.y / sceneHeight * 100}%` }}
           onClick={() => openLetter(thirdLetterId)} />}
         {map === 'fourth-trail' && <button className="autumn-bench-approach" type="button"
@@ -182,12 +194,17 @@ export default function AutumnLetter({ progress, save }: {
         {forest && <button className="autumn-phone-ground" type="button" aria-label="길가의 스마트폰 살펴보기" onClick={openPhone}>
           <span className="autumn-phone-icon" aria-hidden="true" />
         </button>}
-        {dogTrail && <AutumnDogWalk />}
+        {dogTrail && <>
+          <AutumnDogWalk />
+          <button className="autumn-scene-letter" type="button" aria-label="나무에 놓인 편지 읽기"
+            style={{ left: `${dogTrailLetter.x / sceneWidth * 100}%`, top: `${dogTrailLetter.y / sceneHeight * 100}%` }}
+            onClick={() => openLetter(fourthLetterId)} />
+        </>}
       </section>
       {walking && <>
         <div key={map} className="autumn-walk-fade" aria-hidden="true" />
         <div className="autumn-walk-items">
-          {firstLetterAcquired && <button className="autumn-walk-control" type="button" aria-label={thirdLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}
+          {firstLetterAcquired && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}
             onClick={() => openLetter(firstLetterId)}>
             <span className="autumn-envelope" aria-hidden="true" />
           </button>}
@@ -226,22 +243,25 @@ export default function AutumnLetter({ progress, save }: {
 
     <dialog ref={dialog} className={`autumn-dialog ${walking ? '' : 'autumn-dialog-delivery'}`} aria-labelledby="autumn-letter-title">
       {!walking && <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>}
-      <div className={`autumn-paper ${thirdLetterAcquired ? 'autumn-paper-with-nav' : ''}`}>
+      <div className={`autumn-paper ${canBrowseLetters ? 'autumn-paper-with-nav' : ''}`}>
         <button className="autumn-close" aria-label="편지 닫기" onClick={() => dialog.current?.close()}>×</button>
         <article className="autumn-box-letter" aria-live="polite">
-          <h2 id="autumn-letter-title">{showingThird ? '세 번째 편지' : '첫 편지'}</h2>
+          <h2 id="autumn-letter-title">{letters[activeLetter].title}</h2>
           <p className="autumn-letter-face" key={`${activeLetter}-${letterBack}`}>
-            {showingThird ? thirdLetter : letterBack ? firstLetterBack : firstLetter}
+            {showingFirst && letterBack ? firstLetterBack : letters[activeLetter].text}
           </p>
+          {activeLetter === fourthLetterId && <p className="autumn-letter-hint">{fourthLetterHint}</p>}
         </article>
         {!walking && <button className="autumn-return" onClick={startWalking}>영상이랑 걷기</button>}
-        {thirdLetterAcquired && <>
-          <button className="autumn-letter-nav autumn-letter-prev" type="button" aria-label="첫 편지 보기"
-            disabled={!showingThird} onClick={() => selectLetter(firstLetterId)}>‹</button>
-          <button className="autumn-letter-nav autumn-letter-next" type="button" aria-label="세 번째 편지 보기"
-            disabled={showingThird} onClick={() => selectLetter(thirdLetterId)}>›</button>
+        {canBrowseLetters && <>
+          <button className="autumn-letter-nav autumn-letter-prev" type="button"
+            aria-label={previousLetter ? `${letters[previousLetter].title} 보기` : '이전 편지'}
+            disabled={!previousLetter} onClick={() => previousLetter && selectLetter(previousLetter)}>‹</button>
+          <button className="autumn-letter-nav autumn-letter-next" type="button"
+            aria-label={nextLetter ? `${letters[nextLetter].title} 보기` : '다음 편지'}
+            disabled={!nextLetter} onClick={() => nextLetter && selectLetter(nextLetter)}>›</button>
         </>}
-        {walking && !showingThird && <button className="autumn-page-corner" type="button" onClick={() => {
+        {walking && showingFirst && <button className="autumn-page-corner" type="button" onClick={() => {
           if (!letterBack) save({ type: 'read-letter', id: firstLetterId, side: 'back' })
           setLetterBack(!letterBack)
         }}

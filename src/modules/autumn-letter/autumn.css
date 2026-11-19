@@ -939,7 +939,7 @@
   50% { opacity: .67; transform: translateX(8px) scaleX(1.1); }
 }
 
-.autumn-bench-letter {
+.autumn-scene-letter {
   position: absolute;
   width: 48px;
   height: 44px;
@@ -1206,3 +1206,9 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-dog-spitz { left: 40.8%; top: 64.5%; width: 8%; height: 20%; }
 .autumn-dog-corgi { left: 58.8%; top: 67.5%; width: 12%; height: 29%; }
+
+.autumn-box-letter .autumn-letter-hint {
+  margin-top: .9rem;
+  color: #816b5d;
+  font-size: .8rem;
+}

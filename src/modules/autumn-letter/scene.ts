@@ -29,6 +29,7 @@ export const dogTrailTrees = [
   [88, 198, .76], [382, 201, .84], [59, 229, 1.33], [453, 238, 1.55],
   [3, 260, 2.03], [487, 260, 2.01],
 ] as const
+export const dogTrailLetter = { x: dogTrailTrees[4][0] + 3, y: dogTrailTrees[4][1] - 26 }
 const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
@@ -293,6 +294,15 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       ctx.restore()
       drawLamp(x, y, size, false)
     }
+    ctx.save()
+    ctx.translate(dogTrailLetter.x, dogTrailLetter.y)
+    ctx.rotate(-.16)
+    block('#3a2930', -7, -3, 15, 10)
+    block('#dcc196', -7, -5, 14, 9)
+    branch('#9b7963', -6, -4, 0, 0, 1)
+    branch('#9b7963', 6, -4, 0, 0, 1)
+    oval('#813c48', 0, 0, 1.5, 1.5)
+    ctx.restore()
     return
   }
 

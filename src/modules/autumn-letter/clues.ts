@@ -24,3 +24,7 @@ export const thirdLetter = `얼마 전의 호수에서 본 별이 생생해. 핸
 두 번째 숫자의 행방은 별이 가득한 밤하늘에 두고 왔어.`
 
 export const skyPhotoId = 'lakeside-clear-star-photo'
+
+export const fourthLetter = `한 밤에 강아지들과 산책하던 기억.
+사랑하는 사람이 나의 것처럼 아끼고 예뻐해주는 모습에 마음이 많이 가서 그 어떤 것보다 사랑스러움을 느꼈지.`
+export const fourthLetterHint = '세 번째 숫자는 우리와 함께한 것의 수.'
