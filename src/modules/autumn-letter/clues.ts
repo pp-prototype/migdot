@@ -14,3 +14,6 @@ export const finalLetter = '찾아줘서 고마워. 이 가을을 너와 나누�
 
 export const firstLetterBack = `우리가 함께 걷지 못한 가을 한 가운데의 단풍이 물든 풍경을 영원히 볼 수 있게 담아두었어.
 이 산책로에는 다른 것도 좀 숨겨두었는데, 공주가 모두 찾을 수 있으려나? ㅋㅋ`
+
+export const secondLetter = '걸어오면서 숨겨둔 물건과 편지는 읽어보았니? 아니라면 다시 살펴봐~'
+export const phoneHint = '이 산책로에서 첫 번째 숫자를 알아낼 수 있어.'
