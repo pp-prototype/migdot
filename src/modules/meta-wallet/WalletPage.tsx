@@ -1,3 +1,4 @@
+import PlanAccounts, { type AccountEditor, type AccountPayment, type PlanAccount } from './PlanAccounts'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Icon } from '../../shared/Icon'
@@ -15,13 +16,14 @@ const dayDistance = (date: string) => (Date.parse(date) - Date.parse(today)) / 8
 const dateLabel = (date: string) => new Intl.DateTimeFormat('ko-KR', {
   month: 'long', day: 'numeric', timeZone: 'UTC',
 }).format(new Date(date))
-const categories = ['수입', '상환', '저축', '특수비', '고정비', '생활비 예약']
+const categories = ['수입', '상환', '저축', '특수비', '고정비', '필수 지출', '생활비 예약']
 const storageKey = 'meta-wallet-workspace-v2'
 
 type View = 'home' | 'journal' | 'plan'
 type Entry = { amount: number | null; approximate: boolean; note: string }
-type Event = { id: string; date: string; title: string; category: string; amount: number; topic?: string }
-type Plan = { balance: number | null; confirmed: string; horizon: string; events: Event[] }
+type Event = { id: string; date: string; title: string; category: string; amount: number; topic?: string; settledOn?: string; accountId?: string }
+type PlanChange = { date: string; before?: Event; after?: Event; dailyBefore: number | null; dailyAfter: number | null }
+type Plan = { balance: number | null; confirmed: string; horizon: string; events: Event[]; history?: PlanChange[]; accounts?: PlanAccount[] }
 type Workspace = { journal: Record<string, Entry>; plan: Plan }
 const blank: Workspace = { journal: {}, plan: { balance: null, confirmed: '', horizon: '', events: [] } }
 
@@ -56,24 +58,28 @@ function makeSample(): Workspace {
 }
 
 function project(plan: Plan) {
-  const ordered = [...plan.events].sort((a, b) => a.date.localeCompare(b.date)
-    || Number(b.category === '수입') - Number(a.category === '수입'))
-  const pending = ordered.filter(item => item.date >= today)
+  const ordered = [...plan.events].sort((a, b) => a.date.localeCompare(b.date))
+  const unsettled = ordered.filter(item => !item.settledOn)
+  const pending = unsettled
+    .filter(item => item.date >= today || ['상환', '고정비', '특수비', '필수 지출'].includes(item.category))
+    .map(item => ({ ...item, cashDate: item.date < today ? today : item.date }))
+    .sort((a, b) => a.cashDate.localeCompare(b.cashDate)
+      || Number(b.category === '수입') - Number(a.category === '수입'))
   let balance = plan.balance ?? 0
   let minimum = balance
   let shortage: { date: string; amount: number } | undefined
   const timeline = pending.map((item, index) => {
     balance += item.category === '수입' ? item.amount : -item.amount
-    if (pending[index + 1]?.date !== item.date) {
+    if (pending[index + 1]?.cashDate !== item.cashDate) {
       minimum = Math.min(minimum, balance)
-      if (balance < 0 && !shortage) shortage = { date: item.date, amount: -balance }
+      if (balance < 0 && !shortage) shortage = { date: item.cashDate, amount: -balance }
     }
     return { ...item, balance }
   })
   const days = dayDistance(plan.horizon)
   const available = Math.max(0, minimum)
   const ready = plan.balance !== null && days > 0
-  return { timeline, past: ordered.filter(item => item.date < today), shortage: plan.balance === null ? undefined : shortage,
+  return { timeline, past: unsettled.filter(item => !pending.some(projected => projected.id === item.id)), settled: ordered.filter(item => item.settledOn), shortage: plan.balance === null ? undefined : shortage,
     available, days, daily: ready ? Math.floor(available / days) : null }
 }
 
@@ -111,22 +117,33 @@ export default function WalletPage() {
   const [setup, setSetup] = useState<'balance' | 'horizon' | null>(null)
   const [periodMode, setPeriodMode] = useState<'date' | 'days'>('date')
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [accountEditor, setAccountEditor] = useState<AccountEditor | null>(null)
   const [status, setStatus] = useState('')
+  const [settling, setSettling] = useState<Event | null>(null)
+  const [settledBalance, setSettledBalance] = useState('')
   const [selectedScheduleDate, setSelectedScheduleDate] = useState('')
   const setupTitle = useRef<HTMLHeadingElement>(null)
   const draftTitle = useRef<HTMLHeadingElement>(null)
   const scheduleTarget = useRef<HTMLLIElement>(null)
-  const draftOpen = draft !== null && view === 'plan'
+  const draftOpen = (draft !== null || settling !== null) && view === 'plan'
   useEffect(() => { if (setup) setupTitle.current?.focus() }, [setup])
   useEffect(() => { if (draftOpen) draftTitle.current?.focus() }, [draftOpen])
   useEffect(() => { if (view === 'plan' && selectedScheduleDate) scheduleTarget.current?.focus() }, [view, selectedScheduleDate])
   const current = sample ?? workspace
   const { journal, plan } = current
   const forecast = project(plan)
+  const accounts = plan.accounts ?? []
+  const linkedPayment = (id: string) => plan.events.find(item => item.accountId === id && !item.settledOn)
+  const periodOutflows = forecast.timeline.filter(item => item.cashDate < plan.horizon && item.category !== '수입')
+  const outflowGroups = [
+    { title: '상환·카드 대금', categories: ['상환'] },
+    { title: '저축 납입', categories: ['저축'] },
+    { title: '고정비·필수 지출', categories: ['고정비', '필수 지출', '특수비', '생활비 예약'] },
+  ]
   const pattern = findPattern(journal)
   const entry = journal[date]
   const nearest = forecast.timeline[0]
-  const selectedEvent = forecast.timeline.find(item => item.date === selectedScheduleDate && item.category !== '수입')
+  const selectedEvent = forecast.timeline.find(item => item.cashDate === selectedScheduleDate && item.category !== '수입')
   const daily = forecast.daily
   const recent = recentDays.flatMap(day => journal[day] ? [journal[day]] : [])
   const recorded = recent.filter(item => item.amount !== null)
@@ -145,7 +162,9 @@ export default function WalletPage() {
   function navigate(next: View) {
     setStatus('')
     setView(next)
+    setAccountEditor(null)
     setSelectedScheduleDate('')
+    setSettling(null)
     setSetup(null)
     if (next !== 'plan') setDraft(null)
     if (next !== 'plan') selectDay(today)
@@ -172,6 +191,8 @@ export default function WalletPage() {
     setShowNote(false)
     setEditing(false)
     setShowMatches(false)
+    setAccountEditor(null)
+    setSettling(null)
     setSetup(null)
     setDraft(null)
     setStatus('')
@@ -217,10 +238,63 @@ export default function WalletPage() {
     setSetup(null)
   }
 
-  function openEvent(item?: Event) {
-    setView('plan')
+  function openSettlement(item: Event) {
+    setAccountEditor(null)
+    setDraft(null)
+    setSettling(item)
+    setSettledBalance('')
     setStatus('')
-    setDraft(item ? { ...item, amount: String(item.amount) } : newEvent())
+  }
+
+  function commitEvent(nextPlan: Plan, before?: Event, after?: Event) {
+    const change = { date: today, before, after, dailyBefore: forecast.daily, dailyAfter: project(nextPlan).daily }
+    update({ ...current, plan: { ...nextPlan, history: [...(plan.history ?? []), change] } })
+  }
+
+  function settleEvent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!settling || !amountOkay(settledBalance) || !plan.events.some(item => item.id === settling.id && !item.settledOn)) return
+    const settled = { ...settling, settledOn: today }
+    commitEvent({ ...withEvent(settled), balance: Number(settledBalance), confirmed: today }, settling, settled)
+    setSettling(null)
+    setStatus('실제 잔액과 처리 내역을 저장했어요.')
+  }
+
+  function editAccount(editor: AccountEditor | null) {
+    setDraft(null)
+    setSettling(null)
+    setStatus('')
+    setAccountEditor(editor)
+  }
+
+  function saveAccount(account: PlanAccount, payment?: AccountPayment) {
+    const before = linkedPayment(account.id)
+    const after: Event | undefined = payment && {
+      id: before?.id ?? crypto.randomUUID(), accountId: account.id, date: payment.date, amount: payment.amount,
+      title: account.name, category: account.kind === '저축' ? '저축' : '상환',
+    }
+    const next = {
+      ...plan,
+      accounts: [...accounts.filter(item => item.id !== account.id), account],
+      events: [...plan.events.filter(item => item.id !== before?.id), ...(after ? [after] : [])],
+    }
+    if (before || after) commitEvent(next, before, after)
+    else update({ ...current, plan: next })
+    setAccountEditor(null)
+    setStatus('계좌 정보를 저장했어요.')
+  }
+
+  function openEvent(item?: Event, category?: string) {
+    const account = item?.accountId && accounts.find(account => account.id === item.accountId)
+    if (account) {
+      editAccount({ kind: account.kind, account })
+      return
+    }
+    setView('plan')
+    setSettling(null)
+    setStatus('')
+    setAccountEditor(null)
+    setDraft(item ? { ...item, amount: String(item.amount) } : { ...newEvent(), category: category ?? '상환' })
   }
 
   const candidate = draft && draft.title.trim() && amountOkay(draft.amount) && Number(draft.amount) > 0 && draft.date
@@ -351,24 +425,43 @@ export default function WalletPage() {
 
       {view === 'journal' && <div className={styles.layout}>{entryCard}{recentCard}</div>}
 
-      {view === 'plan' && <div className={styles.layout}>
+      {view === 'plan' && <div className={styles.planLayout}>
+        <PlanAccounts accounts={accounts} editor={accountEditor} paymentFor={linkedPayment} edit={editAccount} save={saveAccount} />
+        <div className={styles.layout}>
         <section className={styles.panel}>
           <h2>예정 입출금</h2>
           <p className={styles.detail}>{plan.balance === null ? '잔액을 입력하면 일정별 예상 잔액을 볼 수 있어요.' : `현재 잔액 ${money(plan.balance)} 기준`}</p>
           {forecast.timeline.length > 0 && <ol className={styles.schedule}>{forecast.timeline.map(item => <li key={item.id} ref={item.id === selectedEvent?.id ? scheduleTarget : undefined} tabIndex={item.id === selectedEvent?.id ? -1 : undefined} className={item.id === selectedEvent?.id ? styles.selectedEvent : undefined}>
-            <div><strong>{item.title}</strong><small>{dateLabel(item.date)} · {item.category}</small></div>
+            <div><strong>{item.title}</strong><small>{dateLabel(item.date)} · {item.category}{item.date < today ? ' · 미처리' : ''}</small></div>
             <div className={styles.eventAmount}><strong>{item.category === '수입' ? '+' : '−'}{money(item.amount)}</strong>{plan.balance !== null && <small>예상 잔액 {money(item.balance)}</small>}</div>
-            <button className={styles.ghost} aria-label={`${item.title} 수정`} onClick={() => openEvent(item)}>수정</button>
+            <div className={styles.eventControls}>
+              <button className={styles.ghost} aria-label={`${item.title} 수정`} onClick={() => openEvent(item)}>수정</button>
+              {item.date <= today && <button className={styles.ghost} aria-label={`${item.title} 처리 확인`} onClick={() => openSettlement(item)}>처리 확인</button>}
+            </div>
           </li>)}</ol>}
-          {forecast.past.length > 0 && <details className={styles.past}><summary>날짜가 지난 일정</summary><ul className={styles.matches}>{forecast.past.map(item => <li key={item.id}>{dateLabel(item.date)} · {item.title} {money(item.amount)} <button className={styles.ghost} onClick={() => openEvent(item)}>수정</button></li>)}</ul></details>}
-          <button className={styles.ghost} onClick={() => openEvent()}>일정 추가</button>
+          {forecast.past.length > 0 && <details className={styles.past}><summary>날짜가 지난 일정</summary><ul className={styles.matches}>{forecast.past.map(item => <li key={item.id}>{dateLabel(item.date)} · {item.title} {money(item.amount)} <button className={styles.ghost} onClick={() => openEvent(item)}>수정</button>{item.category !== '생활비 예약' && <button className={styles.ghost} aria-label={`${item.title} 처리 확인`} onClick={() => openSettlement(item)}>처리 확인</button>}</li>)}</ul></details>}
+          {forecast.settled.length > 0 && <details className={styles.past}><summary>처리한 입출금</summary><ul className={styles.matches}>{forecast.settled.map(item => <li key={item.id}>{dateLabel(item.settledOn!)} 처리 · {item.title} {money(item.amount)} 예정</li>)}</ul></details>}
+          {Boolean(plan.history?.length) && <details className={styles.past}><summary>계획 변경 이력</summary><ol className={styles.matches}>{[...(plan.history ?? [])].reverse().map((change, index) => <li key={index}>
+            <strong>{dateLabel(change.date)} · {change.after?.settledOn ? '처리 확인' : !change.before ? '추가' : !change.after ? '삭제' : '수정'}</strong>
+            <p>{change.before && `${dateLabel(change.before.date)} ${change.before.title} ${money(change.before.amount)}`}{change.before && change.after && ' → '}{change.after && `${dateLabel(change.after.date)} ${change.after.title} ${money(change.after.amount)}`}</p>
+            <small>하루 생활비 {dailyText(change.dailyBefore)} → {dailyText(change.dailyAfter)}</small>
+          </li>)}</ol></details>}
+          <div className={styles.entryOptions}><button className={styles.ghost} onClick={() => openEvent()}>일정 추가</button>
+            <button className={styles.ghost} onClick={() => openEvent(undefined, '고정비')}>고정비 추가</button>
+            <button className={styles.ghost} onClick={() => openEvent(undefined, '필수 지출')}>필수 지출 추가</button></div>
         </section>
         <section className={styles.panel}>
-          <h2 ref={draftTitle} tabIndex={-1}>{draft ? draft.id ? '일정 수정' : '일정 추가' : '오늘 생활비 계산'}</h2>
-          {draft ? <form className={styles.form} onSubmit={event => {
+          <h2 ref={draftTitle} tabIndex={-1}>{settling ? '입출금 처리 확인' : draft ? draft.id ? '일정 수정' : '일정 추가' : '오늘 생활비 계산'}</h2>
+          {settling ? <form className={styles.form} onSubmit={settleEvent}>
+            <p><strong>{settling.title}</strong> · 예정 금액 {money(settling.amount)}</p>
+            <label>처리 후 확인한 잔액 (원)<input type="number" inputMode="numeric" min="0" max="100000000" required value={settledBalance} onChange={event => setSettledBalance(event.target.value)} /></label>
+            <p className={styles.detail}>입출금이 끝난 뒤 실제 잔액을 입력하세요. 이 일정은 앞으로의 예상 입출금에서 빠져요.</p>
+            <div className={styles.entryOptions}><button className={styles.submit} disabled={!amountOkay(settledBalance)}>처리 완료</button><button type="button" className={styles.ghost} onClick={() => setSettling(null)}>취소</button></div>
+          </form> : draft ? <form className={styles.form} onSubmit={event => {
             event.preventDefault()
             if (!candidate) return
-            update({ ...current, plan: withEvent({ ...candidate, id: draft.id ?? crypto.randomUUID() }) })
+            const next = { ...candidate, id: draft.id ?? crypto.randomUUID() }
+            commitEvent(withEvent(next), plan.events.find(item => item.id === next.id), next)
             setDraft(null)
             setStatus('돈 계획에 반영했어요.')
           }}>
@@ -381,23 +474,24 @@ export default function WalletPage() {
               {scenario.shortage && <p>{dateLabel(scenario.shortage.date)}에 {money(scenario.shortage.amount)} 부족 예상</p>}</div>}
             <div className={styles.entryOptions}><button className={styles.submit} disabled={!candidate}>돈 계획에 반영</button><button type="button" className={styles.ghost} onClick={() => setDraft(null)}>취소</button>
               {draft.id && <button className={styles.ghost} type="button" onClick={() => {
-                update({ ...current, plan: { ...plan, events: plan.events.filter(item => item.id !== draft.id) } })
+                commitEvent({ ...plan, events: plan.events.filter(item => item.id !== draft.id) }, plan.events.find(item => item.id === draft.id))
                 setDraft(null)
                 setStatus('일정을 삭제했어요.')
               }}>일정 삭제</button>}</div>
           </form> : <>
             <dl className={styles.calculation}>
               <div><dt>생활 기간</dt><dd>{forecast.days > 0 ? `${forecast.days}일` : '미설정'}</dd></div>
+              {forecast.days > 0 && outflowGroups.map(group => <div key={group.title}><dt>{group.title}</dt><dd>{money(periodOutflows.filter(item => group.categories.includes(item.category)).reduce((sum, item) => sum + item.amount, 0))}</dd></div>)}
               <div><dt>생활비로 배분할 금액</dt><dd>{daily === null ? '계산 전' : money(forecast.available)}</dd></div>
               <div><dt>오늘 생활비</dt><dd>{dailyText(daily)}</dd></div>
             </dl>
             {forecast.shortage && <p className={styles.alert}>{dateLabel(forecast.shortage.date)}에 {money(forecast.shortage.amount)} 부족 예상</p>}
-            <p className={styles.detail}>예정 입출금 이후에도 남길 수 있는 돈을 생활 기간으로 나눴어요. 일기 금액은 지출 추이에 반영돼요.</p>
+            <p className={styles.detail}>상환·저축·지출 소계는 생활 기간 중의 예정액이에요. 생활비는 이후 입력된 일정까지 감안해 계산해요. 현재 잔액에는 바로 쓸 수 있는 돈만 입력해 주세요.</p>
             <div className={styles.entryOptions}><button className={styles.ghost} onClick={openBalance}>잔액 확인</button><button className={styles.ghost} onClick={openHorizon}>생활 기간 설정</button></div>
           </>}
           <p className={styles.notice} role="status">{status}</p>
         </section>
-      </div>}
+      </div></div>}
     </main>
   </div>
 }

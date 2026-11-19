@@ -122,3 +122,16 @@
   .schedule li { gap: 5px; }
 }
 .selectedEvent { outline: 2px solid #9784c8; outline-offset: 3px; border-radius: 6px; }
+.schedule li > .eventControls { flex: 0 0 auto; display: grid; justify-items: end; }
+.eventControls .ghost { padding-inline: 6px; }
+
+.planLayout, .accountArea { display: grid; gap: 16px; min-width: 0; }
+.accountGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.accountList { margin: 10px 0 4px; }
+.accountList li { padding: 10px 0; border-top: 1px solid #ecebf2; overflow-wrap: anywhere; }
+.accountRow { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.accountRow small { margin-left: 8px; color: #57566e; }
+.accountProgress { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.accountProgress progress { width: min(180px, 70%); accent-color: #655296; }
+.accountFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); gap: 10px; }
+@media (max-width: 720px) { .accountGrid { grid-template-columns: 1fr; } }
