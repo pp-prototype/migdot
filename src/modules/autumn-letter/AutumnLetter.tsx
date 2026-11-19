@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { firstLetter, firstLetterBack, thirdLetter } from './clues'
+import { firstLetter, firstLetterBack, skyPhotoId, thirdLetter } from './clues'
 import type { Progress, ProgressAction } from './progress'
-import { drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lockPile, sceneHeight, sceneWidth } from './scene'
+import { dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
+import AutumnDogWalk from './AutumnDogWalk'
 import AutumnPhone from './AutumnPhone'
 import Person from './Person'
 import { useSoundEffect } from './useSoundEffect'
@@ -10,19 +11,23 @@ import dialSound from './audio/bgm-dial-lock.mp3'
 import walkSound from './audio/bgm_walk-on-leaves.mp3'
 import './autumn.css'
 
-const fallingLeaves = (windy: boolean, lakeside: boolean) => Array.from({ length: lakeside ? 13 : windy ? 78 : 44 }, (_, i) => {
+const fallingLeaves = (windy: boolean, lakeside: boolean, dogTrail: boolean) => Array.from({ length: dogTrail ? 84 : lakeside ? 13 : windy ? 78 : 44 }, (_, i) => {
   const tree = lakesideForegroundTrees[i % 2 === 0 ? 1 : 0]
-  const direction = tree.ginkgo ? -1 : 1
-  const leafX = tree.x + direction * (28 + i * 13 % 65)
-  const leafY = tree.y - tree.size * (98 + i * 7 % 16)
+  const [dogTreeX, dogTreeY, dogTreeSize] = dogTrailTrees[4 + i % 6]
+  const sourceX = dogTrail ? dogTreeX : tree.x
+  const sourceY = dogTrail ? dogTreeY : tree.y
+  const size = dogTrail ? dogTreeSize : tree.size
+  const direction = sourceX > sceneWidth / 2 ? -1 : 1
+  const leafX = sourceX + direction * (dogTrail ? (18 + i * 17 % 32) * size : 28 + i * 13 % 65)
+  const leafY = sourceY - size * (dogTrail ? 82 + i * 7 % 27 : 98 + i * 7 % 16)
   return {
-    left: `${lakeside ? leafX / sceneWidth * 100 : (i * 37) % 113 - 10}%`,
+    left: `${dogTrail || lakeside ? leafX / sceneWidth * 100 : (i * 37) % 113 - 10}%`,
     '--leaf-size': `${6 + (i * 7) % 12}px`,
     '--leaf-alpha': .42 + (i % 6) * .1,
     '--leaf-origin': `${leafY / sceneHeight * 100}%`,
     '--leaf-direction': direction,
-    animationDelay: `${-i * (windy ? .39 : 1.23)}s`,
-    animationDuration: `${lakeside ? 21 + i % 8 : windy ? 4.8 + i % 8 * .58 : 15 + i % 10}s`,
+    animationDelay: `${-i * (dogTrail ? .61 : windy ? .39 : 1.23)}s`,
+    animationDuration: `${dogTrail ? 12 + i % 10 : lakeside ? 21 + i % 8 : windy ? 4.8 + i % 8 * .58 : 15 + i % 10}s`,
   }
 })
 
@@ -47,6 +52,7 @@ export default function AutumnLetter({ progress, save }: {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
+  const dogTrail = map === 'fifth-trail'
   const lakeside = map === 'fourth-trail' || closeup
   const lakeLamp = closeup ? lakesideCloseupLamp : lakesideBlinkingLamp
   const phoneFound = progress.discoveries.includes(phoneId)
@@ -117,10 +123,10 @@ export default function AutumnLetter({ progress, save }: {
     <audio ref={footstepsAudio} src={walkSound} preload="auto" />
     <audio ref={dialAudio} src={dialSound} preload="auto" />
     <div className="autumn-stage">
-      <section className={`autumn-scene ${closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
-        aria-label={closeup ? '호숫가 벤치와 가로등' : lakeside ? '별이 뜬 네 번째 산책로' : forest ? '바람 부는 세 번째 산책로' : walking ? '함께 걷는 가을 산책로' : '가을 산책로'}>
+      <section className={`autumn-scene ${dogTrail ? 'autumn-scene-dog-trail' : closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
+        aria-label={dogTrail ? '강아지 둘과 걷는 다섯 번째 산책로' : closeup ? '호숫가 벤치와 가로등' : lakeside ? '별이 뜬 네 번째 산책로' : forest ? '바람 부는 세 번째 산책로' : walking ? '함께 걷는 가을 산책로' : '가을 산책로'}>
         <canvas ref={canvas} width={sceneWidth * 2} height={sceneHeight * 2} className="autumn-landscape" aria-hidden="true" />
-        {walking && !lakeside && <div className="autumn-clouds" aria-hidden="true">
+        {walking && !lakeside && !dogTrail && <div className="autumn-clouds" aria-hidden="true">
           {Array.from({ length: forest ? 9 : 3 }, (_, index) => <i key={index}
             style={forest ? {
               top: `${index * 7 % 35 - 6}%`,
@@ -150,8 +156,18 @@ export default function AutumnLetter({ progress, save }: {
             animationDuration: `${lampPattern.length}s`,
           }} />)}
         </div>}
+        {closeup && progress.discoveries.includes(skyPhotoId) && <button type="button" className="autumn-lake-silhouette"
+          aria-label="가로등 아래 남자와 산책하기"
+          onClick={() => {
+            playFootsteps()
+            save({ type: 'visit-map', id: 'fifth-trail' })
+          }}
+          style={{
+            left: `${lakesideSilhouette.x / sceneWidth * 100}%`,
+            top: `${lakesideSilhouette.y / sceneHeight * 100}%`,
+          }}><Person /></button>}
         {!closeup && <div className="autumn-falling" aria-hidden="true">
-          {fallingLeaves(forest, lakeside).map((style, i) => <i key={i} style={style as CSSProperties} />)}
+          {fallingLeaves(forest, lakeside, dogTrail).map((style, i) => <i key={i} style={style as CSSProperties} />)}
         </div>}
         {closeup && <button className="autumn-bench-letter" type="button" aria-label="벤치 위 편지 읽기"
           style={{ left: `${lakesideLetter.x / sceneWidth * 100}%`, top: `${lakesideLetter.y / sceneHeight * 100}%` }}
@@ -166,6 +182,7 @@ export default function AutumnLetter({ progress, save }: {
         {forest && <button className="autumn-phone-ground" type="button" aria-label="길가의 스마트폰 살펴보기" onClick={openPhone}>
           <span className="autumn-phone-icon" aria-hidden="true" />
         </button>}
+        {dogTrail && <AutumnDogWalk />}
       </section>
       {walking && <>
         <div key={map} className="autumn-walk-fade" aria-hidden="true" />
@@ -185,15 +202,15 @@ export default function AutumnLetter({ progress, save }: {
           </button>}
         </div>
         <div className="autumn-next">
-          {(forest || lakeside) && <button className="autumn-walk-control autumn-walk-back" type="button"
-            aria-label={closeup ? '호수공원 입구로 돌아가기' : lakeside ? '세 번째 산책로로 돌아가기' : '두 번째 산책로로 돌아가기'}
+          {(forest || lakeside || dogTrail) && <button className="autumn-walk-control autumn-walk-back" type="button"
+            aria-label={dogTrail ? '호숫가 벤치로 돌아가기' : closeup ? '호수공원 입구로 돌아가기' : lakeside ? '세 번째 산책로로 돌아가기' : '두 번째 산책로로 돌아가기'}
             onClick={() => {
               playFootsteps()
-              save({ type: 'visit-map', id: closeup ? 'fourth-trail' : lakeside ? 'third-trail' : 'second-trail' })
+              save({ type: 'visit-map', id: dogTrail ? 'lakeside-bench' : closeup ? 'fourth-trail' : lakeside ? 'third-trail' : 'second-trail' })
             }}>
             <span className="autumn-steps" aria-hidden="true"><i /><i /></span>
           </button>}
-          {!closeup && <button className="autumn-walk-control" type="button" aria-label="다음 산책길"
+          {!closeup && !dogTrail && <button className="autumn-walk-control" type="button" aria-label="다음 산책길"
             onClick={lakeside ? approachBench : () => {
               playFootsteps()
               save({ type: 'visit-map', id: forest ? 'fourth-trail' : 'third-trail' })
@@ -202,7 +219,7 @@ export default function AutumnLetter({ progress, save }: {
           </button>}
         </div>
         <span className="autumn-visually-hidden" role="status">
-          {closeup ? '호숫가 벤치에 도착했어.' : lakeside ? '별이 뜬 호수공원에 도착했어.' : forest ? '바람 부는 세 번째 산책로에 도착했어.' : '함께 가을 산책을 시작했어.'}
+          {dogTrail ? '두 강아지와 함께 밤길을 걷기 시작했어.' : closeup ? '호숫가 벤치에 도착했어.' : lakeside ? '별이 뜬 호수공원에 도착했어.' : forest ? '바람 부는 세 번째 산책로에 도착했어.' : '함께 가을 산책을 시작했어.'}
         </span>
       </>}
     </div>

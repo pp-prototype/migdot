@@ -16,10 +16,19 @@ export const lakesideCloseupLamp = {
   x: closeupLampBase.x,
   y: closeupLampBase.y - closeupLampHeight * closeupLampScale,
 }
+export const lakesideSilhouette = {
+  x: closeupLampBase.x + 18,
+  y: closeupLampBase.y,
+}
 export const lakesideForegroundTrees = [
   { x: 13, y: 265, size: 1.78, ginkgo: false },
   { x: 486, y: 264, size: 1.71, ginkgo: true },
 ]
+export const dogTrailTrees = [
+  [197, 165, .32], [286, 169, .37], [139, 180, .56], [335, 181, .59],
+  [88, 198, .76], [382, 201, .84], [59, 229, 1.33], [453, 238, 1.55],
+  [3, 260, 2.03], [487, 260, 2.01],
+] as const
 const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
@@ -67,6 +76,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
+  const dogTrail = map === 'fifth-trail'
   const lakeside = map === 'fourth-trail' || closeup
   const backgroundContext = canvas.getContext('2d')
   const foliageContext = canopy.getContext('2d')
@@ -88,7 +98,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(color, x - half, y + row, half * 2 + 1, 1)
     }
   }
-  const random = seededRandom(closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48)
+  const random = seededRandom(dogTrail ? 819 : closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48)
   const branch = (color: string, x: number, y: number, endX: number, endY: number, width: number) => {
     const steps = Math.ceil(Math.hypot(endX - x, endY - y))
     for (let step = 0; step <= steps; step++) {
@@ -102,12 +112,23 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     drawLakeSky(background, closeup, random, sceneHeight)
   } else {
     const sky = background.createLinearGradient(0, 0, 0, 170)
-    sky.addColorStop(0, forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
-    sky.addColorStop(.52, forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
-    sky.addColorStop(1, forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
+    sky.addColorStop(0, dogTrail ? '#171a32' : forest ? '#363944' : walking ? '#5b90be' : '#6f647e')
+    sky.addColorStop(.52, dogTrail ? '#252840' : forest ? '#5f626d' : walking ? '#8cb9d7' : '#bf8a89')
+    sky.addColorStop(1, dogTrail ? '#413647' : forest ? '#8b7b77' : walking ? '#dddec4' : '#f3bc89')
     background.fillStyle = sky
     background.fillRect(0, 0, sceneWidth, sceneHeight)
-    if (!forest) {
+    if (dogTrail) {
+      const moonX = 257
+      const moonY = 48
+      const glow = background.createRadialGradient(moonX, moonY, 9, moonX, moonY, 57)
+      glow.addColorStop(0, '#d1d9f477')
+      glow.addColorStop(1, '#d1d9f400')
+      background.fillStyle = glow
+      background.fillRect(moonX - 57, moonY - 57, 114, 114)
+      oval('#e5def0', moonX, moonY, 17, 17)
+      oval('#c7c0d7', moonX - 5, moonY + 4, 5, 3)
+      oval('#cbc4dc', moonX + 5, moonY - 4, 4, 2)
+    } else if (!forest) {
       const light = walking ? { x: 331, y: 49, radius: 17 } : { x: 252, y: 88, radius: 27 }
       const glow = background.createRadialGradient(light.x, light.y, 7, light.x, light.y, 82)
       glow.addColorStop(0, walking ? '#fff4ba9c' : '#ffe2a6ab')
@@ -119,9 +140,9 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   }
 
   const ridges = [
-    { color: lakeside ? '#333a53' : forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
-    { color: lakeside ? '#2a3349' : forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
-    { color: lakeside ? '#242d40' : forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
+    { color: dogTrail ? '#292637' : lakeside ? '#333a53' : forest ? '#646170' : walking ? '#97adba' : '#a5797f', height: 131, scale: 11 },
+    { color: dogTrail ? '#232231' : lakeside ? '#2a3349' : forest ? '#57545e' : walking ? '#85999a' : '#906975', height: 145, scale: 9 },
+    { color: dogTrail ? '#1d1d2c' : lakeside ? '#242d40' : forest ? '#4f454e' : walking ? '#778686' : '#785865', height: 159, scale: 6 },
   ]
   ridges.forEach(({ color, height, scale }, i) => {
     for (let x = 0; x < sceneWidth; x++) {
@@ -238,6 +259,41 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     block('#473745', -5, -42, 10, 2)
     block('#473745', -3, -44, 6, 2)
     ctx.restore()
+  }
+
+  if (dogTrail) {
+    block('#30252c', 0, 155, sceneWidth, 115)
+    const roadCenter = (y: number) => 241 + Math.sin((y - 155) / 94) * 12
+    const roadWidth = (y: number) => 6 + (y - 154) * 1.96
+    for (let y = 155; y < sceneHeight; y++) {
+      const center = roadCenter(y)
+      const width = roadWidth(y)
+      block('#6b473d', center - width - 5, y, width * 2 + 10, 1)
+      block(y < 180 ? '#5d4b48' : '#7e6053', center - width, y, width * 2, 1)
+    }
+    for (let i = 0; i < 1200; i++) {
+      const x = random() * sceneWidth
+      const y = 158 + random() * 112
+      const onRoad = Math.abs(x - roadCenter(y)) < roadWidth(y)
+      const colors = onRoad ? ['#6d514a', '#936755', '#6b5150'] : ['#58343a', '#9a4739', '#b47046', '#764047']
+      block(colors[i % colors.length], x, y, 1 + random() * (y - 155) / 25, 1)
+    }
+    const lamps = [
+      [222, 161, .32], [271, 171, .49], [179, 181, .62],
+      [339, 200, .85], [120, 220, 1.14], [416, 237, 1.38],
+    ]
+    dogTrailTrees.forEach(([x, y, size], index) => {
+      tree(x, y, size, index % 3 ? crimson : copper, '#281c28', size > 1.5)
+    })
+    for (const [x, y, size] of lamps) {
+      ctx.save()
+      ctx.translate(x, y)
+      ctx.scale(size, size)
+      oval('#b7895b4b', 0, 1, 33, 8)
+      ctx.restore()
+      drawLamp(x, y, size, false)
+    }
+    return
   }
 
   if (closeup) {

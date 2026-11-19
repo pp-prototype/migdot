@@ -4,14 +4,13 @@ import { useSoundEffect } from './useSoundEffect'
 import cameraErrorSound from './audio/bgm-camera-error.mp3'
 import AutumnCamera from './AutumnCamera'
 import Person from './Person'
-import { phoneDaytimeMessage, phoneHint, secondLetter } from './clues'
+import { phoneDaytimeMessage, phoneHint, secondLetter, skyPhotoId } from './clues'
 import type { ProgressAction } from './progress'
 import lockWallpaper from './phone-lock-wallpaper.jpg'
 
 const pages = ['인물', '두 번째 편지', '숫자 힌트', '비밀번호']
 const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 const phonePasscode = '0047'
-const skyPhotoId = 'lakeside-clear-star-photo'
 const unlockId = 'phone-passcode-unlocked'
 
 export default function AutumnPhone({ dialog, save, cameraAvailable, cameraActive, discoveries }: {

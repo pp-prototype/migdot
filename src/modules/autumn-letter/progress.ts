@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const saveKey = 'migdot:autumn-letter:progress'
 const saveVersion = 1
-const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench'] as const
+const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail'] as const
 export type MapId = typeof maps[number]
 
 export type Progress = {
