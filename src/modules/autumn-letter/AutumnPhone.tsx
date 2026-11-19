@@ -10,15 +10,18 @@ const keypad = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
 const phonePasscode = '0047'
 const unlockId = 'phone-passcode-unlocked'
 
-export default function AutumnPhone({ dialog, save }: {
+export default function AutumnPhone({ dialog, save, cameraAvailable }: {
   dialog: RefObject<HTMLDialogElement | null>
+  cameraAvailable: boolean
   save: (action: ProgressAction) => void
 }) {
   const [page, setPage] = useState(0)
   const [screenLocked, setScreenLocked] = useState(false)
+  const [cameraPermission, setCameraPermission] = useState<'idle' | 'prompt' | 'allowed'>('idle')
   const [code, setCode] = useState('')
   const [wrong, setWrong] = useState(false)
   const [showHint, setShowHint] = useState(false)
+  const visiblePages = cameraAvailable ? [...pages, '카메라'] : pages
   const gesture = useRef<{ x: number; y: number; id: number } | null>(null)
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export default function AutumnPhone({ dialog, save }: {
   }, [showHint])
 
   function goTo(next: number) {
-    if (next < 0 || next >= pages.length || next === page) return
+    if (next < 0 || next >= visiblePages.length || next === page) return
     setPage(next)
     setShowHint(false)
     if (next === 1 || next === 2) save({ type: 'read-letter', id: 'second-letter', side: 'front' })
@@ -66,7 +69,7 @@ export default function AutumnPhone({ dialog, save }: {
   }
 
   return <dialog ref={dialog} className="autumn-dialog autumn-phone-dialog" aria-label="발견한 스마트폰"
-    onClose={() => { setPage(0); setScreenLocked(false); setShowHint(false); setCode(''); setWrong(false); gesture.current = null }}
+    onClose={() => { setPage(0); setScreenLocked(false); setCameraPermission('idle'); setShowHint(false); setCode(''); setWrong(false); gesture.current = null }}
     onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
     <div className="autumn-phone">
       <div className="autumn-phone-camera" aria-hidden="true" />
@@ -81,7 +84,7 @@ export default function AutumnPhone({ dialog, save }: {
         onClick={() => dialog.current?.close()}>×</button>
       <div className="autumn-phone-screen"
         onPointerDown={event => {
-          if (screenLocked || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest('button')) return
+          if (screenLocked || cameraPermission === 'prompt' || !event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest('button')) return
           gesture.current = { x: event.clientX, y: event.clientY, id: event.pointerId }
           event.currentTarget.setPointerCapture(event.pointerId)
         }}
@@ -110,10 +113,23 @@ export default function AutumnPhone({ dialog, save }: {
               }}>⌫</button>
             </div>
           </div>)}
+          {page === 4 && cameraAvailable && (
+            cameraPermission === 'prompt' ? <section className="autumn-phone-permission" aria-labelledby="autumn-camera-permission">
+              <h2 id="autumn-camera-permission">앱 사용 권한 허용</h2>
+              <span className="autumn-phone-camera-icon" aria-hidden="true" />
+              <p>카메라 앱의 사용을 허가하겠습니까?</p>
+              <div className="autumn-phone-permission-actions">
+                <button type="button" onClick={() => setCameraPermission('allowed')}>예</button>
+                <button type="button" onClick={() => setCameraPermission('idle')}>아니오</button>
+              </div>
+            </section> : cameraPermission === 'allowed'
+              ? <p role="status">카메라 사용 허용을 선택했어.</p>
+              : <button className="autumn-phone-camera-open" type="button" onClick={() => setCameraPermission('prompt')}>카메라 열기</button>
+          )}
         </div>}
       </div>
-      <div className="autumn-phone-pages" aria-label="스마트폰 화면 넘기기" inert={screenLocked}>
-        {pages.map((label, index) => <button key={label} type="button" aria-label={label}
+      <div className="autumn-phone-pages" aria-label="스마트폰 화면 넘기기" inert={screenLocked || cameraPermission === 'prompt'}>
+        {visiblePages.map((label, index) => <button key={label} type="button" aria-label={label}
           aria-current={page === index ? 'page' : undefined} onClick={() => goTo(index)} />)}
       </div>
     </div>

@@ -8,6 +8,14 @@ export const lakesideBlinkingLamp = {
   x: lakesideBlinkingLampBase.x,
   y: lakesideBlinkingLampBase.y - 37 * lakesideLampScale,
 }
+const closeupLampBase = { x: 158, y: 228 }
+const closeupLampScale = 1.48
+const closeupLampHeight = 64
+export const lakesideLetter = { x: 268, y: 211 }
+export const lakesideCloseupLamp = {
+  x: closeupLampBase.x,
+  y: closeupLampBase.y - closeupLampHeight * closeupLampScale,
+}
 export const lakesideForegroundTrees = [
   { x: 13, y: 265, size: 1.78, ginkgo: false },
   { x: 486, y: 264, size: 1.71, ginkgo: true },
@@ -24,7 +32,8 @@ export const lockPile = {
 export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
-  const lakeside = map === 'fourth-trail'
+  const closeup = map === 'lakeside-bench'
+  const lakeside = map === 'fourth-trail' || closeup
   const backgroundContext = canvas.getContext('2d')
   const foliageContext = canopy.getContext('2d')
   if (!backgroundContext || !foliageContext) return
@@ -45,7 +54,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(color, x - half, y + row, half * 2 + 1, 1)
     }
   }
-  let seed = lakeside ? 511 : forest ? 173 : walking ? 94 : 48
+  let seed = closeup ? 514 : lakeside ? 511 : forest ? 173 : walking ? 94 : 48
   const random = () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
     return seed / 4294967296
@@ -66,9 +75,9 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   background.fillStyle = sky
   background.fillRect(0, 0, sceneWidth, sceneHeight)
   if (lakeside) {
-    for (let i = 0; i < 235; i++) {
+    for (let i = 0; i < (closeup ? 315 : 235); i++) {
       const x = random() * sceneWidth
-      const y = 6 + random() * 126
+      const y = 6 + random() * (closeup ? 140 : 126)
       const color = i % 9 === 0 ? '#faf1d2' : i % 3 === 0 ? '#aab2c9' : '#68748d'
       block(color, x, y, 1, 1)
       if (i % 23 === 0) {
@@ -161,6 +170,79 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     ctx = background
   }
 
+  function drawBench(x: number, y: number, scale: number, hasLetter = false) {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(scale, scale)
+    oval('#382d39', 0, 1, 17, 3)
+    block('#292431', -11, -14, 2, 14)
+    block('#292431', 9, -14, 2, 14)
+    block('#bd9573', -13, -16, 26, 3)
+    block('#9c765d', -13, -12, 26, 3)
+    block('#c7a17d', -15, -8, 30, 3)
+    block('#705448', -15, -5, 30, 2)
+    if (hasLetter) {
+      ctx.save()
+      ctx.translate(0, -8)
+      ctx.rotate(-.18)
+      ctx.scale(.78, .49)
+      block('#694d46', -7, -3, 14, 7)
+      block('#ebd5aa', -7, -4, 14, 7)
+      branch('#b89b79', -6, -4, 0, 0, 1)
+      branch('#b89b79', 6, -4, 0, 0, 1)
+      oval('#8e434b', 0, 0, 1.5, 1.5)
+      ctx.restore()
+    }
+    ctx.restore()
+  }
+
+  function drawLamp(x: number, y: number, scale: number, flickers: boolean, height = 37) {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(scale, scale)
+    if (!flickers) {
+      const halo = ctx.createRadialGradient(0, -37, 3, 0, -37, 24)
+      halo.addColorStop(0, '#ffd68f9e')
+      halo.addColorStop(1, '#ffd68f00')
+      ctx.fillStyle = halo
+      ctx.fillRect(-24, -61, 48, 48)
+    }
+    oval('#695557', 0, 0, 9, 2)
+    block('#302b37', -1, -height + 3, 3, height - 3)
+    block('#63505a', -1, -height + 5, 1, height - 8)
+    ctx.translate(0, 37 - height)
+    block(flickers ? '#775841' : '#e5ad6b', -4, -40, 8, 8)
+    block(flickers ? '#9d7856' : '#ffe4a4', -2, -39, 4, 6)
+    block('#473745', -5, -42, 10, 2)
+    block('#473745', -3, -44, 6, 2)
+    ctx.restore()
+  }
+
+  if (closeup) {
+    const water = background.createLinearGradient(0, 155, 0, 210)
+    water.addColorStop(0, '#202b44')
+    water.addColorStop(1, '#445971')
+    background.fillStyle = water
+    background.fillRect(0, 155, sceneWidth, 57)
+    for (let i = 0; i < 190; i++) {
+      const x = random() * sceneWidth
+      const y = 157 + random() * 53
+      block(i % 5 ? '#455a72' : '#677c90', x, y, 2 + random() * (y - 152) / 3, 1)
+    }
+    for (let x = 0; x < sceneWidth; x++) {
+      const edge = 208 + Math.sin(x / 104) * 4
+      block('#7b7d87', x, edge, 1, 2)
+      block('#4c444e', x, edge + 2, 1, sceneHeight - edge)
+    }
+    for (let y = 232; y < sceneHeight; y++) {
+      block(y % 6 === 0 ? '#746772' : '#7d7079', 0, y, sceneWidth, 1)
+    }
+    ctx = foliage
+    drawBench(lakesideLetter.x, 230, 2.35, true)
+    drawLamp(closeupLampBase.x, closeupLampBase.y, closeupLampScale, true, closeupLampHeight)
+    return
+  }
+
   if (lakeside) {
     const shoreline = (x: number) => 195 + Math.sin(x / 103) * 8 + Math.sin(x / 38) * 2
     const water = background.createLinearGradient(0, 157, 0, 211)
@@ -213,41 +295,10 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     }
 
     for (const [x, y] of [[143, 208], [331, 207], [395, 214]]) {
-      background.save()
-      background.translate(x, y)
-      background.scale(.79, .79)
-      background.translate(-x, -y)
-      oval('#382d39', x, y + 1, 17, 3)
-      block('#292431', x - 11, y - 14, 2, 14)
-      block('#292431', x + 9, y - 14, 2, 14)
-      block('#bd9573', x - 13, y - 16, 26, 3)
-      block('#9c765d', x - 13, y - 12, 26, 3)
-      block('#c7a17d', x - 15, y - 8, 30, 3)
-      block('#705448', x - 15, y - 5, 30, 2)
-      background.restore()
+      drawBench(x, y, .79)
     }
     for (const [x, y] of [[110, 207], [lakesideBlinkingLampBase.x, lakesideBlinkingLampBase.y], [366, 211]]) {
-      background.save()
-      background.translate(x, y)
-      background.scale(lakesideLampScale, lakesideLampScale)
-      background.translate(-x, -y)
-      const lampY = y - 37
-      const flickers = x === lakesideBlinkingLamp.x
-      if (!flickers) {
-        const halo = background.createRadialGradient(x, lampY, 3, x, lampY, 24)
-        halo.addColorStop(0, '#ffd68f9e')
-        halo.addColorStop(1, '#ffd68f00')
-        background.fillStyle = halo
-        background.fillRect(x - 24, lampY - 24, 48, 48)
-      }
-      oval('#695557', x, y, 9, 2)
-      block('#302b37', x - 1, lampY + 3, 3, 34)
-      block('#63505a', x - 1, lampY + 5, 1, 29)
-      block(flickers ? '#775841' : '#e5ad6b', x - 4, lampY - 3, 8, 8)
-      block(flickers ? '#9d7856' : '#ffe4a4', x - 2, lampY - 2, 4, 6)
-      block('#473745', x - 5, lampY - 5, 10, 2)
-      block('#473745', x - 3, lampY - 7, 6, 2)
-      background.restore()
+      drawLamp(x, y, lakesideLampScale, x === lakesideBlinkingLampBase.x)
     }
     return
   }
