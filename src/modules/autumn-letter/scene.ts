@@ -37,6 +37,29 @@ const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
 const walkingPathCenter = (y: number) => 284 - 158 * Math.sin((y - 165) / 105 * 1.42)
+const forestPathCenter = (y: number) => {
+  const depth = (y - 165) / 105
+  return 158 + 143 * Math.sin(depth * Math.PI) + 23 * depth
+}
+const sunglassesTree = { y: 184, side: -1, gap: 102, size: .73 }
+export const forestSunglasses = {
+  x: forestPathCenter(sunglassesTree.y) + sunglassesTree.side * (pathWidth(sunglassesTree.y) * .7 + sunglassesTree.gap)
+    + sunglassesTree.size * 31,
+  y: sunglassesTree.y - sunglassesTree.size * 105 + 11,
+}
+const walkingLeafPiles = [
+  { y: 182, side: -1, offset: 23, width: 10, shrubId: 'shrub-trail-middle' },
+  { y: 190, side: 1, offset: 16, width: 13, shrubId: 'shrub-trail-right' },
+  { y: 202, side: 1, offset: 51, width: 15 },
+  { y: 210, side: -1, offset: 13, width: 17, shrubId: 'shrub-trail-left', lift: 26 },
+  { y: 218, side: 1, offset: 15, width: 19 },
+  { y: 224, side: -1, offset: 19, width: 17 },
+  { y: lockPileY, side: 1, offset: lockPileOffset, width: 23 },
+  { y: 253, side: 1, offset: 26, width: 32 },
+]
+export const shrubPuzzlePiles = walkingLeafPiles.flatMap(({ shrubId, y, side, offset, width, lift = 0 }) =>
+  shrubId ? [{ id: shrubId, x: walkingPathCenter(y) + side * (pathWidth(y) + offset), y: y - lift - width * .24, width }] : [])
+export const shrubPuzzleTree = { x: walkingPathCenter(205) + pathWidth(205) + 100, y: 205 }
 export const lockPile = {
   x: walkingPathCenter(lockPileY) + pathWidth(lockPileY) + lockPileOffset,
   y: lockPileY - 6,
@@ -76,7 +99,7 @@ export function drawLakeCameraSky(canvas: HTMLCanvasElement, exposure: number) {
   if (ctx) drawLakeSky(ctx, true, seededRandom(514), canvas.height, exposure)
 }
 
-export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId, showPickup: boolean) {
+export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId, showPickup: boolean, puzzleTree: HTMLCanvasElement | null) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
@@ -168,10 +191,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   })
 
   const pathCenter = (y: number) => {
-    if (forest) {
-      const depth = (y - 165) / 105
-      return 158 + 143 * Math.sin(depth * Math.PI) + 23 * depth
-    }
+    if (forest) return forestPathCenter(y)
     if (!walking) return 250 + Math.sin((y - 159) / 39) * 32
     return walkingPathCenter(y)
   }
@@ -437,7 +457,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   if (forest) {
     const grove = [
       [169, -1, 29, .46], [171, 1, 42, .52], [174, -1, 77, .67],
-      [180, 1, 63, .62], [184, -1, 102, .73], [189, 1, 104, .79],
+      [180, 1, 63, .62], [sunglassesTree.y, sunglassesTree.side, sunglassesTree.gap, sunglassesTree.size], [189, 1, 104, .79],
       [196, -1, 54, .81], [200, -1, 147, 1.02], [207, 1, 45, .93],
       [214, -1, 92, 1.07], [224, -1, 155, 1.25], [231, 1, 86, 1.16],
       [244, -1, 88, 1.35], [252, 1, 168, 1.42],
@@ -470,17 +490,20 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
     tree(bankX(172, -1, 92), 172, .55, distant, '#68444b')
     tree(bankX(175, 1, 45), 175, .59, ochre, '#69464a')
     tree(bankX(183, -1, 49), 183, .77, scarlet, '#583941')
-    tree(bankX(205, 1, 100), 205, 1.02, scarlet, '#54353e')
+    const puzzleTreeContext = puzzleTree?.getContext('2d')
+    if (puzzleTreeContext) {
+      puzzleTreeContext.setTransform(2, 0, 0, 2, 0, 0)
+      puzzleTreeContext.clearRect(0, 0, sceneWidth, sceneHeight)
+      ctx = puzzleTreeContext
+    }
+    tree(shrubPuzzleTree.x, shrubPuzzleTree.y, 1.02, scarlet, '#54353e')
     tree(bankX(214, -1, 96), 214, 1.28, ochre, '#432e39', true)
     tree(bankX(231, 1, 203), 231, 1.44, ochre, '#4b3239', true)
 
     const leafColors = ['#a15343', '#bd633f', '#ce8147', '#de9c57', '#edb969']
-    const leafPiles = [
-      [182, -1, 23, 10], [190, 1, 16, 13], [202, 1, 51, 15], [210, -1, 13, 17],
-      [218, 1, 15, 19], [224, -1, 19, 17], [lockPileY, 1, lockPileOffset, 23], [253, 1, 26, 32],
-    ]
-    for (const [y, side, offset, width] of leafPiles) {
-      const x = bankX(y, side, offset)
+    for (const { y: bankY, side, offset, width, lift = 0 } of walkingLeafPiles) {
+      const x = bankX(bankY, side, offset)
+      const y = bankY - lift
       oval('#593d3f', x + width * .12, y + 2, width, width * .19)
       oval('#83463d', x, y - width * .14, width * .89, width * .33)
       oval('#b96e45', x - width * .08, y - width * .28, width * .72, width * .34)

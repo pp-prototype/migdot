@@ -69,7 +69,7 @@
   display: flex;
   justify-content: center;
   gap: .24em;
-  font: 500 clamp(1.4rem, min(7.8cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
+  font: 500 clamp(1.25rem, min(7.1cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
   letter-spacing: .035em;
   white-space: nowrap;
 }
@@ -596,6 +596,76 @@
   position: absolute;
   scale: .55;
 }
+.autumn-collectible-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 44px;
+}
+.autumn-noodle-stopper { display: block; width: 100%; height: auto; }
+.autumn-collectible-item .autumn-noodle-stopper { width: 38px; }
+.autumn-plush-box {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1px;
+  width: 39px;
+  height: 43px;
+  padding: 18px 2px 3px;
+}
+.autumn-plush-box::after {
+  position: absolute;
+  inset: 29px 0 0;
+  border: 1px solid #775135;
+  border-radius: 2px 2px 4px 4px;
+  background: linear-gradient(#d4a574 24%, #af744d 25% 85%, #915939 86%);
+  content: "";
+}
+.autumn-plush-box i {
+  position: relative;
+  width: 12px;
+  height: 15px;
+  border-radius: 46%;
+  background: var(--plush-color);
+  box-shadow: -3px -4px 0 -2px var(--plush-color), 3px -4px 0 -2px var(--plush-color);
+}
+.autumn-plush-box i::before {
+  position: absolute;
+  top: 5px;
+  left: 3px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #312735;
+  box-shadow: 4px 0 #312735;
+  content: "";
+}
+.autumn-plush-box i:nth-child(1) { --plush-color: #eed29b; rotate: -12deg; }
+.autumn-plush-box i:nth-child(2) { --plush-color: #ce9ecf; translate: 0 -2px; }
+.autumn-plush-box i:nth-child(3) { --plush-color: #9fc8b8; rotate: 12deg; }
+.autumn-plush-claw {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 4px;
+  height: 10px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #77788d, #fff 55%, #9b9db1);
+  filter: drop-shadow(0 1px 1px #201826);
+}
+.autumn-plush-claw::before, .autumn-plush-claw::after {
+  position: absolute;
+  top: 6px;
+  width: 13px;
+  height: 12px;
+  border: 2.5px solid #eceaf5;
+  border-radius: 70% 28% 55% 48%;
+  content: "";
+}
+.autumn-plush-claw::before { right: 1px; border-right: 0; rotate: -19deg; }
+.autumn-plush-claw::after { left: 1px; border-left: 0; border-radius: 28% 70% 48% 55%; rotate: 19deg; }
 .autumn-key-item {
   display: grid;
   place-items: center;
@@ -1108,6 +1178,89 @@
   border: 0;
   background: transparent;
 }
+.autumn .autumn-sunglasses-pickup {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-sunglasses {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 12px;
+}
+.autumn-sunglasses::before, .autumn-sunglasses::after {
+  position: absolute;
+  top: 1px;
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid #111017;
+  border-radius: 50%;
+  background: linear-gradient(143deg, #4b4750 4%, #25232a 31%, #141319 43%);
+  content: "";
+}
+.autumn-sunglasses::before { left: 0; rotate: 7deg; }
+.autumn-sunglasses::after { right: 0; rotate: -7deg; }
+.autumn-sunglasses i {
+  position: absolute;
+  top: 4px;
+  left: 11px;
+  width: 8px;
+  height: 4px;
+  border-top: 1.5px solid #111017;
+  border-radius: 50%;
+}
+.autumn-sunglasses-hanging .autumn-sunglasses {
+  scale: .72;
+  transform-origin: 16% -40%;
+  animation: autumn-sunglasses-sway 3.8s ease-in-out infinite;
+}
+.autumn-sunglasses-hanging .autumn-sunglasses i::before {
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  width: 11px;
+  height: 2px;
+  border-radius: 2px;
+  background: #201c24;
+  rotate: -52deg;
+  content: "";
+}
+@keyframes autumn-sunglasses-sway {
+  0%, 100% { rotate: 28deg; }
+  38% { rotate: 12deg; }
+  65% { rotate: 37deg; }
+  80% { rotate: 22deg; }
+}
+.autumn-sunglasses-jolt {
+  transform-origin: 16% 0;
+  animation: autumn-sunglasses-jolt .65s ease-out both;
+}
+@keyframes autumn-sunglasses-jolt {
+  0% { rotate: 0deg; }
+  19% { rotate: 46deg; }
+  44% { rotate: -42deg; }
+  68% { rotate: 23deg; }
+  85% { rotate: -13deg; }
+  100% { rotate: 0deg; }
+}
+.autumn-sunglasses-ground .autumn-sunglasses {
+  scale: .85;
+  rotate: -14deg;
+}
+.autumn-sunglasses-drop { animation: autumn-sunglasses-drop .68s ease-in both; }
+@keyframes autumn-sunglasses-drop {
+  from { top: var(--sunglasses-hanging-top); rotate: 29deg; }
+  76% { rotate: -35deg; }
+  89% { transform: translateY(-.3rem); rotate: 14deg; }
+  to { transform: translateY(0); rotate: 0deg; }
+}
 .autumn-phone-icon {
   display: block;
   width: 16px;
@@ -1207,7 +1360,8 @@
   animation: autumn-phone-slide .25s ease-out both;
 }
 .autumn-phone-page h2 { margin-bottom: .45rem; color: inherit; }
-.autumn-phone-page p { font-size: .94rem; line-height: 1.55; word-break: keep-all; }
+.autumn-phone-page p { font-size: .94rem; line-height: 1.55; word-break: keep-all; white-space: pre-line; }
+.autumn-phone-page .autumn-phone-letter-hint { font-size: .76rem; opacity: .72; }
 .autumn-phone-portrait { height: 100%; min-height: 0; }
 .autumn-phone-portrait canvas { width: 100%; height: 100%; object-fit: contain; }
 .autumn-phone-pages { display: flex; justify-content: center; }
@@ -1356,12 +1510,14 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+.autumn-lake-flash {
+  opacity: 0;
+  animation: autumn-lake-lamp-flash linear infinite;
+}
 .autumn-lake-lamp i {
   position: absolute;
   inset: 0;
-  opacity: 0;
   background: radial-gradient(circle, #ffd38fbf, #ffd38f00 67%);
-  animation: autumn-lake-lamp-flash linear infinite;
 }
 .autumn-lake-lamp i::after {
   position: absolute;
@@ -1376,6 +1532,53 @@
 @keyframes autumn-lake-lamp-flash {
   0%, 2.25%, 100% { opacity: 0; }
   .35%, 1.55% { opacity: 1; }
+}
+.autumn .autumn-lake-keycap-pickup {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-lake-keycap-pickup .autumn-lake-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(-19deg);
+  border-radius: 2px;
+  background: linear-gradient(155deg, #b4a18a82 9%, #94857b5c 27%, #51495880 59%, #3933451a 89%);
+  box-shadow: 1px 1px 5px #a88a6840;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-lake-lamp .autumn-lake-flash:first-child,
+  .autumn-lake-keycap-pickup .autumn-lake-flash:first-child { opacity: .8; }
+}
+.autumn .autumn-led-keycap-control { height: 44px; }
+.autumn-led-keycap {
+  display: grid;
+  grid-template: repeat(2, 1fr) / repeat(2, 1fr);
+  gap: 2px;
+  width: 31px;
+  height: 30px;
+  padding: 3px 3px 5px;
+  border: 1px solid #8c859b;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #77778e, #35333e);
+  box-shadow: inset 0 -4px #282631, 0 2px 3px #251d2e70;
+}
+.autumn-led-keycap i {
+  border-radius: 2px;
+  background: #a7aabd;
+  box-shadow: inset 0 0 0 1px #e6ebf352;
+}
+.autumn-led-keycap-control[aria-pressed="true"] .autumn-led-keycap i {
+  background: #efffff;
+  box-shadow: 0 0 5px 1px #9af2ff, 0 0 9px 2px #68ceff80;
 }
 
 .autumn-bench-approach {
@@ -1415,6 +1618,60 @@
   transform: translate(-50%, -50%);
   border: 0;
   background: transparent;
+}
+.autumn-shrub-tree { pointer-events: none; }
+.autumn-shrub-tree-ready { animation: autumn-shrub-tree-sway 1.45s ease-in-out infinite; }
+@keyframes autumn-shrub-tree-sway {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: 2.8deg; }
+  69% { rotate: -2.4deg; }
+}
+.autumn .autumn-shrub-touch, .autumn .autumn-shrub-tree-touch, .autumn .autumn-noodle-stopper-pickup {
+  position: absolute;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-shrub-touch { height: 11%; }
+.autumn-shrub-touch:disabled { pointer-events: none; }
+.autumn-shrub-rustled {
+  position: absolute;
+  left: 48%;
+  top: 47%;
+  width: 6px;
+  height: 4px;
+  border-radius: 60% 30%;
+  background: #de9c57;
+  box-shadow: -8px 4px #bd633f, 9px 2px #edb969, 4px -5px #ce8147;
+  opacity: 0;
+  pointer-events: none;
+  animation: autumn-shrub-rustle .52s ease-out;
+}
+@keyframes autumn-shrub-rustle {
+  from { opacity: 1; transform: translateY(0) rotate(-12deg); }
+  46% { opacity: .85; transform: translateY(-.8rem) rotate(28deg); }
+  to { opacity: 0; transform: translate(.3rem, .2rem) rotate(75deg); }
+}
+.autumn-shrub-tree-touch { width: 17%; height: 47%; }
+.autumn-noodle-stopper-pickup {
+  width: 6%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  animation: autumn-stopper-drop .7s cubic-bezier(.52, .02, .87, .73) both;
+}
+.autumn-noodle-stopper-pickup .autumn-noodle-stopper { width: 68%; }
+@keyframes autumn-stopper-drop {
+  from { transform: translateY(-31cqh) rotate(-38deg); }
+  78% { transform: translateY(0) rotate(11deg); }
+  91% { transform: translateY(-.24rem) rotate(-5deg); }
+  to { transform: translateY(0) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-shrub-tree-ready { filter: brightness(1.18); }
 }
 .autumn-cinema-elevator {
   width: max(44px, 10.5%);
@@ -1539,6 +1796,56 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.autumn-constellation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.autumn-camera-preview .autumn-constellation-lines {
+  position: absolute;
+  inset: 0;
+  object-fit: fill;
+}
+.autumn .autumn-constellation-star {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+  color: #fff8d7;
+  font-size: 1.35rem;
+  line-height: 1;
+  text-shadow: 0 0 8px #a3ceff, 0 0 18px #d8e9ff;
+  pointer-events: auto;
+}
+.autumn-constellation-star span { animation: autumn-constellation-twinkle 1.65s ease-in-out infinite alternate; }
+.autumn .autumn-constellation-star:disabled {
+  color: #dbf4ff;
+  pointer-events: none;
+}
+.autumn-constellation-star:disabled span { animation: none; }
+@keyframes autumn-constellation-twinkle {
+  from { opacity: .67; scale: .88; }
+  to { opacity: 1; scale: 1.13; }
+}
+.autumn-constellation-reward {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  display: grid;
+  place-items: center;
+  translate: -50% -50%;
+  animation: autumn-constellation-reward-in 1.4s .18s ease-out both;
+}
+.autumn-constellation-reward .autumn-plush-box { scale: 1.55; }
+@keyframes autumn-constellation-reward-in {
+  from { opacity: 0; transform: translateY(.25rem); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .autumn-camera-settings {
   position: absolute;
@@ -1692,6 +1999,64 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-dog-spitz { left: 40.8%; top: 64.5%; width: 8%; height: 20%; }
 .autumn-dog-corgi { left: 58.8%; top: 67.5%; width: 12%; height: 29%; }
+.autumn .autumn-dog-treat {
+  position: absolute;
+  top: var(--leaf-origin);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  translate: -50% -50%;
+  opacity: 0;
+  animation: autumn-dog-trail-leaf linear infinite;
+}
+.autumn-dog-treat span {
+  position: relative;
+  width: 13px;
+  height: 4px;
+  border-radius: 2px;
+  background: #d29362;
+}
+.autumn-dog-treat i {
+  position: absolute;
+  inset: -2px auto auto -1px;
+  width: 5px;
+  height: 4.5px;
+  border-radius: 50%;
+  background: #dca173;
+  box-shadow: 0 4px #dca173;
+}
+.autumn-dog-treat i:last-child { left: auto; right: -1px; }
+@media (prefers-reduced-motion: reduce) {
+  .autumn .autumn-dog-treat { top: 54%; opacity: .85; rotate: -22deg; }
+}
+.autumn-nba-cap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 16px;
+  translate: -3px -2px;
+  rotate: -9deg;
+  border-radius: 58% 50% 17% 20%;
+  background: linear-gradient(125deg, #6a9bdf, #2e64ae 58%, #1d4176);
+  color: #f2f6ff;
+  font: 700 7px / 1 system-ui, sans-serif;
+}
+.autumn-nba-cap::after {
+  position: absolute;
+  bottom: -3px;
+  left: 8px;
+  width: 23px;
+  height: 6px;
+  border-radius: 20% 65% 55% 42%;
+  background: #2e5793;
+  box-shadow: inset 0 -1px #163260;
+  content: "";
+}
 
 .autumn-box-letter .autumn-letter-hint {
   margin-top: .9rem;
@@ -1751,6 +2116,7 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-paper-flyer .autumn-flyer-back {
   overflow: auto;
+  align-content: start;
   padding: clamp(.95rem, 3vw, 1.6rem);
   background: #fff;
   color: #443e46;
@@ -1759,13 +2125,13 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-flyer-back .autumn-letter-face {
   font-family: "Cinema Handwriting", cursive;
-  font-size: 1.06rem;
+  font-size: clamp(.8rem, calc(var(--letter-height) * .039), 1.06rem);
   line-height: 1.36;
 }
-.autumn-flyer-back span { display: block; }
-.autumn-flyer-title { margin-bottom: .6rem; font-size: 1.12rem; }
+.autumn-flyer-back span { display: block; white-space: pre-line; }
+.autumn-flyer-title { margin-bottom: .55rem; font-size: 1.08em; }
 .autumn-flyer-hint {
   margin-top: .9rem;
   color: #767078;
-  font-size: .88rem;
+  font-size: .83em;
 }

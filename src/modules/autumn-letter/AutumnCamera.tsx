@@ -2,13 +2,16 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { drawLakeCameraSky, sceneWidth } from './scene'
 import { useSoundEffect } from './useSoundEffect'
+import AutumnConstellation from './AutumnConstellation'
 import shutterSound from './audio/bgm-camera.mp3'
 
 type Photo = { type: 'white' } | { type: 'sky'; exposure: number }
 
-export default function AutumnCamera({ active, savedPhoto, onCapture, onError, onClose }: {
+export default function AutumnCamera({ active, savedPhoto, plushBoxCollected, onCollectPlushBox, onCapture, onError, onClose }: {
   active: boolean
   savedPhoto: boolean
+  plushBoxCollected: boolean
+  onCollectPlushBox: () => void
   onCapture: () => void
   onError: () => void
   onClose: () => void
@@ -49,6 +52,8 @@ export default function AutumnCamera({ active, savedPhoto, onCapture, onError, o
         style={{ '--sky-exposure': [.0, .26, .43, .62, .81, 1][visibleExposure] } as CSSProperties}
         ref={canvas => { if (canvas) drawLakeCameraSky(canvas, visibleExposure) }} />}
       {shots > 0 && active && <div key={shots} className="autumn-camera-exposure" data-flash={flash} aria-hidden="true" />}
+      {active && night && exposure === 3 && live && !photo && <AutumnConstellation
+        collected={plushBoxCollected} onComplete={onCollectPlushBox} />}
       <button type="button" className="autumn-camera-back" aria-label="카메라 닫기" onClick={onClose}>×</button>
       <div className="autumn-camera-settings">
         <button type="button" aria-label="플래시" aria-pressed={flash} disabled={!active} onClick={() => {
@@ -64,7 +69,10 @@ export default function AutumnCamera({ active, savedPhoto, onCapture, onError, o
         }}>
           <span className="autumn-camera-night" aria-hidden="true" />
         </button>
-        <button type="button" aria-label="라이브 모드" aria-pressed={live} disabled={!active} onClick={() => setLive(!live)}>
+        <button type="button" aria-label="라이브 모드" aria-pressed={live} disabled={!active} onClick={() => {
+          setPhoto(null)
+          setLive(!live)
+        }}>
           <span className="autumn-camera-live" aria-hidden="true" />
         </button>
       </div>
