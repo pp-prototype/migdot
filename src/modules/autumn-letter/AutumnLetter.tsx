@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { finalLetter, firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
 import { cinemaPosters } from './cinemaHall'
+import { cinemaExit } from './cinemaRoom'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
 import cinemaFlyerArt from './cinema-flyer.jpg'
 import { cinemaFlyerId, isLeafPileUnlocked } from './progress'
@@ -56,6 +57,7 @@ const letters = {
 const letterOrder = [firstLetterId, thirdLetterId, fourthLetterId] as const
 type LetterId = keyof typeof letters
 const leafPileLockId = 'leaf-pile-lock'
+const chestKeyId = 'leaf-pile-chest-key'
 const phoneId = 'trail-phone'
 
 export default function AutumnLetter({ progress, save }: {
@@ -89,6 +91,7 @@ export default function AutumnLetter({ progress, save }: {
   const collectedLetters = letterOrder.filter(id => progress.letters.acquired.includes(id))
   const storedLetter = collectedLetters[0]
   const flyerAcquired = progress.discoveries.includes(cinemaFlyerId)
+  const keyAcquired = progress.discoveries.includes(chestKeyId)
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
   const nextLetter = collectedLetters[currentLetterIndex + 1]
@@ -104,6 +107,7 @@ export default function AutumnLetter({ progress, save }: {
   const firstDial = useRef<HTMLButtonElement>(null)
   const lockDialog = useRef<HTMLDialogElement>(null)
   const finalLetterDialog = useRef<HTMLDialogElement>(null)
+  const lockedExitDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const flyerDialog = useRef<HTMLDialogElement>(null)
   const lakesideDialogue = useRef<HTMLDialogElement>(null)
@@ -209,6 +213,15 @@ export default function AutumnLetter({ progress, save }: {
     }, 4020)
   }
 
+  function useCinemaExit() {
+    if (!keyAcquired) {
+      lockedExitDialog.current?.showModal()
+      return
+    }
+    playCinemaDoor()
+    save({ type: 'visit-map', id: 'cinema-hall' })
+  }
+
   return <main className="autumn">
     <audio ref={footstepsAudio} src={walkSound} preload="auto" />
     <audio ref={dialAudio} src={dialSound} preload="auto" />
@@ -293,7 +306,16 @@ export default function AutumnLetter({ progress, save }: {
         {cinemaHall && <ul className="autumn-visually-hidden" aria-label="영화 상영 정보">
           {cinemaPosters.map(({ title, date, auditorium }) => <li key={title}>{title} · {date} · {auditorium}</li>)}
         </ul>}
-        {cinemaRoom && <AutumnCinemaCredits />}
+        {cinemaRoom && <>
+          <AutumnCinemaCredits />
+          <button className="autumn-cinema-exit" type="button" aria-label="상영관 출구 열기"
+            style={{
+              left: `${(cinemaExit.x + cinemaExit.width / 2) / sceneWidth * 100}%`,
+              top: `${(cinemaExit.y + cinemaExit.height / 2) / sceneHeight * 100}%`,
+              width: `${cinemaExit.width / sceneWidth * 100}%`,
+              height: `${cinemaExit.height / sceneHeight * 100}%`,
+            }} onClick={useCinemaExit} />
+        </>}
       </section>
       {cinemaHall && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <>
@@ -317,6 +339,9 @@ export default function AutumnLetter({ progress, save }: {
             onClick={openFlyer}>
             <span className="autumn-flyer-icon" aria-hidden="true" />
           </button>}
+          {keyAcquired && <span className="autumn-key-item" role="img" aria-label="획득한 쿼카 키링 열쇠">
+            <span className="autumn-key-icon" aria-hidden="true" />
+          </span>}
         </div>
         <div className="autumn-next" inert={Boolean(cinemaHall && cinemaEntry)}>
           {(forest || lakeside || dogTrail || atCinema) && <button className="autumn-walk-control autumn-walk-back" type="button"
@@ -390,7 +415,10 @@ export default function AutumnLetter({ progress, save }: {
       onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
       {showingChest && <div className={`autumn-chest ${showingOpenChest ? 'autumn-chest-open' : ''}`}>
         <div className="autumn-chest-lid" aria-hidden="true" />
-        {showingOpenChest && <AutumnChestContents onReadNote={() => finalLetterDialog.current?.showModal()} />}
+        {showingOpenChest && <AutumnChestContents
+          onReadNote={() => finalLetterDialog.current?.showModal()}
+          keyAcquired={keyAcquired}
+          onTakeKey={() => save({ type: 'discover', id: chestKeyId })} />}
         <div className="autumn-chest-front" aria-hidden="true" />
         {!showingOpenChest && <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
           <span className="autumn-chest-shackle" aria-hidden="true" />
@@ -424,6 +452,13 @@ export default function AutumnLetter({ progress, save }: {
           <h2 id="autumn-final-letter-title">클리어 성공!</h2>
           <p className="autumn-letter-face">{finalLetter}</p>
         </article>
+      </div>
+    </dialog>
+    <dialog ref={lockedExitDialog} className="autumn-dialog" aria-labelledby="autumn-locked-exit-title">
+      <div className="autumn-paper autumn-conversation">
+        <h2 id="autumn-locked-exit-title">출구가 잠겨 있어.</h2>
+        <p>문을 열려면 열쇠가 필요해.</p>
+        <form method="dialog"><button className="autumn-return">닫기</button></form>
       </div>
     </dialog>
     <AutumnPhone dialog={phoneDialog} save={save} cameraAvailable={thirdLetterAcquired} cameraActive={closeup} discoveries={progress.discoveries} />

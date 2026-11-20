@@ -342,6 +342,19 @@
   color: #fff;
   font: 400 max(10px, 2.25cqh) / 1.4 system-ui, sans-serif;
 }
+.autumn-cinema-exit {
+  position: absolute;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+@media (hover: hover) {
+  .autumn-cinema-exit:hover { box-shadow: 0 0 12px #efa85b85; }
+}
 .autumn-cinema-credits {
   position: absolute;
   inset-inline: 0;
@@ -424,6 +437,32 @@
   position: absolute;
   left: max(1rem, env(safe-area-inset-left));
   bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.autumn-key-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: #e8bc74;
+}
+.autumn-key-icon {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  translate: -4px -4px;
+  rotate: 40deg;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+.autumn-key-icon::after {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 7px;
+  height: 15px;
+  background: currentColor;
+  clip-path: polygon(0 0, 55% 0, 55% 52%, 100% 52%, 100% 69%, 55% 69%, 55% 82%, 100% 82%, 100% 100%, 0 100%);
+  content: "";
 }
 .autumn-envelope {
   position: relative;
@@ -738,7 +777,7 @@
   0%, 25% { opacity: 0; }
   to { opacity: 1; }
 }
-.autumn .autumn-chest-note-button {
+.autumn .autumn-chest-item-button {
   display: grid;
   place-items: center;
   min-width: 44px;
@@ -747,6 +786,7 @@
   border: 0;
   background: transparent;
 }
+.autumn-chest-key-slot { width: 51px; min-height: 45px; }
 .autumn-chest-note {
   width: 39px;
   aspect-ratio: 1;
@@ -784,6 +824,7 @@
 }
 .autumn-chest-keyring {
   position: relative;
+  display: block;
   width: 51px;
   height: 45px;
   rotate: 14deg;

@@ -1,4 +1,5 @@
 export const cinemaScreen = { x: 125, y: 35, width: 230, height: 102 }
+export const cinemaExit = { x: 385, y: 101, width: 30, height: 53 }
 
 export function drawCinemaRoom(ctx: CanvasRenderingContext2D, width: number, height: number) {
   function block(color: string | CanvasGradient, x: number, y: number, w: number, h: number) {
@@ -21,18 +22,20 @@ export function drawCinemaRoom(ctx: CanvasRenderingContext2D, width: number, hei
   block('#241822', 112, 144, 256, 10)
   block('#352530', 112, 144, 256, 2)
 
-  const exitGlow = ctx.createRadialGradient(400, 109, 3, 400, 109, 51)
+  const { x, y, width: exitWidth, height: exitHeight } = cinemaExit
+  const exitCenter = x + exitWidth / 2
+  const exitGlow = ctx.createRadialGradient(exitCenter, y + 8, 3, exitCenter, y + 8, 51)
   exitGlow.addColorStop(0, '#efa85b72')
   exitGlow.addColorStop(1, '#efa85b00')
-  block(exitGlow, 349, 58, 102, 102)
-  block('#5d3b32', 385, 111, 30, 43)
-  block('#251b23', 388, 114, 24, 40)
-  block('#a8643e', 411, 115, 1, 37)
-  block('#c98953', 385, 101, 30, 9)
+  block(exitGlow, exitCenter - 51, y - 43, 102, 102)
+  block('#5d3b32', x, y + 10, exitWidth, exitHeight - 10)
+  block('#251b23', x + 3, y + 13, exitWidth - 6, exitHeight - 13)
+  block('#a8643e', x + exitWidth - 4, y + 14, 1, exitHeight - 16)
+  block('#c98953', x, y, exitWidth, 9)
   ctx.fillStyle = '#2c2025'
   ctx.font = 'bold 6px sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('출구', 400, 108)
+  ctx.fillText('출구', exitCenter, y + 7)
 
   // The central aisle widens toward the viewer, with small amber lights on each tread.
   ctx.fillStyle = '#211b27'
