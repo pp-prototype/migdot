@@ -1,4 +1,5 @@
 export const cinemaFlyer = { x: 336, y: 210 }
+export const cinemaElevator = { x: 326, y: 135 }
 
 export function drawCinema(ctx: CanvasRenderingContext2D, width: number, height: number, random: () => number) {
   function block(color: string | CanvasGradient, x: number, y: number, w: number, h: number) {

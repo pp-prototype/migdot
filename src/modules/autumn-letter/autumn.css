@@ -1005,6 +1005,23 @@
   border: 0;
   background: transparent;
 }
+.autumn-cinema-elevator {
+  width: max(44px, 10.5%);
+  height: max(44px, 19%);
+}
+.autumn-held-flyer {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: clamp(7rem, 21cqw, 13rem);
+  aspect-ratio: 210 / 297;
+  object-fit: cover;
+  object-position: 46% center;
+  border: 1px solid #c9ab92;
+  box-shadow: 0 0 18px #180e1a9e;
+  transform: translate(-50%, 71%) rotate(-10deg);
+  pointer-events: none;
+}
 .autumn-paper-with-nav { padding-inline: 2.55rem; }
 .autumn-paper .autumn-letter-nav {
   position: absolute;
