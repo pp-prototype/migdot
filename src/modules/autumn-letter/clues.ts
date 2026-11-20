@@ -1,4 +1,5 @@
 export const entryCode = '0506'
+export const noodleStopperId = 'white-hamster-noodle-stopper'
 
 export const clues = [
   { id: 'leaf', name: '은행잎', count: 3, hint: '잎맥 끝에 작은 점을 남겨뒀어. 몇 개나 보여?' },

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
+import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, noodleStopperId, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
 import { cinemaPosters } from './cinemaHall'
 import { cinemaExit } from './cinemaRoom'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
@@ -10,6 +10,8 @@ import { cinemaFlyerId, isLeafPileUnlocked } from './progress'
 import type { Progress, ProgressAction } from './progress'
 import AutumnFlyer from './AutumnFlyer'
 import AutumnChestContents from './AutumnChestContents'
+import AutumnNoodleStopper from './AutumnNoodleStopper'
+import AutumnShrubPuzzle from './AutumnShrubPuzzle'
 import AutumnEnding from './AutumnEnding'
 import AutumnCinemaCredits from './AutumnCinemaCredits'
 import AutumnSettings from './AutumnSettings'
@@ -107,6 +109,7 @@ export default function AutumnLetter({ progress, save }: {
   const ending = progress.discoveries.includes(endingId)
   const [endingPlaying, setEndingPlaying] = useState(false)
   const ringsAcquired = progress.discoveries.includes(coupleRingsId)
+  const stopperAcquired = progress.discoveries.includes(noodleStopperId)
   const showScenePickup = cinema ? !flyerAcquired : closeup ? !thirdLetterAcquired : dogTrail && !fourthLetterAcquired
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
@@ -127,9 +130,10 @@ export default function AutumnLetter({ progress, save }: {
   const flyerDialog = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const canopy = useRef<HTMLCanvasElement>(null)
+  const puzzleTree = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    if (canvas.current && canopy.current) drawScene(canvas.current, canopy.current, map, showScenePickup)
+    if (canvas.current && canopy.current) drawScene(canvas.current, canopy.current, map, showScenePickup, puzzleTree.current)
   }, [map, showScenePickup])
 
   useEffect(() => {
@@ -310,6 +314,8 @@ export default function AutumnLetter({ progress, save }: {
             save({ type: 'discover', id: leafPileLockId })
             setLockView('chest')
           }} />}
+        {map === 'second-trail' && <AutumnShrubPuzzle tree={puzzleTree} discoveries={progress.discoveries}
+          discover={id => save({ type: 'discover', id })} />}
         {forest && !phoneFound && <button className="autumn-phone-ground" type="button" aria-label="길가의 스마트폰 살펴보기" onClick={openPhone}>
           <span className="autumn-phone-icon" aria-hidden="true" />
         </button>}
@@ -348,10 +354,13 @@ export default function AutumnLetter({ progress, save }: {
       {cinemaHall && flyerAcquired && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <div key={map} className={`autumn-walk-fade ${cinemaRoom ? 'autumn-cinema-arrival' : ''}`} aria-hidden="true" />}
       <div className="autumn-walk-inventory" inert={Boolean(cinemaHall && cinemaEntry)}>
-        {ringsAcquired && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
-          <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
+        {(ringsAcquired || stopperAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
+          {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
             <span className="autumn-chest-rings" aria-hidden="true"><i /><b /></span>
-          </span>
+          </span>}
+          {stopperAcquired && <span className="autumn-stopper-item" role="img" aria-label="획득한 흰 햄스터 도자기 누들 스토퍼">
+            <AutumnNoodleStopper />
+          </span>}
         </div>}
         <div className="autumn-walk-items" aria-label="기본 아이템" role="group">
           {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}

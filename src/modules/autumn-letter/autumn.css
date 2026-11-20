@@ -596,6 +596,14 @@
   position: absolute;
   scale: .55;
 }
+.autumn-stopper-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 44px;
+}
+.autumn-noodle-stopper { display: block; width: 100%; height: auto; }
+.autumn-stopper-item .autumn-noodle-stopper { width: 38px; }
 .autumn-key-item {
   display: grid;
   place-items: center;
@@ -1416,6 +1424,60 @@
   transform: translate(-50%, -50%);
   border: 0;
   background: transparent;
+}
+.autumn-shrub-tree { pointer-events: none; }
+.autumn-shrub-tree-ready { animation: autumn-shrub-tree-sway 1.45s ease-in-out infinite; }
+@keyframes autumn-shrub-tree-sway {
+  0%, 100% { rotate: 0deg; }
+  25% { rotate: 2.8deg; }
+  69% { rotate: -2.4deg; }
+}
+.autumn .autumn-shrub-touch, .autumn .autumn-shrub-tree-touch, .autumn .autumn-noodle-stopper-pickup {
+  position: absolute;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-shrub-touch { height: 11%; }
+.autumn-shrub-touch:disabled { pointer-events: none; }
+.autumn-shrub-rustled {
+  position: absolute;
+  left: 48%;
+  top: 47%;
+  width: 6px;
+  height: 4px;
+  border-radius: 60% 30%;
+  background: #de9c57;
+  box-shadow: -8px 4px #bd633f, 9px 2px #edb969, 4px -5px #ce8147;
+  opacity: 0;
+  pointer-events: none;
+  animation: autumn-shrub-rustle .52s ease-out;
+}
+@keyframes autumn-shrub-rustle {
+  from { opacity: 1; transform: translateY(0) rotate(-12deg); }
+  46% { opacity: .85; transform: translateY(-.8rem) rotate(28deg); }
+  to { opacity: 0; transform: translate(.3rem, .2rem) rotate(75deg); }
+}
+.autumn-shrub-tree-touch { width: 17%; height: 47%; }
+.autumn-noodle-stopper-pickup {
+  width: 6%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  animation: autumn-stopper-drop .7s cubic-bezier(.52, .02, .87, .73) both;
+}
+.autumn-noodle-stopper-pickup .autumn-noodle-stopper { width: 68%; }
+@keyframes autumn-stopper-drop {
+  from { transform: translateY(-31cqh) rotate(-38deg); }
+  78% { transform: translateY(0) rotate(11deg); }
+  91% { transform: translateY(-.24rem) rotate(-5deg); }
+  to { transform: translateY(0) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-shrub-tree-ready { filter: brightness(1.18); }
 }
 .autumn-cinema-elevator {
   width: max(44px, 10.5%);
