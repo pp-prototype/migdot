@@ -596,14 +596,14 @@
   position: absolute;
   scale: .55;
 }
-.autumn-stopper-item {
+.autumn-collectible-item {
   display: grid;
   place-items: center;
   width: 52px;
   height: 44px;
 }
 .autumn-noodle-stopper { display: block; width: 100%; height: auto; }
-.autumn-stopper-item .autumn-noodle-stopper { width: 38px; }
+.autumn-collectible-item .autumn-noodle-stopper { width: 38px; }
 .autumn-key-item {
   display: grid;
   place-items: center;
@@ -1115,6 +1115,89 @@
   transform: translate(-50%, -50%);
   border: 0;
   background: transparent;
+}
+.autumn .autumn-sunglasses-pickup {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-sunglasses {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 12px;
+}
+.autumn-sunglasses::before, .autumn-sunglasses::after {
+  position: absolute;
+  top: 1px;
+  width: 14px;
+  height: 10px;
+  border: 1.5px solid #111017;
+  border-radius: 50%;
+  background: linear-gradient(143deg, #4b4750 4%, #25232a 31%, #141319 43%);
+  content: "";
+}
+.autumn-sunglasses::before { left: 0; rotate: 7deg; }
+.autumn-sunglasses::after { right: 0; rotate: -7deg; }
+.autumn-sunglasses i {
+  position: absolute;
+  top: 4px;
+  left: 11px;
+  width: 8px;
+  height: 4px;
+  border-top: 1.5px solid #111017;
+  border-radius: 50%;
+}
+.autumn-sunglasses-hanging .autumn-sunglasses {
+  scale: .72;
+  transform-origin: 16% -40%;
+  animation: autumn-sunglasses-sway 3.8s ease-in-out infinite;
+}
+.autumn-sunglasses-hanging .autumn-sunglasses i::before {
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  width: 11px;
+  height: 2px;
+  border-radius: 2px;
+  background: #201c24;
+  rotate: -52deg;
+  content: "";
+}
+@keyframes autumn-sunglasses-sway {
+  0%, 100% { rotate: 28deg; }
+  38% { rotate: 12deg; }
+  65% { rotate: 37deg; }
+  80% { rotate: 22deg; }
+}
+.autumn-sunglasses-jolt {
+  transform-origin: 16% 0;
+  animation: autumn-sunglasses-jolt .65s ease-out both;
+}
+@keyframes autumn-sunglasses-jolt {
+  0% { rotate: 0deg; }
+  19% { rotate: 46deg; }
+  44% { rotate: -42deg; }
+  68% { rotate: 23deg; }
+  85% { rotate: -13deg; }
+  100% { rotate: 0deg; }
+}
+.autumn-sunglasses-ground .autumn-sunglasses {
+  scale: .85;
+  rotate: -14deg;
+}
+.autumn-sunglasses-drop { animation: autumn-sunglasses-drop .68s ease-in both; }
+@keyframes autumn-sunglasses-drop {
+  from { top: var(--sunglasses-hanging-top); rotate: 29deg; }
+  76% { rotate: -35deg; }
+  89% { transform: translateY(-.3rem); rotate: 14deg; }
+  to { transform: translateY(0); rotate: 0deg; }
 }
 .autumn-phone-icon {
   display: block;

@@ -37,6 +37,16 @@ const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
 const walkingPathCenter = (y: number) => 284 - 158 * Math.sin((y - 165) / 105 * 1.42)
+const forestPathCenter = (y: number) => {
+  const depth = (y - 165) / 105
+  return 158 + 143 * Math.sin(depth * Math.PI) + 23 * depth
+}
+const sunglassesTree = { y: 184, side: -1, gap: 102, size: .73 }
+export const forestSunglasses = {
+  x: forestPathCenter(sunglassesTree.y) + sunglassesTree.side * (pathWidth(sunglassesTree.y) * .7 + sunglassesTree.gap)
+    + sunglassesTree.size * 31,
+  y: sunglassesTree.y - sunglassesTree.size * 105 + 11,
+}
 const walkingLeafPiles = [
   { y: 182, side: -1, offset: 23, width: 10, shrubId: 'shrub-trail-middle' },
   { y: 190, side: 1, offset: 16, width: 13, shrubId: 'shrub-trail-right' },
@@ -181,10 +191,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   })
 
   const pathCenter = (y: number) => {
-    if (forest) {
-      const depth = (y - 165) / 105
-      return 158 + 143 * Math.sin(depth * Math.PI) + 23 * depth
-    }
+    if (forest) return forestPathCenter(y)
     if (!walking) return 250 + Math.sin((y - 159) / 39) * 32
     return walkingPathCenter(y)
   }
@@ -450,7 +457,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   if (forest) {
     const grove = [
       [169, -1, 29, .46], [171, 1, 42, .52], [174, -1, 77, .67],
-      [180, 1, 63, .62], [184, -1, 102, .73], [189, 1, 104, .79],
+      [180, 1, 63, .62], [sunglassesTree.y, sunglassesTree.side, sunglassesTree.gap, sunglassesTree.size], [189, 1, 104, .79],
       [196, -1, 54, .81], [200, -1, 147, 1.02], [207, 1, 45, .93],
       [214, -1, 92, 1.07], [224, -1, 155, 1.25], [231, 1, 86, 1.16],
       [244, -1, 88, 1.35], [252, 1, 168, 1.42],
