@@ -15,6 +15,57 @@
   container-type: size;
 }
 
+.autumn .autumn-settings-toggle {
+  position: absolute;
+  top: max(.75rem, env(safe-area-inset-top));
+  right: max(.75rem, env(safe-area-inset-right));
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: 1.55rem / 1 system-ui, sans-serif;
+}
+
+.autumn-settings-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(calc(100% - 2rem), 23rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 1.25rem;
+  border: 1px solid #a57458;
+  border-radius: 4px;
+  background: #f6e3bc;
+  color: #492f2c;
+}
+
+.autumn-settings-dialog::backdrop { background: #251625a3; }
+.autumn-settings-dialog h2 { font-size: 1.25rem; }
+.autumn-settings-dialog p { margin-top: .75rem; line-height: 1.6; word-break: keep-all; }
+.autumn-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .65rem;
+  margin-top: 1rem;
+}
+
+.autumn .autumn-settings-actions button {
+  min-width: 4.5rem;
+  min-height: 44px;
+  padding-inline: .75rem;
+  border-color: #a57458;
+}
+
+.autumn .autumn-settings-actions .autumn-settings-reset {
+  background: #754044;
+  color: #fff5e9;
+}
+
 .autumn-scene {
   position: absolute;
   top: 50%;

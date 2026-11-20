@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
 import type { Progress, ProgressAction } from './progress'
+import AutumnSettings from './AutumnSettings'
 import { dogTrailLetter, dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
 import AutumnDogWalk from './AutumnDogWalk'
 import AutumnPhone from './AutumnPhone'
@@ -241,6 +242,7 @@ export default function AutumnLetter({ progress, save }: {
       </>}
     </div>
 
+    <AutumnSettings />
     <dialog ref={dialog} className={`autumn-dialog ${walking ? '' : 'autumn-dialog-delivery'}`} aria-labelledby="autumn-letter-title">
       {!walking && <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>}
       <div className={`autumn-paper ${canBrowseLetters ? 'autumn-paper-with-nav' : ''}`}>
