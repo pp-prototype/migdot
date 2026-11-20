@@ -28,6 +28,7 @@ export type Progress = {
 
 export type ProgressAction =
   | { type: 'admit' }
+  | { type: 'restart' }
   | { type: 'visit-map'; id: MapId }
   | { type: 'read-letter'; id: string; side: 'front' | 'back' }
   | { type: 'discover'; id: string }
@@ -86,6 +87,8 @@ function applyProgress(current: Progress, action: ProgressAction): Progress {
   switch (action.type) {
     case 'admit':
       return { ...current, admitted: true, unlockedMaps: add(current.unlockedMaps, 'first-trail') }
+    case 'restart':
+      return { ...initialProgress, admitted: true, unlockedMaps: ['first-trail'] }
     case 'visit-map':
       return { ...current, currentMap: action.id, unlockedMaps: add(current.unlockedMaps, action.id) }
     case 'read-letter':

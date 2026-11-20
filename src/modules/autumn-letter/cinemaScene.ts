@@ -1,7 +1,7 @@
 export const cinemaFlyer = { x: 336, y: 210 }
 export const cinemaElevator = { x: 326, y: 135 }
 
-export function drawCinema(ctx: CanvasRenderingContext2D, width: number, height: number, random: () => number) {
+export function drawCinema(ctx: CanvasRenderingContext2D, width: number, height: number, random: () => number, showFlyer: boolean) {
   function block(color: string | CanvasGradient, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = color
     ctx.fillRect(x, y, w, h)
@@ -109,6 +109,7 @@ export function drawCinema(ctx: CanvasRenderingContext2D, width: number, height:
   shape('#efc891', [[337, 216], [351, 216], [357, 224], [341, 224]])
   block('#a06765', 342, 219, 9, 1)
   block('#a06765', 345, 222, 7, 1)
+  if (!showFlyer) return
   shape('#292333', [[326, 205], [342, 205], [349, 215], [331, 216]])
   shape('#dfa0a1', [[325, 204], [341, 204], [347, 214], [330, 215]])
   shape('#643f60', [[328, 206], [339, 206], [343, 210], [330, 211]])

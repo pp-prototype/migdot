@@ -76,7 +76,7 @@ export function drawLakeCameraSky(canvas: HTMLCanvasElement, exposure: number) {
   if (ctx) drawLakeSky(ctx, true, seededRandom(514), canvas.height, exposure)
 }
 
-export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
+export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId, showPickup: boolean) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
@@ -91,7 +91,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   foliage.setTransform(2, 0, 0, 2, 0, 0)
   foliage.clearRect(0, 0, sceneWidth, sceneHeight)
   if (map === 'sixth-trail') {
-    drawCinema(background, sceneWidth, sceneHeight, seededRandom(631))
+    drawCinema(background, sceneWidth, sceneHeight, seededRandom(631), showPickup)
     return
   }
   if (map === 'cinema-hall') {
@@ -309,15 +309,17 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       ctx.restore()
       drawLamp(x, y, size, false)
     }
-    ctx.save()
-    ctx.translate(dogTrailLetter.x, dogTrailLetter.y)
-    ctx.rotate(-.16)
-    block('#3a2930', -7, -3, 15, 10)
-    block('#dcc196', -7, -5, 14, 9)
-    branch('#9b7963', -6, -4, 0, 0, 1)
-    branch('#9b7963', 6, -4, 0, 0, 1)
-    oval('#813c48', 0, 0, 1.5, 1.5)
-    ctx.restore()
+    if (showPickup) {
+      ctx.save()
+      ctx.translate(dogTrailLetter.x, dogTrailLetter.y)
+      ctx.rotate(-.16)
+      block('#3a2930', -7, -3, 15, 10)
+      block('#dcc196', -7, -5, 14, 9)
+      branch('#9b7963', -6, -4, 0, 0, 1)
+      branch('#9b7963', 6, -4, 0, 0, 1)
+      oval('#813c48', 0, 0, 1.5, 1.5)
+      ctx.restore()
+    }
     return
   }
 
@@ -341,7 +343,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(y % 6 === 0 ? '#746772' : '#7d7079', 0, y, sceneWidth, 1)
     }
     ctx = foliage
-    drawBench(lakesideLetter.x, 230, 2.35, true)
+    drawBench(lakesideLetter.x, 230, 2.35, showPickup)
     drawLamp(closeupLampBase.x, closeupLampBase.y, closeupLampScale, true, closeupLampHeight)
     return
   }

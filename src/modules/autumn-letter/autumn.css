@@ -15,6 +15,153 @@
   container-type: size;
 }
 
+.autumn-stage.autumn-ending {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: #fff;
+}
+.autumn-ending.autumn-ending-playing { background: transparent; }
+.autumn-ending-light, .autumn-ending-wash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+}
+.autumn-ending-light { animation: autumn-ending-light var(--ending-duration) linear both; }
+.autumn-ending-wash { animation: autumn-ending-wash var(--ending-duration) linear both; }
+.autumn-ending-character {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: min(72cqw, 87cqh);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  transform-origin: center bottom;
+  mix-blend-mode: multiply;
+  animation: autumn-ending-approach var(--ending-duration) ease-in-out both;
+}
+.autumn-ending-pose {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image: var(--ending-poses);
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+}
+.autumn-ending-back {
+  background-position: left;
+  filter: grayscale(1) brightness(.74) contrast(12);
+  animation: autumn-ending-back var(--ending-duration) linear both;
+}
+.autumn-ending-turn {
+  background-position: center;
+  animation: autumn-ending-turn var(--ending-duration) linear both;
+}
+.autumn-ending-smile {
+  background-position: right;
+  transform-origin: center 85%;
+  animation: autumn-ending-smile var(--ending-duration) ease-in-out both;
+}
+.autumn-ending-title {
+  position: relative;
+  margin: 0;
+  color: #261e25;
+  display: flex;
+  justify-content: center;
+  gap: .24em;
+  font: 500 clamp(1.4rem, min(7.8cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.autumn-ending-message {
+  position: relative;
+}
+.autumn-ending-suffix {
+  display: grid;
+  justify-items: start;
+}
+.autumn-ending-suffix span { grid-area: 1 / 1; }
+.autumn-ending-over { opacity: 0; translate: var(--ending-center-offset, 0px) 0; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-over {
+  animation: autumn-ending-over .55s 1.2s ease-in both;
+}
+.autumn-ending-playing .autumn-ending-game { translate: var(--ending-center-offset, 0px) 0; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-game {
+  animation: autumn-ending-game .65s 1.75s ease-in-out both;
+}
+.autumn-ending-started { opacity: 1; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-started {
+  animation: autumn-ending-started .65s 2.4s ease-out both;
+}
+.autumn-ending-playing .autumn-ending-over { opacity: 1; }
+.autumn-ending-playing .autumn-ending-started { opacity: 0; }
+.autumn .autumn-ending-continue {
+  position: absolute;
+  top: calc(100% + 1.25rem);
+  left: 50%;
+  translate: -50% 0;
+  min-height: 44px;
+  padding: .5rem 1rem;
+  border: 0;
+  background: transparent;
+  color: #aaa;
+  white-space: nowrap;
+  animation: autumn-ending-continue .6s 3.38s ease-out both;
+}
+.autumn-ending-playing .autumn-ending-title {
+  animation: autumn-ending-title var(--ending-duration) ease-out both;
+}
+@keyframes autumn-ending-light {
+  0% { opacity: 0; }
+  14%, 100% { opacity: 1; }
+}
+@keyframes autumn-ending-approach {
+  0%, 14% { transform: scale(.27) translateY(-8%); }
+  43% { transform: scale(.82) translateY(-1%); }
+  58% { transform: scale(.94); }
+  76%, 100% { transform: scale(1); }
+}
+@keyframes autumn-ending-back {
+  0%, 14% { opacity: 0; }
+  23%, 41% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+@keyframes autumn-ending-turn {
+  0%, 40% { opacity: 0; transform: perspective(720px) rotateY(-22deg) translateX(3%); }
+  49%, 53% { opacity: 1; transform: perspective(720px) rotateY(-5deg); }
+  61%, 100% { opacity: 0; transform: perspective(720px) rotateY(2deg); }
+}
+@keyframes autumn-ending-smile {
+  0%, 53% { opacity: 0; transform: perspective(720px) rotateY(-7deg) rotate(-1deg); }
+  62% { opacity: 1; transform: perspective(720px) rotateY(0) rotate(-.6deg); }
+  73% { transform: scale(1.025) rotate(.9deg); }
+  81%, 100% { opacity: 1; transform: scale(1.015) rotate(.2deg); }
+}
+@keyframes autumn-ending-wash {
+  0%, 76% { opacity: 0; }
+  88%, 100% { opacity: 1; }
+}
+@keyframes autumn-ending-title {
+  0%, 89% { opacity: 0; transform: translateY(.35em); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes autumn-ending-over {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes autumn-ending-game {
+  from { translate: var(--ending-center-offset, 0px) 0; }
+  to { translate: 0 0; }
+}
+@keyframes autumn-ending-started {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes autumn-ending-continue {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
 .autumn .autumn-settings-toggle {
   position: absolute;
   top: max(.75rem, env(safe-area-inset-top));
@@ -432,11 +579,22 @@
   color: #000;
 }
 .autumn-walk-control:is(:hover, :active) span { scale: 1.12; }
-.autumn-walk-items {
-  display: flex;
+.autumn-walk-inventory {
   position: absolute;
+  display: grid;
   left: max(1rem, env(safe-area-inset-left));
   bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.autumn-walk-items { display: flex; }
+.autumn-rings-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 44px;
+}
+.autumn-rings-item .autumn-chest-rings {
+  position: absolute;
+  scale: .55;
 }
 .autumn-key-item {
   display: grid;
@@ -761,9 +919,9 @@
 }
 .autumn-chest-interior {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  place-items: center;
   height: 88px;
   padding-inline: .35rem;
   overflow: hidden;
@@ -786,7 +944,9 @@
   border: 0;
   background: transparent;
 }
-.autumn-chest-key-slot { width: 51px; min-height: 45px; }
+.autumn-chest-note-slot { grid-area: 1 / 1; }
+.autumn-chest-rings-slot { grid-area: 1 / 2; }
+.autumn-chest-key-slot { grid-area: 1 / 3; width: 51px; min-height: 45px; }
 .autumn-chest-note {
   width: 39px;
   aspect-ratio: 1;
