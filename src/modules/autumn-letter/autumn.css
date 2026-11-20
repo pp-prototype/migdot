@@ -199,6 +199,13 @@
 .autumn-paper p { line-height: 1.7; }
 .autumn-paper .autumn-close { position: absolute; right: .3rem; top: .16rem; border: 0; font-size: 1.3rem; line-height: 1; min-width: 44px; min-height: 44px; }
 .autumn-paper .autumn-return { margin-top: .45rem; }
+.autumn-paper.autumn-conversation {
+  height: auto;
+  grid-template-rows: auto auto;
+  padding-top: 2.75rem;
+}
+.autumn-conversation p { word-break: keep-all; overflow-wrap: anywhere; }
+.autumn-conversation .autumn-return { min-height: 44px; padding-inline: .75rem; }
 @media (prefers-reduced-motion: reduce) {
   .autumn *, .autumn-dialog[open] { animation: none !important; }
   .autumn-falling, .autumn-walk-fade { display: none; }

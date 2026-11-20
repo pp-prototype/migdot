@@ -60,6 +60,7 @@ export default function AutumnLetter({ progress, save }: {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
+  const silhouetteVisible = closeup && progress.discoveries.includes(skyPhotoId)
   const dogTrail = map === 'fifth-trail'
   const lakeside = map === 'fourth-trail' || closeup
   const lakeLamp = closeup ? lakesideCloseupLamp : lakesideBlinkingLamp
@@ -81,6 +82,7 @@ export default function AutumnLetter({ progress, save }: {
   const firstDial = useRef<HTMLButtonElement>(null)
   const lockDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
+  const lakesideDialogue = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const canopy = useRef<HTMLCanvasElement>(null)
 
@@ -132,6 +134,12 @@ export default function AutumnLetter({ progress, save }: {
     save({ type: 'visit-map', id: 'lakeside-bench' })
   }
 
+  function takeHand() {
+    lakesideDialogue.current?.close()
+    playFootsteps()
+    save({ type: 'visit-map', id: 'fifth-trail' })
+  }
+
   return <main className="autumn">
     <audio ref={footstepsAudio} src={walkSound} preload="auto" />
     <audio ref={dialAudio} src={dialSound} preload="auto" />
@@ -169,12 +177,9 @@ export default function AutumnLetter({ progress, save }: {
             animationDuration: `${lampPattern.length}s`,
           }} />)}
         </div>}
-        {closeup && progress.discoveries.includes(skyPhotoId) && <button type="button" className="autumn-lake-silhouette"
-          aria-label="가로등 아래 남자와 산책하기"
-          onClick={() => {
-            playFootsteps()
-            save({ type: 'visit-map', id: 'fifth-trail' })
-          }}
+        {silhouetteVisible && <button type="button" className="autumn-lake-silhouette"
+          aria-label="가로등 아래 남자와 대화하기" aria-haspopup="dialog"
+          onClick={() => lakesideDialogue.current?.showModal()}
           style={{
             left: `${lakesideSilhouette.x / sceneWidth * 100}%`,
             top: `${lakesideSilhouette.y / sceneHeight * 100}%`,
@@ -243,6 +248,16 @@ export default function AutumnLetter({ progress, save }: {
     </div>
 
     <AutumnSettings />
+    {silhouetteVisible && <dialog ref={lakesideDialogue}
+      className="autumn-dialog autumn-dialog-delivery" aria-labelledby="autumn-lakeside-dialogue">
+      <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>
+      <div className="autumn-paper autumn-conversation">
+        <button className="autumn-close" type="button" aria-label="대화 닫기"
+          onClick={() => lakesideDialogue.current?.close()}>×</button>
+        <p id="autumn-lakeside-dialogue">별을 가득 담을 수 있는 방법을 찾았구나? 어때? ㅋㅋㅋ</p>
+        <button type="button" className="autumn-return" onClick={takeHand}>손을 잡는다</button>
+      </div>
+    </dialog>}
     <dialog ref={dialog} className={`autumn-dialog ${walking ? '' : 'autumn-dialog-delivery'}`} aria-labelledby="autumn-letter-title">
       {!walking && <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>}
       <div className={`autumn-paper ${canBrowseLetters ? 'autumn-paper-with-nav' : ''}`}>
