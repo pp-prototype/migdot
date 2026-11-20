@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
+import { cinemaFlyer } from './cinemaScene'
+import { cinemaFlyerId } from './progress'
 import type { Progress, ProgressAction } from './progress'
+import AutumnFlyer from './AutumnFlyer'
 import AutumnSettings from './AutumnSettings'
 import { dogTrailLetter, dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
 import AutumnDogWalk from './AutumnDogWalk'
@@ -73,6 +76,8 @@ export default function AutumnLetter({ progress, save }: {
   const firstLetterAcquired = progress.letters.acquired.includes(firstLetterId)
   const thirdLetterAcquired = progress.letters.acquired.includes(thirdLetterId)
   const collectedLetters = letterOrder.filter(id => progress.letters.acquired.includes(id))
+  const storedLetter = collectedLetters[0]
+  const flyerAcquired = progress.discoveries.includes(cinemaFlyerId)
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
   const nextLetter = collectedLetters[currentLetterIndex + 1]
@@ -83,6 +88,7 @@ export default function AutumnLetter({ progress, save }: {
   const firstDial = useRef<HTMLButtonElement>(null)
   const lockDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
+  const flyerDialog = useRef<HTMLDialogElement>(null)
   const lakesideDialogue = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const canopy = useRef<HTMLCanvasElement>(null)
@@ -100,6 +106,18 @@ export default function AutumnLetter({ progress, save }: {
   function openLetter(id: LetterId) {
     selectLetter(id)
     dialog.current?.showModal()
+  }
+
+  function flipLetter() {
+    if (!letterBack && !progress.letters.backsRead.includes(activeLetter)) {
+      save({ type: 'read-letter', id: activeLetter, side: 'back' })
+    }
+    setLetterBack(!letterBack)
+  }
+
+  function openFlyer() {
+    if (!flyerAcquired) save({ type: 'discover', id: cinemaFlyerId })
+    flyerDialog.current?.showModal()
   }
 
   useEffect(() => {
@@ -208,12 +226,15 @@ export default function AutumnLetter({ progress, save }: {
             style={{ left: `${dogTrailLetter.x / sceneWidth * 100}%`, top: `${dogTrailLetter.y / sceneHeight * 100}%` }}
             onClick={() => openLetter(fourthLetterId)} />
         </>}
+        {cinema && <button className="autumn-scene-letter" type="button"
+          style={{ left: `${cinemaFlyer.x / sceneWidth * 100}%`, top: `${cinemaFlyer.y / sceneHeight * 100}%` }}
+          aria-label="자동차 위 영화 전단지 읽기" onClick={openFlyer} />}
       </section>
       {walking && <>
         <div key={map} className="autumn-walk-fade" aria-hidden="true" />
         <div className="autumn-walk-items">
-          {firstLetterAcquired && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}
-            onClick={() => openLetter(firstLetterId)}>
+          {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}
+            onClick={() => openLetter(storedLetter)}>
             <span className="autumn-envelope" aria-hidden="true" />
           </button>}
           {lockFound && <button className="autumn-walk-control" type="button" aria-label="자물쇠 다시 열기" onClick={openLock}>
@@ -224,6 +245,10 @@ export default function AutumnLetter({ progress, save }: {
             <span className="autumn-phone-icon" aria-hidden="true">
               {thirdLetterAcquired && <i className="autumn-phone-notification" />}
             </span>
+          </button>}
+          {flyerAcquired && <button className="autumn-walk-control" type="button" aria-label="보관한 영화 전단지 보기"
+            onClick={openFlyer}>
+            <span className="autumn-flyer-icon" aria-hidden="true" />
           </button>}
         </div>
         <div className="autumn-next">
@@ -266,7 +291,7 @@ export default function AutumnLetter({ progress, save }: {
         <button className="autumn-close" aria-label="편지 닫기" onClick={() => dialog.current?.close()}>×</button>
         <article className="autumn-box-letter" aria-live="polite">
           <h2 id="autumn-letter-title">{letters[activeLetter].title}</h2>
-          <p className="autumn-letter-face" key={`${activeLetter}-${letterBack}`}>
+          <p key={`${activeLetter}-${letterBack}`} className="autumn-letter-face">
             {showingFirst && letterBack ? firstLetterBack : letters[activeLetter].text}
           </p>
           {activeLetter === fourthLetterId && <p className="autumn-letter-hint">{fourthLetterHint}</p>}
@@ -280,14 +305,12 @@ export default function AutumnLetter({ progress, save }: {
             aria-label={nextLetter ? `${letters[nextLetter].title} 보기` : '다음 편지'}
             disabled={!nextLetter} onClick={() => nextLetter && selectLetter(nextLetter)}>›</button>
         </>}
-        {walking && showingFirst && <button className="autumn-page-corner" type="button" onClick={() => {
-          if (!letterBack) save({ type: 'read-letter', id: firstLetterId, side: 'back' })
-          setLetterBack(!letterBack)
-        }}
+        {walking && showingFirst && <button className="autumn-page-corner" type="button" onClick={flipLetter}
           aria-label={letterBack ? '편지 앞면 보기' : '편지 뒷면 보기'} />}
       </div>
     </dialog>
 
+    <AutumnFlyer dialog={flyerDialog} />
     <dialog ref={lockDialog}
       className={`autumn-dialog autumn-lock-dialog ${lockView === 'chest' ? 'autumn-chest-dialog' : ''}`}
       aria-label={lockView === 'chest' ? '낙엽 아래 숨겨진 상자' : '네 자리 다이얼 자물쇠'}

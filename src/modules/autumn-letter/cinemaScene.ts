@@ -1,3 +1,5 @@
+export const cinemaFlyer = { x: 336, y: 210 }
+
 export function drawCinema(ctx: CanvasRenderingContext2D, width: number, height: number, random: () => number) {
   function block(color: string | CanvasGradient, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = color

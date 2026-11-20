@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 const saveKey = 'migdot:autumn-letter:progress'
 const saveVersion = 1
+export const cinemaFlyerId = 'cinema-flyer'
+const legacyFlyerLetterId = 'fifth-letter'
 
 export function clearAutumnProgress() {
   localStorage.removeItem(saveKey)
@@ -52,7 +54,9 @@ function parseSave(value: unknown): Progress | null {
   const currentMap = maps.find(id => id === value.currentMap) ?? 'first-trail'
   const unlockedMaps = maps.filter(id => id === 'first-trail' || id === currentMap || savedMaps.includes(id))
   const letters = isRecord(value.letters) ? value.letters : {}
-  const acquired = ids(letters.acquired)
+  const savedLetters = ids(letters.acquired)
+  const acquired = savedLetters.filter(id => id !== legacyFlyerLetterId)
+  const discoveries = ids(value.discoveries)
   const puzzles = isRecord(value.puzzles) ? value.puzzles : {}
   const lock = puzzles.leafPileLock
   const digits = Array.isArray(lock) && lock.length === 4 &&
@@ -65,7 +69,7 @@ function parseSave(value: unknown): Progress | null {
     currentMap,
     unlockedMaps,
     letters: { acquired, backsRead: ids(letters.backsRead).filter(id => acquired.includes(id)) },
-    discoveries: ids(value.discoveries),
+    discoveries: savedLetters.includes(legacyFlyerLetterId) ? add(discoveries, cinemaFlyerId) : discoveries,
     puzzles: { leafPileLock: digits },
   }
 }

@@ -28,3 +28,6 @@ export const skyPhotoId = 'lakeside-clear-star-photo'
 export const fourthLetter = `한 밤에 강아지들과 산책하던 기억.
 사랑하는 사람이 나의 것처럼 아끼고 예뻐해주는 모습에 마음이 많이 가서 그 어떤 것보다 사랑스러움을 느꼈지.`
 export const fourthLetterHint = '세 번째 숫자는 우리와 함께한 것의 수.'
+
+export const fifthLetter = '우리 만의 조용한 영화관에서 아늑한 분위기를 느끼며 보았던 그 시간은 지나가다, 잠들기전, 그냥 문득 떠오르고 좋아지는거 있지?'
+export const fifthLetterHint = '2층 1관에서 네 번째 숫자를 알 수 있어.'

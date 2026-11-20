@@ -1270,3 +1270,74 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
   color: #816b5d;
   font-size: .8rem;
 }
+
+@font-face {
+  font-family: "Cinema Handwriting";
+  src: url("./cinema-handwriting.woff") format("woff");
+  font-display: swap;
+}
+
+.autumn-flyer-icon {
+  width: 16px;
+  aspect-ratio: 210 / 297;
+  border: 1.5px solid currentColor;
+  background: url("./cinema-flyer.jpg") center / cover;
+  rotate: -8deg;
+}
+.autumn-paper.autumn-paper-flyer {
+  height: auto;
+  grid-template-rows: auto;
+  padding-top: 2.5rem;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+.autumn-paper-flyer .autumn-flyer-sheet {
+  position: relative;
+  display: block;
+  width: min(100%, calc((var(--letter-height) - 4.25rem) * 210 / 297));
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 1px 3px 1px 2px;
+  box-shadow: 0 5px 15px #130d16a3;
+  transform: perspective(850px) rotateY(-8deg) rotate(-5deg);
+}
+.autumn-flyer-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 46% center;
+}
+.autumn-flyer-art::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(163deg, transparent 35%, #f3dcc947 37%, #20161b44 38%, transparent 42%),
+    linear-gradient(24deg, transparent 59%, #1710164a 61%, #fff0d83f 62%, transparent 64%),
+    linear-gradient(105deg, #130c1260, transparent 15% 83%, #fff2dc35);
+  pointer-events: none;
+  content: "";
+}
+.autumn-paper-flyer .autumn-flyer-back {
+  overflow: auto;
+  padding: clamp(.95rem, 3vw, 1.6rem);
+  background: #fff;
+  color: #443e46;
+  text-align: left;
+  word-break: keep-all;
+}
+.autumn-flyer-back .autumn-letter-face {
+  font-family: "Cinema Handwriting", cursive;
+  font-size: 1.06rem;
+  line-height: 1.36;
+}
+.autumn-flyer-back span { display: block; }
+.autumn-flyer-title { margin-bottom: .6rem; font-size: 1.12rem; }
+.autumn-flyer-hint {
+  margin-top: .9rem;
+  color: #767078;
+  font-size: .88rem;
+}
