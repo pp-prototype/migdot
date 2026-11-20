@@ -4,9 +4,10 @@ import { firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoI
 import { cinemaPosters } from './cinemaHall'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
 import cinemaFlyerArt from './cinema-flyer.jpg'
-import { cinemaFlyerId } from './progress'
+import { cinemaFlyerId, isLeafPileUnlocked } from './progress'
 import type { Progress, ProgressAction } from './progress'
 import AutumnFlyer from './AutumnFlyer'
+import AutumnChestContents from './AutumnChestContents'
 import AutumnCinemaCredits from './AutumnCinemaCredits'
 import AutumnSettings from './AutumnSettings'
 import { dogTrailLetter, dogTrailTrees, drawScene, lakesideBlinkingLamp, lakesideCloseupLamp, lakesideForegroundTrees, lakesideLetter, lakesideSilhouette, lockPile, sceneHeight, sceneWidth } from './scene'
@@ -17,6 +18,7 @@ import { useSoundEffect } from './useSoundEffect'
 import dialSound from './audio/bgm-dial-lock.mp3'
 import walkSound from './audio/bgm_walk-on-leaves.mp3'
 import cinemaDoorSound from './audio/bgm_cinema-door.mp3'
+import unlockSound from './audio/bgm_unlock.mp3'
 import './autumn.css'
 
 const fallingLeaves = (windy: boolean, lakeside: boolean, dogTrail: boolean) => Array.from({ length: dogTrail ? 84 : lakeside ? 13 : windy ? 78 : 44 }, (_, i) => {
@@ -58,7 +60,7 @@ const phoneId = 'trail-phone'
 
 export default function AutumnLetter({ progress, save }: {
   progress: Progress
-  save: (action: ProgressAction) => void
+  save: (action: ProgressAction) => Progress
 }) {
   const [activeLetter, setActiveLetter] = useState<LetterId>(firstLetterId)
   const showingFirst = activeLetter === firstLetterId
@@ -78,6 +80,7 @@ export default function AutumnLetter({ progress, save }: {
   const phoneFound = progress.discoveries.includes(phoneId)
   const { audioRef: footstepsAudio, play: playFootsteps } = useSoundEffect(2000)
   const { audioRef: dialAudio, play: playDial } = useSoundEffect(1000)
+  const { audioRef: unlockAudio, play: playUnlock } = useSoundEffect(1800)
   const { audioRef: cinemaDoorAudio, play: playCinemaDoor } = useSoundEffect(4020)
   const phoneDialog = useRef<HTMLDialogElement>(null)
   const lockFound = progress.discoveries.includes(leafPileLockId)
@@ -91,7 +94,10 @@ export default function AutumnLetter({ progress, save }: {
   const nextLetter = collectedLetters[currentLetterIndex + 1]
   const canBrowseLetters = collectedLetters.length > 1
   const digits = progress.puzzles.leafPileLock
-  const [lockView, setLockView] = useState<'chest' | 'dial' | null>(null)
+  const chestUnlocked = isLeafPileUnlocked(digits)
+  const [lockView, setLockView] = useState<'chest' | 'dial' | 'unlocking' | 'open' | null>(null)
+  const showingChest = lockView === 'chest' || lockView === 'open' || (lockView === 'dial' && chestUnlocked)
+  const showingOpenChest = showingChest && chestUnlocked
   const [turnedDials, setTurnedDials] = useState<number[]>([])
   const [cinemaEntry, setCinemaEntry] = useState<'door' | 'fade' | null>(null)
   const cinemaEntryTimer = useRef<number | undefined>(undefined)
@@ -141,12 +147,17 @@ export default function AutumnLetter({ progress, save }: {
     if (!lockView) return
     lockDialog.current?.showModal()
     if (lockView === 'dial') firstDial.current?.focus()
+    if (lockView === 'unlocking') {
+      const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650
+      const timer = window.setTimeout(() => setLockView('open'), duration)
+      return () => window.clearTimeout(timer)
+    }
   }, [lockView])
 
   function openLock() {
     save({ type: 'discover', id: leafPileLockId })
     setTurnedDials([])
-    setLockView('dial')
+    setLockView(chestUnlocked ? 'open' : 'dial')
   }
 
   function openPhone() {
@@ -155,9 +166,15 @@ export default function AutumnLetter({ progress, save }: {
   }
 
   function rotateDial(index: number) {
-    playDial()
+    if (chestUnlocked || lockView !== 'dial') return
     setTurnedDials(current => current.includes(index) ? current : [...current, index])
-    save({ type: 'rotate-lock-dial', index })
+    const next = save({ type: 'rotate-lock-dial', index })
+    if (isLeafPileUnlocked(next.puzzles.leafPileLock)) {
+      playUnlock()
+      setLockView('unlocking')
+    } else {
+      playDial()
+    }
   }
 
   function startWalking() {
@@ -194,6 +211,7 @@ export default function AutumnLetter({ progress, save }: {
   return <main className="autumn">
     <audio ref={footstepsAudio} src={walkSound} preload="auto" />
     <audio ref={dialAudio} src={dialSound} preload="auto" />
+    <audio ref={unlockAudio} src={unlockSound} preload="auto" />
     <audio ref={cinemaDoorAudio} src={cinemaDoorSound} preload="auto" />
     <div className="autumn-stage">
       <section className={`autumn-scene ${atCinema ? '' : dogTrail ? 'autumn-scene-dog-trail' : closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
@@ -284,8 +302,9 @@ export default function AutumnLetter({ progress, save }: {
             onClick={() => openLetter(storedLetter)}>
             <span className="autumn-envelope" aria-hidden="true" />
           </button>}
-          {lockFound && <button className="autumn-walk-control" type="button" aria-label="자물쇠 다시 열기" onClick={openLock}>
-            <span className="autumn-lock-icon" aria-hidden="true" />
+          {lockFound && <button className="autumn-walk-control" type="button"
+            aria-label={chestUnlocked ? '열린 상자 보기' : '자물쇠 다시 열기'} onClick={openLock}>
+            <span className={chestUnlocked ? 'autumn-chest-icon' : 'autumn-lock-icon'} aria-hidden="true" />
           </button>}
           {phoneFound && <button className="autumn-walk-control" type="button"
             aria-label={thirdLetterAcquired ? '스마트폰 다시 보기, 새 알림' : '스마트폰 다시 보기'} onClick={openPhone}>
@@ -364,25 +383,29 @@ export default function AutumnLetter({ progress, save }: {
 
     <AutumnFlyer dialog={flyerDialog} />
     <dialog ref={lockDialog}
-      className={`autumn-dialog autumn-lock-dialog ${lockView === 'chest' ? 'autumn-chest-dialog' : ''}`}
-      aria-label={lockView === 'chest' ? '낙엽 아래 숨겨진 상자' : '네 자리 다이얼 자물쇠'}
+      className={`autumn-dialog autumn-lock-dialog ${showingChest ? 'autumn-chest-dialog' : ''}`}
+      aria-label={showingOpenChest ? '열린 상자' : showingChest ? '낙엽 아래 숨겨진 상자' : '네 자리 다이얼 자물쇠'}
       onClose={() => setLockView(null)}
       onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
-      {lockView === 'chest' && <div className="autumn-chest">
+      {showingChest && <div className={`autumn-chest ${showingOpenChest ? 'autumn-chest-open' : ''}`}>
         <div className="autumn-chest-lid" aria-hidden="true" />
+        {showingOpenChest && <AutumnChestContents />}
         <div className="autumn-chest-front" aria-hidden="true" />
-        <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
+        {!showingOpenChest && <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
           <span className="autumn-chest-shackle" aria-hidden="true" />
           <span className="autumn-chest-padlock" aria-hidden="true"><i /><i /><i /><i /></span>
-        </button>
+        </button>}
+        {showingOpenChest && <button className="autumn-chest-close" type="button" aria-label="상자 닫기"
+          onClick={() => lockDialog.current?.close()}>×</button>}
       </div>}
-      {lockView === 'dial' && <div className="autumn-lock">
+      {(lockView === 'unlocking' || (lockView === 'dial' && !chestUnlocked)) && <div
+        className={`autumn-lock ${lockView === 'unlocking' ? 'autumn-lock-unlocking' : ''}`}>
         <div className="autumn-lock-shackle" aria-hidden="true" />
         <div className="autumn-lock-body">
           <div className="autumn-lock-wheels">
             {digits.map((digit, index) => <button key={index} type="button" className="autumn-lock-wheel"
               ref={index === 0 ? firstDial : undefined}
-              aria-label={`${index + 1}번째 다이얼, 현재 ${digit}`} onClick={() => rotateDial(index)}>
+              aria-label={`${index + 1}번째 다이얼, 현재 ${digit}`} disabled={lockView === 'unlocking'} onClick={() => rotateDial(index)}>
               <span className={`autumn-lock-drum ${turnedDials.includes(index) ? 'autumn-lock-drum-turning' : ''}`}
                 aria-hidden="true" key={digit}>
                 {[-2, -1, 0, 1].map(offset => <span key={offset}>{(digit + 10 + offset) % 10}</span>)}

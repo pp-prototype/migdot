@@ -524,6 +524,16 @@
   content: "";
 }
 
+.autumn-chest-icon {
+  width: 25px;
+  height: 19px;
+  border: 2px solid currentColor;
+  border-radius: 7px 7px 3px 3px;
+  background:
+    linear-gradient(currentColor, currentColor) center 8px / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center 7px / 5px 6px no-repeat;
+}
+
 .autumn-lock-dialog {
   width: min(19rem, var(--letter-width) - 2rem);
   overflow: visible;
@@ -675,8 +685,162 @@
   background: linear-gradient(#72635b, #dbccaf 49%, #77685f);
 }
 .autumn-lock { animation: autumn-lock-zoom .42s cubic-bezier(.19, .8, .28, 1) both; }
+.autumn-lock.autumn-lock-unlocking { animation: autumn-lock-dismiss 650ms ease-in both; }
+@keyframes autumn-lock-dismiss {
+  0%, 35% { opacity: 1; }
+  to { opacity: 0; translate: 0 .6rem; scale: .93; }
+}
 @keyframes autumn-chest-reveal {
   from { opacity: .2; transform: translateY(12px) scale(.88); }
+}
+
+.autumn-chest-open { animation-duration: .65s; }
+.autumn-chest-open .autumn-chest-lid {
+  position: relative;
+  z-index: 1;
+  transform-origin: center bottom;
+  animation: autumn-chest-lift .85s ease-out both;
+}
+@keyframes autumn-chest-lift {
+  from { transform: translateY(5rem) scaleY(.65); }
+  to { transform: perspective(270px) rotateX(-25deg); }
+}
+.autumn-chest-open .autumn-chest-front {
+  position: relative;
+  height: 64px;
+}
+.autumn-chest-open .autumn-chest-front::after {
+  position: absolute;
+  inset: .5rem auto auto 50%;
+  width: 23px;
+  height: 15px;
+  translate: -50% 0;
+  border: 1px solid #744924;
+  border-radius: 2px;
+  background: #c69857;
+  content: "";
+}
+.autumn-chest-interior {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 88px;
+  padding-inline: .35rem;
+  overflow: hidden;
+  border: 5px solid #895d3c;
+  border-block-width: 2px 3px;
+  background: radial-gradient(ellipse at bottom, #8e5249, #49303a 75%);
+  box-shadow: inset 0 5px 9px #211724ac;
+  animation: autumn-chest-contents .85s ease both;
+}
+@keyframes autumn-chest-contents {
+  0%, 25% { opacity: 0; }
+  to { opacity: 1; }
+}
+.autumn-chest-note {
+  width: 39px;
+  aspect-ratio: 1;
+  border: 1px solid #c8a984;
+  background:
+    linear-gradient(45deg, #e2c8a7 48%, #b79b7d 49% 51%, #f6ead4 52%) right bottom / 52% 52% no-repeat,
+    linear-gradient(180deg, #f8ecd6 0 48%, #cfb495 49% 51%, #eddbc0 52%);
+  box-shadow: 2px 3px 4px #281c29a8;
+  rotate: -11deg;
+}
+.autumn-chest-rings {
+  position: relative;
+  width: 76px;
+  height: 48px;
+}
+.autumn-chest-rings i, .autumn-chest-rings b {
+  position: absolute;
+  border: 5px solid;
+  border-color: #f1f2f4 #b4b8c1 #7d828f #d6d9e1;
+  border-radius: 39%;
+  box-shadow: inset 0 1px 2px #171523a8, 0 3px 4px #26182485;
+}
+.autumn-chest-rings i {
+  inset: 7px auto auto 1px;
+  width: 41px;
+  height: 33px;
+  rotate: -19deg;
+}
+.autumn-chest-rings b {
+  inset: 15px 1px auto auto;
+  width: 33px;
+  height: 27px;
+  border-width: 4px;
+  rotate: 17deg;
+}
+.autumn-chest-keyring {
+  position: relative;
+  width: 51px;
+  height: 45px;
+  rotate: 14deg;
+}
+.autumn-chest-keyring i, .autumn-chest-keyring b {
+  position: absolute;
+  border: 2px solid #dfb773;
+  border-radius: 50%;
+}
+.autumn-chest-keyring i { inset: 5px auto auto 6px; width: 17px; height: 17px; }
+.autumn-chest-keyring b { inset: 14px auto auto 2px; width: 15px; height: 15px; }
+.autumn-chest-keyring b::after {
+  position: absolute;
+  top: 9px;
+  left: 4px;
+  width: 7px;
+  height: 19px;
+  background: #dfb773;
+  clip-path: polygon(0 0, 62% 0, 62% 50%, 100% 50%, 100% 70%, 62% 70%, 62% 81%, 100% 81%, 100% 100%, 0 100%);
+  content: "";
+}
+.autumn-chest-quokka-charm {
+  position: absolute;
+  top: 17px;
+  right: 0;
+  width: 25px;
+  height: 26px;
+  border-radius: 48%;
+  background: radial-gradient(ellipse at 50% 71%, #d9b995 0 27%, #a18262 31%);
+  box-shadow: 1px 2px 3px #2518239c;
+}
+.autumn-chest-quokka-charm::before {
+  position: absolute;
+  inset: -7px -1px auto;
+  height: 19px;
+  border-radius: 46%;
+  background:
+    radial-gradient(circle at 29% 42%, #32232a 0 1px, transparent 1.6px),
+    radial-gradient(circle at 71% 42%, #32232a 0 1px, transparent 1.6px),
+    radial-gradient(ellipse at 50% 59%, #433036 0 1.7px, transparent 2.4px),
+    radial-gradient(ellipse at 50% 68%, #e0c6a4 0 24%, transparent 27%),
+    #ab8a68;
+  box-shadow: -6px -6px 0 -4px #ab8a68, 6px -6px 0 -4px #ab8a68;
+  content: "";
+}
+.autumn-chest-quokka-charm::after {
+  position: absolute;
+  top: -12px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #dfb773;
+  border-radius: 50%;
+  content: "";
+}
+.autumn-chest .autumn-chest-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  color: #fff2d9;
+  font-size: 1.4rem;
+  text-shadow: 0 1px 3px #211724;
 }
 @keyframes autumn-lock-zoom {
   from { opacity: .3; transform: scale(.32); }

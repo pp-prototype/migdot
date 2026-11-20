@@ -12,6 +12,10 @@ export function clearAutumnProgress() {
 const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail', 'sixth-trail', 'cinema-hall', 'cinema-room'] as const
 export type MapId = typeof maps[number]
 
+export function isLeafPileUnlocked(digits: number[]) {
+  return digits.join('') === '7524'
+}
+
 export type Progress = {
   version: typeof saveVersion
   admitted: boolean
@@ -95,6 +99,7 @@ function applyProgress(current: Progress, action: ProgressAction): Progress {
     case 'discover':
       return { ...current, discoveries: add(current.discoveries, action.id) }
     case 'rotate-lock-dial':
+      if (isLeafPileUnlocked(current.puzzles.leafPileLock)) return current
       return {
         ...current,
         puzzles: {
@@ -160,6 +165,7 @@ export function useAutumnProgress() {
         storageFailed.current = true
       }
     }
+    return next
   }
 
   return { progress, save }
