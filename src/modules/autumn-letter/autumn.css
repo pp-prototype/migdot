@@ -738,6 +738,15 @@
   0%, 25% { opacity: 0; }
   to { opacity: 1; }
 }
+.autumn .autumn-chest-note-button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
 .autumn-chest-note {
   width: 39px;
   aspect-ratio: 1;

@@ -10,7 +10,9 @@ export type Clue = typeof clues[number]
 export const firstLetter = `사랑하는 희선아,
 어서 와. 작은 가을 풍경으로 너를 초대해봤는데 어때, 귀엽지? ㅎㅎ
 우리 같이 좀 걸어볼까?`
-export const finalLetter = '찾아줘서 고마워. 이 가을을 너와 나누고 싶었어.'
+export const finalLetter = `클리어 한 것을 축하해. 약소하게나마 만들어봤는데 어땠니? 부디 재미있게 플레이 해주었다면 좋겠네.
+만들면서 만든 장면 하나하나에 들어있는 숨겨진 요소가 아마 더 있단다? ㅋㅋ
+이제 열쇠를 들고 문 밖으로 나가자.`
 
 export const firstLetterBack = `우리가 함께 걷지 못한 가을 한 가운데의 단풍이 물든 풍경을 영원히 볼 수 있게 담아두었어.
 이 산책로에는 다른 것도 좀 숨겨두었는데, 공주가 모두 찾을 수 있으려나? ㅋㅋ`

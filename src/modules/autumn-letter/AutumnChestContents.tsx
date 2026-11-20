@@ -1,6 +1,9 @@
-export default function AutumnChestContents() {
+export default function AutumnChestContents({ onReadNote }: { onReadNote: () => void }) {
   return <div className="autumn-chest-interior">
-    <span className="autumn-chest-note" role="img" aria-label="사각으로 접은 쪽지" />
+    <button type="button" className="autumn-chest-note-button" aria-label="상자 속 쪽지 읽기"
+      aria-haspopup="dialog" onClick={onReadNote}>
+      <span className="autumn-chest-note" aria-hidden="true" />
+    </button>
     <span className="autumn-chest-rings" role="img" aria-label="살짝 각진 민무늬 실버링 한 쌍">
       <i /><b />
     </span>

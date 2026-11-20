@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
+import { finalLetter, firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
 import { cinemaPosters } from './cinemaHall'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
 import cinemaFlyerArt from './cinema-flyer.jpg'
@@ -103,6 +103,7 @@ export default function AutumnLetter({ progress, save }: {
   const cinemaEntryTimer = useRef<number | undefined>(undefined)
   const firstDial = useRef<HTMLButtonElement>(null)
   const lockDialog = useRef<HTMLDialogElement>(null)
+  const finalLetterDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const flyerDialog = useRef<HTMLDialogElement>(null)
   const lakesideDialogue = useRef<HTMLDialogElement>(null)
@@ -389,7 +390,7 @@ export default function AutumnLetter({ progress, save }: {
       onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
       {showingChest && <div className={`autumn-chest ${showingOpenChest ? 'autumn-chest-open' : ''}`}>
         <div className="autumn-chest-lid" aria-hidden="true" />
-        {showingOpenChest && <AutumnChestContents />}
+        {showingOpenChest && <AutumnChestContents onReadNote={() => finalLetterDialog.current?.showModal()} />}
         <div className="autumn-chest-front" aria-hidden="true" />
         {!showingOpenChest && <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
           <span className="autumn-chest-shackle" aria-hidden="true" />
@@ -414,6 +415,16 @@ export default function AutumnLetter({ progress, save }: {
           </div>
         </div>
       </div>}
+    </dialog>
+    <dialog ref={finalLetterDialog} className="autumn-dialog" aria-labelledby="autumn-final-letter-title">
+      <div className="autumn-paper">
+        <button className="autumn-close" type="button" aria-label="마지막 편지 닫기"
+          onClick={() => finalLetterDialog.current?.close()}>×</button>
+        <article className="autumn-box-letter">
+          <h2 id="autumn-final-letter-title">클리어 성공!</h2>
+          <p className="autumn-letter-face">{finalLetter}</p>
+        </article>
+      </div>
     </dialog>
     <AutumnPhone dialog={phoneDialog} save={save} cameraAvailable={thirdLetterAcquired} cameraActive={closeup} discoveries={progress.discoveries} />
   </main>
