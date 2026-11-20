@@ -1,4 +1,5 @@
 import type { MapId } from './progress'
+import { drawCinema } from './cinemaScene'
 
 export const sceneWidth = 480
 export const sceneHeight = 270
@@ -87,6 +88,10 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   background.setTransform(2, 0, 0, 2, 0, 0)
   foliage.setTransform(2, 0, 0, 2, 0, 0)
   foliage.clearRect(0, 0, sceneWidth, sceneHeight)
+  if (map === 'sixth-trail') {
+    drawCinema(background, sceneWidth, sceneHeight, seededRandom(631))
+    return
+  }
   let ctx = background
 
   const block = (color: string, x: number, y: number, w: number, h: number) => {

@@ -7,7 +7,7 @@ export function clearAutumnProgress() {
   localStorage.removeItem(saveKey)
 }
 
-const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail'] as const
+const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail', 'sixth-trail'] as const
 export type MapId = typeof maps[number]
 
 export type Progress = {

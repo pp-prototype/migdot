@@ -62,6 +62,7 @@ export default function AutumnLetter({ progress, save }: {
   const closeup = map === 'lakeside-bench'
   const silhouetteVisible = closeup && progress.discoveries.includes(skyPhotoId)
   const dogTrail = map === 'fifth-trail'
+  const cinema = map === 'sixth-trail'
   const lakeside = map === 'fourth-trail' || closeup
   const lakeLamp = closeup ? lakesideCloseupLamp : lakesideBlinkingLamp
   const phoneFound = progress.discoveries.includes(phoneId)
@@ -144,10 +145,11 @@ export default function AutumnLetter({ progress, save }: {
     <audio ref={footstepsAudio} src={walkSound} preload="auto" />
     <audio ref={dialAudio} src={dialSound} preload="auto" />
     <div className="autumn-stage">
-      <section className={`autumn-scene ${dogTrail ? 'autumn-scene-dog-trail' : closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
-        aria-label={dogTrail ? '강아지 둘과 걷는 다섯 번째 산책로' : closeup ? '호숫가 벤치와 가로등' : lakeside ? '별이 뜬 네 번째 산책로' : forest ? '바람 부는 세 번째 산책로' : walking ? '함께 걷는 가을 산책로' : '가을 산책로'}>
+      <section className={`autumn-scene ${cinema ? '' : dogTrail ? 'autumn-scene-dog-trail' : closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
+        aria-label={cinema ? '작은 영화관이 있는 여섯 번째 산책로' : dogTrail ? '강아지 둘과 걷는 다섯 번째 산책로' : closeup ? '호숫가 벤치와 가로등' : lakeside ? '별이 뜬 네 번째 산책로' : forest ? '바람 부는 세 번째 산책로' : walking ? '함께 걷는 가을 산책로' : '가을 산책로'}
+        aria-description={cinema ? '주차장 앞 3층 영화관의 1층 유리 너머로 엘리베이터에 불이 켜져 있다. 가까운 큰 자동차 위에 영화표와 영화 전단지가 놓여 있다.' : undefined}>
         <canvas ref={canvas} width={sceneWidth * 2} height={sceneHeight * 2} className="autumn-landscape" aria-hidden="true" />
-        {walking && !lakeside && !dogTrail && <div className="autumn-clouds" aria-hidden="true">
+        {walking && !lakeside && !dogTrail && !cinema && <div className="autumn-clouds" aria-hidden="true">
           {Array.from({ length: forest ? 9 : 3 }, (_, index) => <i key={index}
             style={forest ? {
               top: `${index * 7 % 35 - 6}%`,
@@ -184,7 +186,7 @@ export default function AutumnLetter({ progress, save }: {
             left: `${lakesideSilhouette.x / sceneWidth * 100}%`,
             top: `${lakesideSilhouette.y / sceneHeight * 100}%`,
           }}><Person /></button>}
-        {!closeup && <div className="autumn-falling" aria-hidden="true">
+        {!closeup && !cinema && <div className="autumn-falling" aria-hidden="true">
           {fallingLeaves(forest, lakeside, dogTrail).map((style, i) => <i key={i} style={style as CSSProperties} />)}
         </div>}
         {closeup && <button className="autumn-scene-letter" type="button" aria-label="벤치 위 편지 읽기"
@@ -225,24 +227,24 @@ export default function AutumnLetter({ progress, save }: {
           </button>}
         </div>
         <div className="autumn-next">
-          {(forest || lakeside || dogTrail) && <button className="autumn-walk-control autumn-walk-back" type="button"
-            aria-label={dogTrail ? '호숫가 벤치로 돌아가기' : closeup ? '호수공원 입구로 돌아가기' : lakeside ? '세 번째 산책로로 돌아가기' : '두 번째 산책로로 돌아가기'}
+          {(forest || lakeside || dogTrail || cinema) && <button className="autumn-walk-control autumn-walk-back" type="button"
+            aria-label={cinema ? '다섯 번째 산책로로 돌아가기' : dogTrail ? '호숫가 벤치로 돌아가기' : closeup ? '호수공원 입구로 돌아가기' : lakeside ? '세 번째 산책로로 돌아가기' : '두 번째 산책로로 돌아가기'}
             onClick={() => {
               playFootsteps()
-              save({ type: 'visit-map', id: dogTrail ? 'lakeside-bench' : closeup ? 'fourth-trail' : lakeside ? 'third-trail' : 'second-trail' })
+              save({ type: 'visit-map', id: cinema ? 'fifth-trail' : dogTrail ? 'lakeside-bench' : closeup ? 'fourth-trail' : lakeside ? 'third-trail' : 'second-trail' })
             }}>
             <span className="autumn-steps" aria-hidden="true"><i /><i /></span>
           </button>}
-          {!closeup && !dogTrail && <button className="autumn-walk-control" type="button" aria-label="다음 산책길"
+          {!closeup && !cinema && <button className="autumn-walk-control" type="button" aria-label="다음 산책길"
             onClick={lakeside ? approachBench : () => {
               playFootsteps()
-              save({ type: 'visit-map', id: forest ? 'fourth-trail' : 'third-trail' })
+              save({ type: 'visit-map', id: dogTrail ? 'sixth-trail' : forest ? 'fourth-trail' : 'third-trail' })
             }}>
             <span className="autumn-steps" aria-hidden="true"><i /><i /></span>
           </button>}
         </div>
         <span className="autumn-visually-hidden" role="status">
-          {dogTrail ? '두 강아지와 함께 밤길을 걷기 시작했어.' : closeup ? '호숫가 벤치에 도착했어.' : lakeside ? '별이 뜬 호수공원에 도착했어.' : forest ? '바람 부는 세 번째 산책로에 도착했어.' : '함께 가을 산책을 시작했어.'}
+          {cinema ? '작은 영화관 앞에 도착했어.' : dogTrail ? '두 강아지와 함께 밤길을 걷기 시작했어.' : closeup ? '호숫가 벤치에 도착했어.' : lakeside ? '별이 뜬 호수공원에 도착했어.' : forest ? '바람 부는 세 번째 산책로에 도착했어.' : '함께 가을 산책을 시작했어.'}
         </span>
       </>}
     </div>
