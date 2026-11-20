@@ -92,7 +92,7 @@ export default function AutumnLetter({ progress, save }: {
   }, [map])
 
   function selectLetter(id: LetterId) {
-    save({ type: 'read-letter', id, side: 'front' })
+    if (!collectedLetters.includes(id)) save({ type: 'read-letter', id, side: 'front' })
     setActiveLetter(id)
     setLetterBack(false)
   }

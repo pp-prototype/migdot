@@ -49,7 +49,8 @@ function parseSave(value: unknown): Progress | null {
   if (!isRecord(value) || value.version !== saveVersion || value.admitted !== true) return null
 
   const savedMaps = ids(value.unlockedMaps)
-  const unlockedMaps = maps.filter(id => id === 'first-trail' || savedMaps.includes(id))
+  const currentMap = maps.find(id => id === value.currentMap) ?? 'first-trail'
+  const unlockedMaps = maps.filter(id => id === 'first-trail' || id === currentMap || savedMaps.includes(id))
   const letters = isRecord(value.letters) ? value.letters : {}
   const acquired = ids(letters.acquired)
   const puzzles = isRecord(value.puzzles) ? value.puzzles : {}
@@ -61,7 +62,7 @@ function parseSave(value: unknown): Progress | null {
   return {
     version: saveVersion,
     admitted: true,
-    currentMap: unlockedMaps.find(id => id === value.currentMap) ?? 'first-trail',
+    currentMap,
     unlockedMaps,
     letters: { acquired, backsRead: ids(letters.backsRead).filter(id => acquired.includes(id)) },
     discoveries: ids(value.discoveries),
