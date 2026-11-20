@@ -1,6 +1,7 @@
 import type { MapId } from './progress'
 import { drawCinema } from './cinemaScene'
 import { drawCinemaHall } from './cinemaHall'
+import { drawCinemaRoom } from './cinemaRoom'
 
 export const sceneWidth = 480
 export const sceneHeight = 270
@@ -95,6 +96,10 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   }
   if (map === 'cinema-hall') {
     drawCinemaHall(background, sceneWidth, sceneHeight)
+    return
+  }
+  if (map === 'cinema-room') {
+    drawCinemaRoom(background, sceneWidth, sceneHeight)
     return
   }
   let ctx = background

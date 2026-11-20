@@ -319,6 +319,43 @@
   from { opacity: .92; }
   to { opacity: 0; }
 }
+.autumn-cinema-fade-out, .autumn-walk-fade.autumn-cinema-arrival {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+}
+.autumn-cinema-fade-out { animation: autumn-cinema-darken 750ms ease-in both; }
+.autumn-walk-fade.autumn-cinema-arrival { animation-name: autumn-cinema-reveal; }
+@keyframes autumn-cinema-darken {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes autumn-cinema-reveal {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.autumn-cinema-screen {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font: 400 max(10px, 2.25cqh) / 1.4 system-ui, sans-serif;
+}
+.autumn-cinema-credits {
+  position: absolute;
+  inset-inline: 0;
+  animation: autumn-cinema-roll 28s linear .65s infinite both;
+}
+.autumn-cinema-credits p { margin: 0 0 1.65em; }
+@keyframes autumn-cinema-roll {
+  from { top: 100%; transform: translateY(0); }
+  to { top: 0; transform: translateY(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-cinema-screen { overflow: auto; }
+  .autumn-cinema-credits { position: static; padding: .5em; }
+}
 .autumn-visually-hidden {
   position: absolute;
   width: 1px;
