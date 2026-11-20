@@ -13,6 +13,7 @@ import AutumnChestContents from './AutumnChestContents'
 import AutumnNoodleStopper from './AutumnNoodleStopper'
 import AutumnShrubPuzzle from './AutumnShrubPuzzle'
 import AutumnSunglasses, { AutumnHangingSunglasses } from './AutumnSunglasses'
+import AutumnLedKeycap from './AutumnLedKeycap'
 import AutumnEnding from './AutumnEnding'
 import AutumnCinemaCredits from './AutumnCinemaCredits'
 import AutumnSettings from './AutumnSettings'
@@ -50,6 +51,10 @@ const fallingLeaves = (windy: boolean, lakeside: boolean, dogTrail: boolean) => 
 const lampPattern = [1, 1, 0, 1, 1, 1, 0, 1, 2, 0, 1, 1]
 const lampPulses = lampPattern.flatMap((count, second) =>
   Array.from({ length: count }, (_, pulse) => second + .12 + pulse * .42))
+const lampFlashStyles = lampPulses.map(delay => ({
+  animationDelay: `${delay}s`,
+  animationDuration: `${lampPattern.length}s`,
+}))
 
 const firstLetterId = 'first-letter'
 const thirdLetterId = 'third-letter'
@@ -67,6 +72,7 @@ const leafPileLockId = 'leaf-pile-lock'
 const chestKeyId = 'leaf-pile-chest-key'
 const coupleRingsId = 'leaf-pile-couple-rings'
 const sunglassesId = 'forest-oval-sunglasses'
+const ledKeycapId = 'lakeside-led-keycap'
 const endingId = 'cinema-ending'
 const endingDuration = 10800
 const phoneId = 'trail-phone'
@@ -113,6 +119,7 @@ export default function AutumnLetter({ progress, save }: {
   const ringsAcquired = progress.discoveries.includes(coupleRingsId)
   const stopperAcquired = progress.discoveries.includes(noodleStopperId)
   const sunglassesAcquired = progress.discoveries.includes(sunglassesId)
+  const ledKeycapAcquired = progress.discoveries.includes(ledKeycapId)
   const showScenePickup = cinema ? !flyerAcquired : closeup ? !thirdLetterAcquired : dogTrail && !fourthLetterAcquired
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
@@ -284,16 +291,24 @@ export default function AutumnLetter({ progress, save }: {
           }} />)}
         </div>}
         <canvas ref={canopy} width={sceneWidth * 2} height={sceneHeight * 2} className="autumn-landscape autumn-canopy" aria-hidden="true" />
-        {lakeside && <div className="autumn-lake-lamp" aria-hidden="true"
+        {lakeside && <div key={map} className="autumn-lake-lamp" aria-hidden="true"
           style={{
             left: `${lakeLamp.x / sceneWidth * 100}%`,
             top: `${lakeLamp.y / sceneHeight * 100}%`,
           }}>
-          {lampPulses.map(delay => <i key={delay} style={{
-            animationDelay: `${delay}s`,
-            animationDuration: `${lampPattern.length}s`,
-          }} />)}
+          {lampFlashStyles.map(style => <i key={style.animationDelay} className="autumn-lake-flash" style={style} />)}
         </div>}
+        {closeup && !ledKeycapAcquired && <button type="button" className="autumn-lake-keycap-pickup"
+          style={{ left: `${(lakesideLetter.x + 18) / sceneWidth * 100}%`, top: `${235 / sceneHeight * 100}%` }}
+          aria-label="가로등 불빛에 반짝이는 금속 조각 줍기"
+          onClick={event => {
+            const flashes = Array.from(event.currentTarget.children)
+            if (flashes.some(flash => Number(getComputedStyle(flash).opacity) > .05)) {
+              save({ type: 'discover', id: ledKeycapId })
+            }
+          }}>
+          {lampFlashStyles.map(style => <i key={style.animationDelay} className="autumn-lake-flash" style={style} aria-hidden="true" />)}
+        </button>}
         {silhouetteVisible && <button type="button" className="autumn-lake-silhouette"
           aria-label="가로등 아래 남자의 손을 잡고 다음 산책로로 가기"
           onClick={takeHand}
@@ -360,7 +375,7 @@ export default function AutumnLetter({ progress, save }: {
       {cinemaHall && flyerAcquired && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <div key={map} className={`autumn-walk-fade ${cinemaRoom ? 'autumn-cinema-arrival' : ''}`} aria-hidden="true" />}
       <div className="autumn-walk-inventory" inert={Boolean(cinemaHall && cinemaEntry)}>
-        {(ringsAcquired || stopperAcquired || sunglassesAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
+        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
           {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
             <span className="autumn-chest-rings" aria-hidden="true"><i /><b /></span>
           </span>}
@@ -370,6 +385,7 @@ export default function AutumnLetter({ progress, save }: {
           {sunglassesAcquired && <span className="autumn-collectible-item" role="img" aria-label="획득한 검은 타원형 선글라스">
             <AutumnSunglasses />
           </span>}
+          {ledKeycapAcquired && <AutumnLedKeycap />}
         </div>}
         <div className="autumn-walk-items" aria-label="기본 아이템" role="group">
           {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}

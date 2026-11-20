@@ -1448,12 +1448,14 @@
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+.autumn-lake-flash {
+  opacity: 0;
+  animation: autumn-lake-lamp-flash linear infinite;
+}
 .autumn-lake-lamp i {
   position: absolute;
   inset: 0;
-  opacity: 0;
   background: radial-gradient(circle, #ffd38fbf, #ffd38f00 67%);
-  animation: autumn-lake-lamp-flash linear infinite;
 }
 .autumn-lake-lamp i::after {
   position: absolute;
@@ -1468,6 +1470,53 @@
 @keyframes autumn-lake-lamp-flash {
   0%, 2.25%, 100% { opacity: 0; }
   .35%, 1.55% { opacity: 1; }
+}
+.autumn .autumn-lake-keycap-pickup {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+}
+.autumn-lake-keycap-pickup .autumn-lake-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(-19deg);
+  border-radius: 2px;
+  background: linear-gradient(155deg, #b4a18a82 9%, #94857b5c 27%, #51495880 59%, #3933451a 89%);
+  box-shadow: 1px 1px 5px #a88a6840;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-lake-lamp .autumn-lake-flash:first-child,
+  .autumn-lake-keycap-pickup .autumn-lake-flash:first-child { opacity: .8; }
+}
+.autumn .autumn-led-keycap-control { height: 44px; }
+.autumn-led-keycap {
+  display: grid;
+  grid-template: repeat(2, 1fr) / repeat(2, 1fr);
+  gap: 2px;
+  width: 31px;
+  height: 30px;
+  padding: 3px 3px 5px;
+  border: 1px solid #8c859b;
+  border-radius: 5px;
+  background: linear-gradient(145deg, #77778e, #35333e);
+  box-shadow: inset 0 -4px #282631, 0 2px 3px #251d2e70;
+}
+.autumn-led-keycap i {
+  border-radius: 2px;
+  background: #a7aabd;
+  box-shadow: inset 0 0 0 1px #e6ebf352;
+}
+.autumn-led-keycap-control[aria-pressed="true"] .autumn-led-keycap i {
+  background: #efffff;
+  box-shadow: 0 0 5px 1px #9af2ff, 0 0 9px 2px #68ceff80;
 }
 
 .autumn-bench-approach {
