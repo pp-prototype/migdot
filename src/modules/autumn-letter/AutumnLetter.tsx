@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { finalLetter, firstLetter, firstLetterBack, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter } from './clues'
+import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
 import { cinemaPosters } from './cinemaHall'
 import { cinemaExit } from './cinemaRoom'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
@@ -74,6 +74,9 @@ export default function AutumnLetter({ progress, save }: {
   const [activeLetter, setActiveLetter] = useState<LetterId>(firstLetterId)
   const showingFirst = activeLetter === firstLetterId
   const [letterBack, setLetterBack] = useState(false)
+  const letterHint = showingFirst && letterBack ? firstLetterBackHint
+    : activeLetter === thirdLetterId ? thirdLetterHint
+    : activeLetter === fourthLetterId ? fourthLetterHint : ''
   const map = progress.currentMap
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
@@ -122,7 +125,6 @@ export default function AutumnLetter({ progress, save }: {
   const lockedExitDialog = useRef<HTMLDialogElement>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const flyerDialog = useRef<HTMLDialogElement>(null)
-  const lakesideDialogue = useRef<HTMLDialogElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const canopy = useRef<HTMLCanvasElement>(null)
 
@@ -216,7 +218,6 @@ export default function AutumnLetter({ progress, save }: {
   }
 
   function takeHand() {
-    lakesideDialogue.current?.close()
     playFootsteps()
     save({ type: 'visit-map', id: 'fifth-trail' })
   }
@@ -287,8 +288,8 @@ export default function AutumnLetter({ progress, save }: {
           }} />)}
         </div>}
         {silhouetteVisible && <button type="button" className="autumn-lake-silhouette"
-          aria-label="가로등 아래 남자와 대화하기" aria-haspopup="dialog"
-          onClick={() => lakesideDialogue.current?.showModal()}
+          aria-label="가로등 아래 남자의 손을 잡고 다음 산책로로 가기"
+          onClick={takeHand}
           style={{
             left: `${lakesideSilhouette.x / sceneWidth * 100}%`,
             top: `${lakesideSilhouette.y / sceneHeight * 100}%`,
@@ -408,16 +409,6 @@ export default function AutumnLetter({ progress, save }: {
     {ending && <AutumnEnding playing={endingPlaying} duration={endingDuration}
       onContinue={() => save({ type: 'restart' })} />}
     {!endingPlaying && <div inert={Boolean(cinemaHall && cinemaEntry)}><AutumnSettings /></div>}
-    {silhouetteVisible && <dialog ref={lakesideDialogue}
-      className="autumn-dialog autumn-dialog-delivery" aria-labelledby="autumn-lakeside-dialogue">
-      <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>
-      <div className="autumn-paper autumn-conversation">
-        <button className="autumn-close" type="button" aria-label="대화 닫기"
-          onClick={() => lakesideDialogue.current?.close()}>×</button>
-        <p id="autumn-lakeside-dialogue">별을 가득 담을 수 있는 방법을 찾았구나? 어때? ㅋㅋㅋ</p>
-        <button type="button" className="autumn-return" onClick={takeHand}>손을 잡는다</button>
-      </div>
-    </dialog>}
     <dialog ref={dialog} className={`autumn-dialog ${walking ? '' : 'autumn-dialog-delivery'}`} aria-labelledby="autumn-letter-title">
       {!walking && <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>}
       <div className={`autumn-paper ${canBrowseLetters ? 'autumn-paper-with-nav' : ''}`}>
@@ -427,9 +418,9 @@ export default function AutumnLetter({ progress, save }: {
           <p key={`${activeLetter}-${letterBack}`} className="autumn-letter-face">
             {showingFirst && letterBack ? firstLetterBack : letters[activeLetter].text}
           </p>
-          {activeLetter === fourthLetterId && <p className="autumn-letter-hint">{fourthLetterHint}</p>}
+          {letterHint && <p className="autumn-letter-hint">{letterHint}</p>}
         </article>
-        {!walking && showingFirst && <button className="autumn-return" onClick={startWalking}>영상이랑 걷기</button>}
+        {!walking && showingFirst && <button className="autumn-return" onClick={startWalking}>산책로를 걸어보기</button>}
         {canBrowseLetters && <>
           <button className="autumn-letter-nav autumn-letter-prev" type="button"
             aria-label={previousLetter ? `${letters[previousLetter].title} 보기` : '이전 편지'}

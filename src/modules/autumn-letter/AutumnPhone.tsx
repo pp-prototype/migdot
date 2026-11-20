@@ -4,7 +4,7 @@ import { useSoundEffect } from './useSoundEffect'
 import cameraErrorSound from './audio/bgm-camera-error.mp3'
 import AutumnCamera from './AutumnCamera'
 import Person from './Person'
-import { phoneDaytimeMessage, phoneHint, secondLetter, skyPhotoId } from './clues'
+import { phoneDaytimeMessage, phoneHint, phoneNumberMessage, secondLetter, skyPhotoId } from './clues'
 import type { ProgressAction } from './progress'
 import lockWallpaper from './phone-lock-wallpaper.jpg'
 
@@ -111,9 +111,9 @@ export default function AutumnPhone({ dialog, save, cameraAvailable, cameraActiv
         </div> : <div className="autumn-phone-page" key={page} aria-live="polite">
           {page === 0 && <div className="autumn-phone-portrait" role="img" aria-label="편지를 건넸던 남자"><Person /></div>}
           {page === 1 && <article><h2>두 번째 편지</h2><p>{phoneDaytimeMessage}</p></article>}
-          {page === 2 && <article><p>{secondLetter}</p><p>{phoneHint}</p></article>}
+          {page === 2 && <article><p>{secondLetter}</p><p className="autumn-phone-letter-hint">{phoneHint}</p></article>}
           {page === 3 && (showHint
-            ? <p role="status">첫 번째 숫자는 이 중에 있어. 공주야.</p>
+            ? <p role="status">{phoneNumberMessage}</p>
             : <div className="autumn-phone-passcode">
             <h2>비밀번호</h2>
             <div className="autumn-phone-stars" aria-label={`네 자리 중 ${code.length}자리 입력됨`}>

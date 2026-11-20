@@ -69,7 +69,7 @@
   display: flex;
   justify-content: center;
   gap: .24em;
-  font: 500 clamp(1.4rem, min(7.8cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
+  font: 500 clamp(1.25rem, min(7.1cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
   letter-spacing: .035em;
   white-space: nowrap;
 }
@@ -1207,7 +1207,8 @@
   animation: autumn-phone-slide .25s ease-out both;
 }
 .autumn-phone-page h2 { margin-bottom: .45rem; color: inherit; }
-.autumn-phone-page p { font-size: .94rem; line-height: 1.55; word-break: keep-all; }
+.autumn-phone-page p { font-size: .94rem; line-height: 1.55; word-break: keep-all; white-space: pre-line; }
+.autumn-phone-page .autumn-phone-letter-hint { font-size: .76rem; opacity: .72; }
 .autumn-phone-portrait { height: 100%; min-height: 0; }
 .autumn-phone-portrait canvas { width: 100%; height: 100%; object-fit: contain; }
 .autumn-phone-pages { display: flex; justify-content: center; }
@@ -1751,6 +1752,7 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-paper-flyer .autumn-flyer-back {
   overflow: auto;
+  align-content: start;
   padding: clamp(.95rem, 3vw, 1.6rem);
   background: #fff;
   color: #443e46;
@@ -1759,13 +1761,13 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-flyer-back .autumn-letter-face {
   font-family: "Cinema Handwriting", cursive;
-  font-size: 1.06rem;
+  font-size: clamp(.8rem, calc(var(--letter-height) * .039), 1.06rem);
   line-height: 1.36;
 }
-.autumn-flyer-back span { display: block; }
-.autumn-flyer-title { margin-bottom: .6rem; font-size: 1.12rem; }
+.autumn-flyer-back span { display: block; white-space: pre-line; }
+.autumn-flyer-title { margin-bottom: .55rem; font-size: 1.08em; }
 .autumn-flyer-hint {
   margin-top: .9rem;
   color: #767078;
-  font-size: .88rem;
+  font-size: .83em;
 }

@@ -7,29 +7,36 @@ export const clues = [
 ] as const
 
 export type Clue = typeof clues[number]
-export const firstLetter = `사랑하는 희선아,
-어서 와. 작은 가을 풍경으로 너를 초대해봤는데 어때, 귀엽지? ㅎㅎ
-우리 같이 좀 걸어볼까?`
-export const finalLetter = `클리어 한 것을 축하해. 약소하게나마 만들어봤는데 어땠니? 부디 재미있게 플레이 해주었다면 좋겠네.
-만들면서 만든 장면 하나하나에 들어있는 숨겨진 요소가 아마 더 있단다? ㅋㅋ
-이제 열쇠를 들고 문 밖으로 나가자.`
+export const firstLetter = `비밀 초대장을 받은 사람이여 어서와요.
+당신을 초대한 이 곳은 가을의 작은 풍경이에요.
+이 곳을 차분히 걸으면서 제가 만든 작은 수수께끼들을 풀어보실래요?`
+export const finalLetter = `사랑하는 나의 공주 희선아, 200일을 축하해!
+기념하여 내가 만든 작은 가을 산책로는 어땠니? 말만 하면서 가지 못했던 가을이 벌써 지나 겨울이 다가오니, 미안한 마음과 가을 단풍을 한가득 눈에 담아주고 싶던 내 마음으로 네게 선사해.
+재밌게 즐겼기를 바라며 - 영상 -`
 
-export const firstLetterBack = `우리가 함께 걷지 못한 가을 한 가운데의 단풍이 물든 풍경을 영원히 볼 수 있게 담아두었어.
-이 산책로에는 다른 것도 좀 숨겨두었는데, 공주가 모두 찾을 수 있으려나? ㅋㅋ`
+export const firstLetterBack = `따뜻한 해가 비추는 가을 하늘이 제법 포근하죠?
+이렇게 물든 풍경을 영원히 남겨두고 싶어요. 누군가에게 두고두고 보여주고 싶은 제 마음, 느껴지시나요?`
+export const firstLetterBackHint = '이 산책로에는 숨겨진 물건들도 있어요'
 
-export const secondLetter = '걸어오면서 숨겨둔 물건과 편지는 읽어보았니? 아니라면 다시 살펴봐~'
-export const phoneHint = '이 산책로에서 첫 번째 숫자를 알아낼 수 있어.'
+export const secondLetter = `걸어오면서 숨겨둔 물건과 편지도 보았나요?
+아니라면 뒤로 돌아가 보는 것도 방법이에요.`
+export const phoneHint = '참고로 여기에선 첫 번째 숫자를 알아낼 수 있어요.'
+export const phoneNumberMessage = `첫 번째 숫자는 이 중에 있어.
+공주야.`
 
-export const phoneDaytimeMessage = '따뜻한 낮의 풍경도 보여주고 싶었는데 우린 자꾸 밤에 만나니까 낙엽 흩날리는 밤의 가을 풍경만 보여줬던게 생각나.'
+export const phoneDaytimeMessage = `바람이 부는 낙엽을 보는 풍경은 왠지 마음이 차분히 가라앉아요.
+따뜻한 낮의 풍경보다 자주 보여준 것이 이유일까요.`
 
-export const thirdLetter = `얼마 전의 호수에서 본 별이 생생해. 핸드폰을 열어 별을 찍던 네 모습은 더.
-두 번째 숫자의 행방은 별이 가득한 밤하늘에 두고 왔어.`
+export const thirdLetter = `호수에서 바라보는 별은 어째서 더 아름답게 느껴질까요.
+물에 비추는 별빛이 더 빛나게 주변을 아름답게 밝혀주는 탓 일지도요.`
+export const thirdLetterHint = '두 번째 숫자의 행방은 별을 완벽하게 찍은 한 장의 그림 속에 있어요.'
 
 export const skyPhotoId = 'lakeside-clear-star-photo'
 
-export const fourthLetter = `한 밤에 강아지들과 산책하던 기억.
-사랑하는 사람이 나의 것처럼 아끼고 예뻐해주는 모습에 마음이 많이 가서 그 어떤 것보다 사랑스러움을 느꼈지.`
-export const fourthLetterHint = '세 번째 숫자는 우리와 함께한 것의 수.'
+export const fourthLetter = `한 밤의 달 빛 가득한 밤에 자주하던 산책은 마음을 가득 채워주는 느낌이에요.
+사랑하는 이가 나의 가까운 것을 나만큼이나 아끼고 예뻐해주는 모습에 그 어떤 것보다 사랑스러움이 느껴지죠.`
+export const fourthLetterHint = '세 번째 숫자는 함께한 그것의 수.'
 
-export const fifthLetter = '우리 만의 조용한 영화관에서 아늑한 분위기를 느끼며 보았던 그 시간은 지나가다, 잠들기전, 그냥 문득 떠오르고 좋아지는거 있지?'
-export const fifthLetterHint = '2층 1관에서 네 번째 숫자를 알 수 있어.'
+export const fifthLetter = `상영관의 어둠은 까만 밤 속을 느긋하게 걷는 것 같죠?
+아늑한 분위기를 느끼며 보았던 그 시간은 어쩌면 그 순간보다 다음 날, 그리고 그 다음 날에 금세 떠올라 마음을 충만하게, 또 그립게 만들지 몰라요.`
+export const fifthLetterHint = '2층 1관에서 마지막 숫자를 알 수 있어요.'

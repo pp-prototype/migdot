@@ -8,23 +8,27 @@ export default function AutumnEnding({ playing, duration, onContinue }: {
   onContinue: () => void
 }) {
   const title = useRef<HTMLHeadingElement>(null)
+  const prefix = useRef<HTMLSpanElement>(null)
   const over = useRef<HTMLSpanElement>(null)
   const started = useRef<HTMLSpanElement>(null)
 
   useLayoutEffect(() => {
     const heading = title.current
+    const thisWord = prefix.current
     const first = over.current
     const second = started.current
-    if (!heading || !first || !second) return
+    if (!heading || !thisWord || !first || !second) return
 
     const centerOver = () => {
-      heading.style.setProperty('--ending-center-offset', `${(second.offsetWidth - first.offsetWidth) / 2}px`)
+      const gap = Number.parseFloat(getComputedStyle(heading).columnGap)
+      heading.style.setProperty('--ending-center-offset', `${(second.offsetWidth - first.offsetWidth - thisWord.offsetWidth - gap) / 2}px`)
     }
 
     centerOver()
     const observer = new ResizeObserver(centerOver)
     observer.observe(first)
     observer.observe(second)
+    observer.observe(thisWord)
     return () => observer.disconnect()
   }, [])
 
@@ -41,7 +45,8 @@ export default function AutumnEnding({ playing, duration, onContinue }: {
       <div className="autumn-ending-wash" aria-hidden="true" />
     </>}
     <div className="autumn-ending-message">
-      <h1 ref={title} className="autumn-ending-title" aria-label={playing ? 'Game Over' : 'Game has just started'} aria-hidden={playing}>
+      <h1 ref={title} className="autumn-ending-title" aria-label={playing ? 'Game Over' : 'This Game has just started'} aria-hidden={playing}>
+        <span ref={prefix} className="autumn-ending-started" aria-hidden="true">This</span>
         <span className="autumn-ending-game" aria-hidden="true">Game</span>
         <span className="autumn-ending-suffix" aria-hidden="true">
           <span ref={over} className="autumn-ending-over">Over</span>
