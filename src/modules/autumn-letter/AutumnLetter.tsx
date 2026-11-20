@@ -29,6 +29,7 @@ import cinemaDoorSound from './audio/bgm_cinema-door.mp3'
 import unlockSound from './audio/bgm_unlock.mp3'
 import './autumn.css'
 
+const dogTreatLeafIndex = 13
 const fallingLeaves = (windy: boolean, lakeside: boolean, dogTrail: boolean) => Array.from({ length: dogTrail ? 84 : lakeside ? 13 : windy ? 78 : 44 }, (_, i) => {
   const tree = lakesideForegroundTrees[i % 2 === 0 ? 1 : 0]
   const [dogTreeX, dogTreeY, dogTreeSize] = dogTrailTrees[4 + i % 6]
@@ -74,6 +75,7 @@ const chestKeyId = 'leaf-pile-chest-key'
 const coupleRingsId = 'leaf-pile-couple-rings'
 const sunglassesId = 'forest-oval-sunglasses'
 const ledKeycapId = 'lakeside-led-keycap'
+const dogCapId = 'dog-trail-blue-nba-cap'
 const endingId = 'cinema-ending'
 const endingDuration = 10800
 const phoneId = 'trail-phone'
@@ -94,6 +96,7 @@ export default function AutumnLetter({ progress, save }: {
   const closeup = map === 'lakeside-bench'
   const silhouetteVisible = closeup && progress.discoveries.includes(skyPhotoId)
   const dogTrail = map === 'fifth-trail'
+  const leaves = fallingLeaves(forest, closeup || map === 'fourth-trail', dogTrail)
   const cinema = map === 'sixth-trail'
   const cinemaHall = map === 'cinema-hall'
   const cinemaRoom = map === 'cinema-room'
@@ -122,6 +125,7 @@ export default function AutumnLetter({ progress, save }: {
   const sunglassesAcquired = progress.discoveries.includes(sunglassesId)
   const ledKeycapAcquired = progress.discoveries.includes(ledKeycapId)
   const plushBoxAcquired = progress.discoveries.includes(plushBoxId)
+  const dogCapAcquired = progress.discoveries.includes(dogCapId)
   const showScenePickup = cinema ? !flyerAcquired : closeup ? !thirdLetterAcquired : dogTrail && !fourthLetterAcquired
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
@@ -319,7 +323,9 @@ export default function AutumnLetter({ progress, save }: {
             top: `${lakesideSilhouette.y / sceneHeight * 100}%`,
           }}><Person /></button>}
         {!closeup && !atCinema && <div className="autumn-falling" aria-hidden="true">
-          {fallingLeaves(forest, lakeside, dogTrail).map((style, i) => <i key={i} style={style as CSSProperties} />)}
+          {leaves.map((style, i) => dogTrail && i === dogTreatLeafIndex && !dogCapAcquired
+            ? null
+            : <i key={i} style={style as CSSProperties} />)}
         </div>}
         {closeup && showScenePickup && <button className="autumn-scene-letter" type="button" aria-label="벤치 위 편지 읽기"
           style={{ left: `${lakesideLetter.x / sceneWidth * 100}%`, top: `${lakesideLetter.y / sceneHeight * 100}%` }}
@@ -343,7 +349,8 @@ export default function AutumnLetter({ progress, save }: {
           onShake={id => save({ type: 'discover', id })}
           onPickup={() => save({ type: 'discover', id: sunglassesId })} />}
         {dogTrail && <>
-          <AutumnDogWalk />
+          <AutumnDogWalk hatAcquired={dogCapAcquired} treatStyle={leaves[dogTreatLeafIndex] as CSSProperties}
+            onFetchHat={() => save({ type: 'discover', id: dogCapId })} />
           {showScenePickup && <button className="autumn-scene-letter" type="button" aria-label="나무에 놓인 편지 읽기"
             style={{ left: `${dogTrailLetter.x / sceneWidth * 100}%`, top: `${dogTrailLetter.y / sceneHeight * 100}%` }}
             onClick={() => openLetter(fourthLetterId)} />}
@@ -377,7 +384,7 @@ export default function AutumnLetter({ progress, save }: {
       {cinemaHall && flyerAcquired && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <div key={map} className={`autumn-walk-fade ${cinemaRoom ? 'autumn-cinema-arrival' : ''}`} aria-hidden="true" />}
       <div className="autumn-walk-inventory" inert={Boolean(cinemaHall && cinemaEntry)}>
-        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired || plushBoxAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
+        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired || plushBoxAcquired || dogCapAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
           {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
             <span className="autumn-chest-rings" aria-hidden="true"><i /><b /></span>
           </span>}
@@ -390,6 +397,9 @@ export default function AutumnLetter({ progress, save }: {
           {ledKeycapAcquired && <AutumnLedKeycap />}
           {plushBoxAcquired && <span className="autumn-collectible-item" role="img" aria-label="인형뽑기 인형이 담긴 상자">
             <AutumnPlushBox />
+          </span>}
+          {dogCapAcquired && <span className="autumn-collectible-item" role="img" aria-label="획득한 파란색 NBA 모자">
+            <span className="autumn-nba-cap" aria-hidden="true">NBA</span>
           </span>}
         </div>}
         <div className="autumn-walk-items" aria-label="기본 아이템" role="group">
