@@ -4,7 +4,7 @@ import { useSoundEffect } from './useSoundEffect'
 import cameraErrorSound from './audio/bgm-camera-error.mp3'
 import AutumnCamera from './AutumnCamera'
 import Person from './Person'
-import { phoneDaytimeMessage, phoneHint, phoneNumberMessage, secondLetter, skyPhotoId } from './clues'
+import { phoneDaytimeMessage, phoneHint, phoneNumberMessage, plushBoxId, secondLetter, skyPhotoId } from './clues'
 import type { ProgressAction } from './progress'
 import lockWallpaper from './phone-lock-wallpaper.jpg'
 
@@ -86,6 +86,8 @@ export default function AutumnPhone({ dialog, save, cameraAvailable, cameraActiv
     <audio ref={cameraErrorAudio} src={cameraErrorSound} preload="auto" />
     {cameraPermission === 'open' ? <AutumnCamera
       active={cameraActive} savedPhoto={discoveries.includes(skyPhotoId)}
+      plushBoxCollected={discoveries.includes(plushBoxId)}
+      onCollectPlushBox={() => save({ type: 'discover', id: plushBoxId })}
       onCapture={() => save({ type: 'discover', id: skyPhotoId })}
       onError={playCameraError} onClose={() => setCameraPermission('ready')} /> : <div className="autumn-phone">
       <div className="autumn-phone-camera" aria-hidden="true" />

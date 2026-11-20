@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, noodleStopperId, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
+import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, noodleStopperId, plushBoxId, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
 import { cinemaPosters } from './cinemaHall'
 import { cinemaExit } from './cinemaRoom'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
@@ -14,6 +14,7 @@ import AutumnNoodleStopper from './AutumnNoodleStopper'
 import AutumnShrubPuzzle from './AutumnShrubPuzzle'
 import AutumnSunglasses, { AutumnHangingSunglasses } from './AutumnSunglasses'
 import AutumnLedKeycap from './AutumnLedKeycap'
+import AutumnPlushBox from './AutumnPlushBox'
 import AutumnEnding from './AutumnEnding'
 import AutumnCinemaCredits from './AutumnCinemaCredits'
 import AutumnSettings from './AutumnSettings'
@@ -120,6 +121,7 @@ export default function AutumnLetter({ progress, save }: {
   const stopperAcquired = progress.discoveries.includes(noodleStopperId)
   const sunglassesAcquired = progress.discoveries.includes(sunglassesId)
   const ledKeycapAcquired = progress.discoveries.includes(ledKeycapId)
+  const plushBoxAcquired = progress.discoveries.includes(plushBoxId)
   const showScenePickup = cinema ? !flyerAcquired : closeup ? !thirdLetterAcquired : dogTrail && !fourthLetterAcquired
   const currentLetterIndex = collectedLetters.indexOf(activeLetter)
   const previousLetter = collectedLetters[currentLetterIndex - 1]
@@ -375,7 +377,7 @@ export default function AutumnLetter({ progress, save }: {
       {cinemaHall && flyerAcquired && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <div key={map} className={`autumn-walk-fade ${cinemaRoom ? 'autumn-cinema-arrival' : ''}`} aria-hidden="true" />}
       <div className="autumn-walk-inventory" inert={Boolean(cinemaHall && cinemaEntry)}>
-        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
+        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired || plushBoxAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
           {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
             <span className="autumn-chest-rings" aria-hidden="true"><i /><b /></span>
           </span>}
@@ -386,6 +388,9 @@ export default function AutumnLetter({ progress, save }: {
             <AutumnSunglasses />
           </span>}
           {ledKeycapAcquired && <AutumnLedKeycap />}
+          {plushBoxAcquired && <span className="autumn-collectible-item" role="img" aria-label="인형뽑기 인형이 담긴 상자">
+            <AutumnPlushBox />
+          </span>}
         </div>}
         <div className="autumn-walk-items" aria-label="기본 아이템" role="group">
           {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}

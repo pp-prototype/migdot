@@ -604,6 +604,68 @@
 }
 .autumn-noodle-stopper { display: block; width: 100%; height: auto; }
 .autumn-collectible-item .autumn-noodle-stopper { width: 38px; }
+.autumn-plush-box {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 1px;
+  width: 39px;
+  height: 43px;
+  padding: 18px 2px 3px;
+}
+.autumn-plush-box::after {
+  position: absolute;
+  inset: 29px 0 0;
+  border: 1px solid #775135;
+  border-radius: 2px 2px 4px 4px;
+  background: linear-gradient(#d4a574 24%, #af744d 25% 85%, #915939 86%);
+  content: "";
+}
+.autumn-plush-box i {
+  position: relative;
+  width: 12px;
+  height: 15px;
+  border-radius: 46%;
+  background: var(--plush-color);
+  box-shadow: -3px -4px 0 -2px var(--plush-color), 3px -4px 0 -2px var(--plush-color);
+}
+.autumn-plush-box i::before {
+  position: absolute;
+  top: 5px;
+  left: 3px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #312735;
+  box-shadow: 4px 0 #312735;
+  content: "";
+}
+.autumn-plush-box i:nth-child(1) { --plush-color: #eed29b; rotate: -12deg; }
+.autumn-plush-box i:nth-child(2) { --plush-color: #ce9ecf; translate: 0 -2px; }
+.autumn-plush-box i:nth-child(3) { --plush-color: #9fc8b8; rotate: 12deg; }
+.autumn-plush-claw {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 4px;
+  height: 10px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: linear-gradient(90deg, #77788d, #fff 55%, #9b9db1);
+  filter: drop-shadow(0 1px 1px #201826);
+}
+.autumn-plush-claw::before, .autumn-plush-claw::after {
+  position: absolute;
+  top: 6px;
+  width: 13px;
+  height: 12px;
+  border: 2.5px solid #eceaf5;
+  border-radius: 70% 28% 55% 48%;
+  content: "";
+}
+.autumn-plush-claw::before { right: 1px; border-right: 0; rotate: -19deg; }
+.autumn-plush-claw::after { left: 1px; border-left: 0; border-radius: 28% 70% 48% 55%; rotate: 19deg; }
 .autumn-key-item {
   display: grid;
   place-items: center;
@@ -1734,6 +1796,56 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.autumn-constellation {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.autumn-camera-preview .autumn-constellation-lines {
+  position: absolute;
+  inset: 0;
+  object-fit: fill;
+}
+.autumn .autumn-constellation-star {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  background: transparent;
+  color: #fff8d7;
+  font-size: 1.35rem;
+  line-height: 1;
+  text-shadow: 0 0 8px #a3ceff, 0 0 18px #d8e9ff;
+  pointer-events: auto;
+}
+.autumn-constellation-star span { animation: autumn-constellation-twinkle 1.65s ease-in-out infinite alternate; }
+.autumn .autumn-constellation-star:disabled {
+  color: #dbf4ff;
+  pointer-events: none;
+}
+.autumn-constellation-star:disabled span { animation: none; }
+@keyframes autumn-constellation-twinkle {
+  from { opacity: .67; scale: .88; }
+  to { opacity: 1; scale: 1.13; }
+}
+.autumn-constellation-reward {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  display: grid;
+  place-items: center;
+  translate: -50% -50%;
+  animation: autumn-constellation-reward-in 1.4s .18s ease-out both;
+}
+.autumn-constellation-reward .autumn-plush-box { scale: 1.55; }
+@keyframes autumn-constellation-reward-in {
+  from { opacity: 0; transform: translateY(.25rem); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .autumn-camera-settings {
   position: absolute;
