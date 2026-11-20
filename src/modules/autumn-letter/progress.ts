@@ -2,8 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 
 const saveKey = 'migdot:autumn-letter:progress'
 const saveVersion = 1
-const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail'] as const
+export const cinemaFlyerId = 'cinema-flyer'
+const legacyFlyerLetterId = 'fifth-letter'
+
+export function clearAutumnProgress() {
+  localStorage.removeItem(saveKey)
+}
+
+const maps = ['first-trail', 'second-trail', 'third-trail', 'fourth-trail', 'lakeside-bench', 'fifth-trail', 'sixth-trail', 'cinema-hall', 'cinema-room'] as const
 export type MapId = typeof maps[number]
+
+export function isLeafPileUnlocked(digits: number[]) {
+  return digits.join('') === '7524'
+}
 
 export type Progress = {
   version: typeof saveVersion
@@ -17,6 +28,7 @@ export type Progress = {
 
 export type ProgressAction =
   | { type: 'admit' }
+  | { type: 'restart' }
   | { type: 'visit-map'; id: MapId }
   | { type: 'read-letter'; id: string; side: 'front' | 'back' }
   | { type: 'discover'; id: string }
@@ -44,9 +56,12 @@ function parseSave(value: unknown): Progress | null {
   if (!isRecord(value) || value.version !== saveVersion || value.admitted !== true) return null
 
   const savedMaps = ids(value.unlockedMaps)
-  const unlockedMaps = maps.filter(id => id === 'first-trail' || savedMaps.includes(id))
+  const currentMap = maps.find(id => id === value.currentMap) ?? 'first-trail'
+  const unlockedMaps = maps.filter(id => id === 'first-trail' || id === currentMap || savedMaps.includes(id))
   const letters = isRecord(value.letters) ? value.letters : {}
-  const acquired = ids(letters.acquired)
+  const savedLetters = ids(letters.acquired)
+  const acquired = savedLetters.filter(id => id !== legacyFlyerLetterId)
+  const discoveries = ids(value.discoveries)
   const puzzles = isRecord(value.puzzles) ? value.puzzles : {}
   const lock = puzzles.leafPileLock
   const digits = Array.isArray(lock) && lock.length === 4 &&
@@ -56,10 +71,10 @@ function parseSave(value: unknown): Progress | null {
   return {
     version: saveVersion,
     admitted: true,
-    currentMap: unlockedMaps.find(id => id === value.currentMap) ?? 'first-trail',
+    currentMap,
     unlockedMaps,
     letters: { acquired, backsRead: ids(letters.backsRead).filter(id => acquired.includes(id)) },
-    discoveries: ids(value.discoveries),
+    discoveries: savedLetters.includes(legacyFlyerLetterId) ? add(discoveries, cinemaFlyerId) : discoveries,
     puzzles: { leafPileLock: digits },
   }
 }
@@ -72,6 +87,8 @@ function applyProgress(current: Progress, action: ProgressAction): Progress {
   switch (action.type) {
     case 'admit':
       return { ...current, admitted: true, unlockedMaps: add(current.unlockedMaps, 'first-trail') }
+    case 'restart':
+      return { ...initialProgress, admitted: true, unlockedMaps: ['first-trail'] }
     case 'visit-map':
       return { ...current, currentMap: action.id, unlockedMaps: add(current.unlockedMaps, action.id) }
     case 'read-letter':
@@ -85,6 +102,7 @@ function applyProgress(current: Progress, action: ProgressAction): Progress {
     case 'discover':
       return { ...current, discoveries: add(current.discoveries, action.id) }
     case 'rotate-lock-dial':
+      if (isLeafPileUnlocked(current.puzzles.leafPileLock)) return current
       return {
         ...current,
         puzzles: {
@@ -150,6 +168,7 @@ export function useAutumnProgress() {
         storageFailed.current = true
       }
     }
+    return next
   }
 
   return { progress, save }

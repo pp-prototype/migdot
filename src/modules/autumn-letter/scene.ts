@@ -1,4 +1,7 @@
 import type { MapId } from './progress'
+import { drawCinema } from './cinemaScene'
+import { drawCinemaHall } from './cinemaHall'
+import { drawCinemaRoom } from './cinemaRoom'
 
 export const sceneWidth = 480
 export const sceneHeight = 270
@@ -29,6 +32,7 @@ export const dogTrailTrees = [
   [88, 198, .76], [382, 201, .84], [59, 229, 1.33], [453, 238, 1.55],
   [3, 260, 2.03], [487, 260, 2.01],
 ] as const
+export const dogTrailLetter = { x: dogTrailTrees[4][0] + 3, y: dogTrailTrees[4][1] - 26 }
 const lockPileY = 227
 const lockPileOffset = 47
 const pathWidth = (y: number) => 4 + (y - 164) * 1.51
@@ -72,7 +76,7 @@ export function drawLakeCameraSky(canvas: HTMLCanvasElement, exposure: number) {
   if (ctx) drawLakeSky(ctx, true, seededRandom(514), canvas.height, exposure)
 }
 
-export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId) {
+export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, map: MapId, showPickup: boolean) {
   const walking = map !== 'first-trail'
   const forest = map === 'third-trail'
   const closeup = map === 'lakeside-bench'
@@ -86,6 +90,18 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
   background.setTransform(2, 0, 0, 2, 0, 0)
   foliage.setTransform(2, 0, 0, 2, 0, 0)
   foliage.clearRect(0, 0, sceneWidth, sceneHeight)
+  if (map === 'sixth-trail') {
+    drawCinema(background, sceneWidth, sceneHeight, seededRandom(631), showPickup)
+    return
+  }
+  if (map === 'cinema-hall') {
+    drawCinemaHall(background, sceneWidth, sceneHeight)
+    return
+  }
+  if (map === 'cinema-room') {
+    drawCinemaRoom(background, sceneWidth, sceneHeight)
+    return
+  }
   let ctx = background
 
   const block = (color: string, x: number, y: number, w: number, h: number) => {
@@ -293,6 +309,17 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       ctx.restore()
       drawLamp(x, y, size, false)
     }
+    if (showPickup) {
+      ctx.save()
+      ctx.translate(dogTrailLetter.x, dogTrailLetter.y)
+      ctx.rotate(-.16)
+      block('#3a2930', -7, -3, 15, 10)
+      block('#dcc196', -7, -5, 14, 9)
+      branch('#9b7963', -6, -4, 0, 0, 1)
+      branch('#9b7963', 6, -4, 0, 0, 1)
+      oval('#813c48', 0, 0, 1.5, 1.5)
+      ctx.restore()
+    }
     return
   }
 
@@ -316,7 +343,7 @@ export function drawScene(canvas: HTMLCanvasElement, canopy: HTMLCanvasElement, 
       block(y % 6 === 0 ? '#746772' : '#7d7079', 0, y, sceneWidth, 1)
     }
     ctx = foliage
-    drawBench(lakesideLetter.x, 230, 2.35, true)
+    drawBench(lakesideLetter.x, 230, 2.35, showPickup)
     drawLamp(closeupLampBase.x, closeupLampBase.y, closeupLampScale, true, closeupLampHeight)
     return
   }

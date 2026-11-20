@@ -15,6 +15,204 @@
   container-type: size;
 }
 
+.autumn-stage.autumn-ending {
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  background: #fff;
+}
+.autumn-ending.autumn-ending-playing { background: transparent; }
+.autumn-ending-light, .autumn-ending-wash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+}
+.autumn-ending-light { animation: autumn-ending-light var(--ending-duration) linear both; }
+.autumn-ending-wash { animation: autumn-ending-wash var(--ending-duration) linear both; }
+.autumn-ending-character {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: min(72cqw, 87cqh);
+  aspect-ratio: 1;
+  translate: -50% 0;
+  transform-origin: center bottom;
+  mix-blend-mode: multiply;
+  animation: autumn-ending-approach var(--ending-duration) ease-in-out both;
+}
+.autumn-ending-pose {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image: var(--ending-poses);
+  background-repeat: no-repeat;
+  background-size: 300% 100%;
+}
+.autumn-ending-back {
+  background-position: left;
+  filter: grayscale(1) brightness(.74) contrast(12);
+  animation: autumn-ending-back var(--ending-duration) linear both;
+}
+.autumn-ending-turn {
+  background-position: center;
+  animation: autumn-ending-turn var(--ending-duration) linear both;
+}
+.autumn-ending-smile {
+  background-position: right;
+  transform-origin: center 85%;
+  animation: autumn-ending-smile var(--ending-duration) ease-in-out both;
+}
+.autumn-ending-title {
+  position: relative;
+  margin: 0;
+  color: #261e25;
+  display: flex;
+  justify-content: center;
+  gap: .24em;
+  font: 500 clamp(1.4rem, min(7.8cqw, 11cqh), 6rem) / 1.15 Georgia, serif;
+  letter-spacing: .035em;
+  white-space: nowrap;
+}
+.autumn-ending-message {
+  position: relative;
+}
+.autumn-ending-suffix {
+  display: grid;
+  justify-items: start;
+}
+.autumn-ending-suffix span { grid-area: 1 / 1; }
+.autumn-ending-over { opacity: 0; translate: var(--ending-center-offset, 0px) 0; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-over {
+  animation: autumn-ending-over .55s 1.2s ease-in both;
+}
+.autumn-ending-playing .autumn-ending-game { translate: var(--ending-center-offset, 0px) 0; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-game {
+  animation: autumn-ending-game .65s 1.75s ease-in-out both;
+}
+.autumn-ending-started { opacity: 1; }
+.autumn-ending:not(.autumn-ending-playing) .autumn-ending-started {
+  animation: autumn-ending-started .65s 2.4s ease-out both;
+}
+.autumn-ending-playing .autumn-ending-over { opacity: 1; }
+.autumn-ending-playing .autumn-ending-started { opacity: 0; }
+.autumn .autumn-ending-continue {
+  position: absolute;
+  top: calc(100% + 1.25rem);
+  left: 50%;
+  translate: -50% 0;
+  min-height: 44px;
+  padding: .5rem 1rem;
+  border: 0;
+  background: transparent;
+  color: #aaa;
+  white-space: nowrap;
+  animation: autumn-ending-continue .6s 3.38s ease-out both;
+}
+.autumn-ending-playing .autumn-ending-title {
+  animation: autumn-ending-title var(--ending-duration) ease-out both;
+}
+@keyframes autumn-ending-light {
+  0% { opacity: 0; }
+  14%, 100% { opacity: 1; }
+}
+@keyframes autumn-ending-approach {
+  0%, 14% { transform: scale(.27) translateY(-8%); }
+  43% { transform: scale(.82) translateY(-1%); }
+  58% { transform: scale(.94); }
+  76%, 100% { transform: scale(1); }
+}
+@keyframes autumn-ending-back {
+  0%, 14% { opacity: 0; }
+  23%, 41% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+@keyframes autumn-ending-turn {
+  0%, 40% { opacity: 0; transform: perspective(720px) rotateY(-22deg) translateX(3%); }
+  49%, 53% { opacity: 1; transform: perspective(720px) rotateY(-5deg); }
+  61%, 100% { opacity: 0; transform: perspective(720px) rotateY(2deg); }
+}
+@keyframes autumn-ending-smile {
+  0%, 53% { opacity: 0; transform: perspective(720px) rotateY(-7deg) rotate(-1deg); }
+  62% { opacity: 1; transform: perspective(720px) rotateY(0) rotate(-.6deg); }
+  73% { transform: scale(1.025) rotate(.9deg); }
+  81%, 100% { opacity: 1; transform: scale(1.015) rotate(.2deg); }
+}
+@keyframes autumn-ending-wash {
+  0%, 76% { opacity: 0; }
+  88%, 100% { opacity: 1; }
+}
+@keyframes autumn-ending-title {
+  0%, 89% { opacity: 0; transform: translateY(.35em); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes autumn-ending-over {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes autumn-ending-game {
+  from { translate: var(--ending-center-offset, 0px) 0; }
+  to { translate: 0 0; }
+}
+@keyframes autumn-ending-started {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes autumn-ending-continue {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+.autumn .autumn-settings-toggle {
+  position: absolute;
+  top: max(.75rem, env(safe-area-inset-top));
+  right: max(.75rem, env(safe-area-inset-right));
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font: 1.55rem / 1 system-ui, sans-serif;
+}
+
+.autumn-settings-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(calc(100% - 2rem), 23rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 1.25rem;
+  border: 1px solid #a57458;
+  border-radius: 4px;
+  background: #f6e3bc;
+  color: #492f2c;
+}
+
+.autumn-settings-dialog::backdrop { background: #251625a3; }
+.autumn-settings-dialog h2 { font-size: 1.25rem; }
+.autumn-settings-dialog p { margin-top: .75rem; line-height: 1.6; word-break: keep-all; }
+.autumn-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .65rem;
+  margin-top: 1rem;
+}
+
+.autumn .autumn-settings-actions button {
+  min-width: 4.5rem;
+  min-height: 44px;
+  padding-inline: .75rem;
+  border-color: #a57458;
+}
+
+.autumn .autumn-settings-actions .autumn-settings-reset {
+  background: #754044;
+  color: #fff5e9;
+}
+
 .autumn-scene {
   position: absolute;
   top: 50%;
@@ -148,6 +346,13 @@
 .autumn-paper p { line-height: 1.7; }
 .autumn-paper .autumn-close { position: absolute; right: .3rem; top: .16rem; border: 0; font-size: 1.3rem; line-height: 1; min-width: 44px; min-height: 44px; }
 .autumn-paper .autumn-return { margin-top: .45rem; }
+.autumn-paper.autumn-conversation {
+  height: auto;
+  grid-template-rows: auto auto;
+  padding-top: 2.75rem;
+}
+.autumn-conversation p { word-break: keep-all; overflow-wrap: anywhere; }
+.autumn-conversation .autumn-return { min-height: 44px; padding-inline: .75rem; }
 @media (prefers-reduced-motion: reduce) {
   .autumn *, .autumn-dialog[open] { animation: none !important; }
   .autumn-falling, .autumn-walk-fade { display: none; }
@@ -261,6 +466,56 @@
   from { opacity: .92; }
   to { opacity: 0; }
 }
+.autumn-cinema-fade-out, .autumn-walk-fade.autumn-cinema-arrival {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #000;
+}
+.autumn-cinema-fade-out { animation: autumn-cinema-darken 750ms ease-in both; }
+.autumn-walk-fade.autumn-cinema-arrival { animation-name: autumn-cinema-reveal; }
+@keyframes autumn-cinema-darken {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes autumn-cinema-reveal {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.autumn-cinema-screen {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font: 400 max(10px, 2.25cqh) / 1.4 system-ui, sans-serif;
+}
+.autumn-cinema-exit {
+  position: absolute;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  translate: -50% -50%;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+}
+@media (hover: hover) {
+  .autumn-cinema-exit:hover { box-shadow: 0 0 12px #efa85b85; }
+}
+.autumn-cinema-credits {
+  position: absolute;
+  inset-inline: 0;
+  animation: autumn-cinema-roll 28s linear .65s infinite both;
+}
+.autumn-cinema-credits p { margin: 0 0 1.65em; }
+@keyframes autumn-cinema-roll {
+  from { top: 100%; transform: translateY(0); }
+  to { top: 0; transform: translateY(-100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .autumn-cinema-screen { overflow: auto; }
+  .autumn-cinema-credits { position: static; padding: .5em; }
+}
 .autumn-visually-hidden {
   position: absolute;
   width: 1px;
@@ -324,11 +579,48 @@
   color: #000;
 }
 .autumn-walk-control:is(:hover, :active) span { scale: 1.12; }
-.autumn-walk-items {
-  display: flex;
+.autumn-walk-inventory {
   position: absolute;
+  display: grid;
   left: max(1rem, env(safe-area-inset-left));
   bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.autumn-walk-items { display: flex; }
+.autumn-rings-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 44px;
+}
+.autumn-rings-item .autumn-chest-rings {
+  position: absolute;
+  scale: .55;
+}
+.autumn-key-item {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: #e8bc74;
+}
+.autumn-key-icon {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  translate: -4px -4px;
+  rotate: 40deg;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+.autumn-key-icon::after {
+  position: absolute;
+  top: 8px;
+  left: 2px;
+  width: 7px;
+  height: 15px;
+  background: currentColor;
+  clip-path: polygon(0 0, 55% 0, 55% 52%, 100% 52%, 100% 69%, 55% 69%, 55% 82%, 100% 82%, 100% 100%, 0 100%);
+  content: "";
 }
 .autumn-envelope {
   position: relative;
@@ -427,6 +719,16 @@
   background: #bc927e;
   clip-path: polygon(50% 0, 87% 13%, 100% 43%, 66% 60%, 81% 100%, 19% 100%, 34% 60%, 0 43%, 13% 13%);
   content: "";
+}
+
+.autumn-chest-icon {
+  width: 25px;
+  height: 19px;
+  border: 2px solid currentColor;
+  border-radius: 7px 7px 3px 3px;
+  background:
+    linear-gradient(currentColor, currentColor) center 8px / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center 7px / 5px 6px no-repeat;
 }
 
 .autumn-lock-dialog {
@@ -580,8 +882,175 @@
   background: linear-gradient(#72635b, #dbccaf 49%, #77685f);
 }
 .autumn-lock { animation: autumn-lock-zoom .42s cubic-bezier(.19, .8, .28, 1) both; }
+.autumn-lock.autumn-lock-unlocking { animation: autumn-lock-dismiss 650ms ease-in both; }
+@keyframes autumn-lock-dismiss {
+  0%, 35% { opacity: 1; }
+  to { opacity: 0; translate: 0 .6rem; scale: .93; }
+}
 @keyframes autumn-chest-reveal {
   from { opacity: .2; transform: translateY(12px) scale(.88); }
+}
+
+.autumn-chest-open { animation-duration: .65s; }
+.autumn-chest-open .autumn-chest-lid {
+  position: relative;
+  z-index: 1;
+  transform-origin: center bottom;
+  animation: autumn-chest-lift .85s ease-out both;
+}
+@keyframes autumn-chest-lift {
+  from { transform: translateY(5rem) scaleY(.65); }
+  to { transform: perspective(270px) rotateX(-25deg); }
+}
+.autumn-chest-open .autumn-chest-front {
+  position: relative;
+  height: 64px;
+}
+.autumn-chest-open .autumn-chest-front::after {
+  position: absolute;
+  inset: .5rem auto auto 50%;
+  width: 23px;
+  height: 15px;
+  translate: -50% 0;
+  border: 1px solid #744924;
+  border-radius: 2px;
+  background: #c69857;
+  content: "";
+}
+.autumn-chest-interior {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  place-items: center;
+  height: 88px;
+  padding-inline: .35rem;
+  overflow: hidden;
+  border: 5px solid #895d3c;
+  border-block-width: 2px 3px;
+  background: radial-gradient(ellipse at bottom, #8e5249, #49303a 75%);
+  box-shadow: inset 0 5px 9px #211724ac;
+  animation: autumn-chest-contents .85s ease both;
+}
+@keyframes autumn-chest-contents {
+  0%, 25% { opacity: 0; }
+  to { opacity: 1; }
+}
+.autumn .autumn-chest-item-button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.autumn-chest-note-slot { grid-area: 1 / 1; }
+.autumn-chest-rings-slot { grid-area: 1 / 2; }
+.autumn-chest-key-slot { grid-area: 1 / 3; width: 51px; min-height: 45px; }
+.autumn-chest-note {
+  width: 39px;
+  aspect-ratio: 1;
+  border: 1px solid #c8a984;
+  background:
+    linear-gradient(45deg, #e2c8a7 48%, #b79b7d 49% 51%, #f6ead4 52%) right bottom / 52% 52% no-repeat,
+    linear-gradient(180deg, #f8ecd6 0 48%, #cfb495 49% 51%, #eddbc0 52%);
+  box-shadow: 2px 3px 4px #281c29a8;
+  rotate: -11deg;
+}
+.autumn-chest-rings {
+  position: relative;
+  width: 76px;
+  height: 48px;
+}
+.autumn-chest-rings i, .autumn-chest-rings b {
+  position: absolute;
+  border: 5px solid;
+  border-color: #f1f2f4 #b4b8c1 #7d828f #d6d9e1;
+  border-radius: 39%;
+  box-shadow: inset 0 1px 2px #171523a8, 0 3px 4px #26182485;
+}
+.autumn-chest-rings i {
+  inset: 7px auto auto 1px;
+  width: 41px;
+  height: 33px;
+  rotate: -19deg;
+}
+.autumn-chest-rings b {
+  inset: 15px 1px auto auto;
+  width: 33px;
+  height: 27px;
+  border-width: 4px;
+  rotate: 17deg;
+}
+.autumn-chest-keyring {
+  position: relative;
+  display: block;
+  width: 51px;
+  height: 45px;
+  rotate: 14deg;
+}
+.autumn-chest-keyring i, .autumn-chest-keyring b {
+  position: absolute;
+  border: 2px solid #dfb773;
+  border-radius: 50%;
+}
+.autumn-chest-keyring i { inset: 5px auto auto 6px; width: 17px; height: 17px; }
+.autumn-chest-keyring b { inset: 14px auto auto 2px; width: 15px; height: 15px; }
+.autumn-chest-keyring b::after {
+  position: absolute;
+  top: 9px;
+  left: 4px;
+  width: 7px;
+  height: 19px;
+  background: #dfb773;
+  clip-path: polygon(0 0, 62% 0, 62% 50%, 100% 50%, 100% 70%, 62% 70%, 62% 81%, 100% 81%, 100% 100%, 0 100%);
+  content: "";
+}
+.autumn-chest-quokka-charm {
+  position: absolute;
+  top: 17px;
+  right: 0;
+  width: 25px;
+  height: 26px;
+  border-radius: 48%;
+  background: radial-gradient(ellipse at 50% 71%, #d9b995 0 27%, #a18262 31%);
+  box-shadow: 1px 2px 3px #2518239c;
+}
+.autumn-chest-quokka-charm::before {
+  position: absolute;
+  inset: -7px -1px auto;
+  height: 19px;
+  border-radius: 46%;
+  background:
+    radial-gradient(circle at 29% 42%, #32232a 0 1px, transparent 1.6px),
+    radial-gradient(circle at 71% 42%, #32232a 0 1px, transparent 1.6px),
+    radial-gradient(ellipse at 50% 59%, #433036 0 1.7px, transparent 2.4px),
+    radial-gradient(ellipse at 50% 68%, #e0c6a4 0 24%, transparent 27%),
+    #ab8a68;
+  box-shadow: -6px -6px 0 -4px #ab8a68, 6px -6px 0 -4px #ab8a68;
+  content: "";
+}
+.autumn-chest-quokka-charm::after {
+  position: absolute;
+  top: -12px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #dfb773;
+  border-radius: 50%;
+  content: "";
+}
+.autumn-chest .autumn-chest-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  color: #fff2d9;
+  font-size: 1.4rem;
+  text-shadow: 0 1px 3px #211724;
 }
 @keyframes autumn-lock-zoom {
   from { opacity: .3; transform: scale(.32); }
@@ -939,13 +1408,30 @@
   50% { opacity: .67; transform: translateX(8px) scaleX(1.1); }
 }
 
-.autumn-bench-letter {
+.autumn-scene-letter {
   position: absolute;
   width: 48px;
   height: 44px;
   transform: translate(-50%, -50%);
   border: 0;
   background: transparent;
+}
+.autumn-cinema-elevator {
+  width: max(44px, 10.5%);
+  height: max(44px, 19%);
+}
+.autumn-held-flyer {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: clamp(7rem, 21cqw, 13rem);
+  aspect-ratio: 210 / 297;
+  object-fit: cover;
+  object-position: 46% center;
+  border: 1px solid #c9ab92;
+  box-shadow: 0 0 18px #180e1a9e;
+  transform: translate(-50%, 71%) rotate(-10deg);
+  pointer-events: none;
 }
 .autumn-paper-with-nav { padding-inline: 2.55rem; }
 .autumn-paper .autumn-letter-nav {
@@ -1206,3 +1692,80 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
 }
 .autumn-dog-spitz { left: 40.8%; top: 64.5%; width: 8%; height: 20%; }
 .autumn-dog-corgi { left: 58.8%; top: 67.5%; width: 12%; height: 29%; }
+
+.autumn-box-letter .autumn-letter-hint {
+  margin-top: .9rem;
+  color: #816b5d;
+  font-size: .8rem;
+}
+
+@font-face {
+  font-family: "Cinema Handwriting";
+  src: url("./cinema-handwriting.woff") format("woff");
+  font-display: swap;
+}
+
+.autumn-flyer-icon {
+  width: 16px;
+  aspect-ratio: 210 / 297;
+  border: 1.5px solid currentColor;
+  background: url("./cinema-flyer.jpg") center / cover;
+  rotate: -8deg;
+}
+.autumn-paper.autumn-paper-flyer {
+  height: auto;
+  grid-template-rows: auto;
+  padding-top: 2.5rem;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+.autumn-paper-flyer .autumn-flyer-sheet {
+  position: relative;
+  display: block;
+  width: min(100%, calc((var(--letter-height) - 4.25rem) * 210 / 297));
+  aspect-ratio: 210 / 297;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 1px 3px 1px 2px;
+  box-shadow: 0 5px 15px #130d16a3;
+  transform: perspective(850px) rotateY(-8deg) rotate(-5deg);
+}
+.autumn-flyer-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 46% center;
+}
+.autumn-flyer-art::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(163deg, transparent 35%, #f3dcc947 37%, #20161b44 38%, transparent 42%),
+    linear-gradient(24deg, transparent 59%, #1710164a 61%, #fff0d83f 62%, transparent 64%),
+    linear-gradient(105deg, #130c1260, transparent 15% 83%, #fff2dc35);
+  pointer-events: none;
+  content: "";
+}
+.autumn-paper-flyer .autumn-flyer-back {
+  overflow: auto;
+  padding: clamp(.95rem, 3vw, 1.6rem);
+  background: #fff;
+  color: #443e46;
+  text-align: left;
+  word-break: keep-all;
+}
+.autumn-flyer-back .autumn-letter-face {
+  font-family: "Cinema Handwriting", cursive;
+  font-size: 1.06rem;
+  line-height: 1.36;
+}
+.autumn-flyer-back span { display: block; }
+.autumn-flyer-title { margin-bottom: .6rem; font-size: 1.12rem; }
+.autumn-flyer-hint {
+  margin-top: .9rem;
+  color: #767078;
+  font-size: .88rem;
+}
