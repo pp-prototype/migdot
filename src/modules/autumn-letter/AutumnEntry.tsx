@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import AutumnLetter from './AutumnLetter'
 import { entryCode } from './clues'
@@ -7,11 +7,34 @@ import quokkaSeal from './quokka-seal.png'
 import './entry.css'
 
 const nicknames = ['곰찌', '깨비', '오깨', '곰카']
+const entryNotice = {
+  title: '플레이 안내',
+  message: '해당 게임은 접속 시 공유버튼 -> 홈 화면 내보내기를 통해 전체 화면으로 보시기를 권장합니다.',
+}
+
+function EntryNotice({ onClose }: { onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+
+  useLayoutEffect(() => {
+    const element = dialog.current
+    if (element && !element.open) element.showModal()
+  }, [])
+
+  return <dialog ref={dialog} className="autumn-entry-notice" onClose={onClose}
+    aria-labelledby="autumn-entry-notice-title" aria-describedby="autumn-entry-notice-message">
+    <h2 id="autumn-entry-notice-title">{entryNotice.title}</h2>
+    <p id="autumn-entry-notice-message">{entryNotice.message}</p>
+    <form method="dialog">
+      <button>OKAY</button>
+    </form>
+  </dialog>
+}
 
 export default function AutumnEntry() {
   const { progress, save } = useAutumnProgress()
   const [answer, setAnswer] = useState('')
   const [wrong, setWrong] = useState(false)
+  const [showNotice, setShowNotice] = useState(false)
 
   function enter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -20,9 +43,13 @@ export default function AutumnEntry() {
       return
     }
     save({ type: 'admit' })
+    setShowNotice(true)
   }
 
-  if (progress.admitted) return <AutumnLetter progress={progress} save={save} />
+  if (progress.admitted) return <>
+    <AutumnLetter progress={progress} save={save} />
+    {showNotice && <EntryNotice onClose={() => setShowNotice(false)} />}
+  </>
 
   return <main className="autumn-entry">
     <form className="autumn-entry-card" onSubmit={enter}>

@@ -102,6 +102,42 @@
 .autumn-entry button:disabled { opacity: .66; cursor: default; }
 .autumn-entry p { color: #833f4f; font-size: .9rem; }
 
+.autumn-entry-notice {
+  position: fixed;
+  inset: 0;
+  width: min(calc(100% - 2rem), 24rem);
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: clamp(1.25rem, 5vw, 2rem);
+  border: 1px solid #ddd2bc;
+  border-radius: 4px;
+  background: #eee5d6;
+  color: #342f3c;
+  font-family: Georgia, "Noto Serif KR", serif;
+  text-align: center;
+  box-shadow: 0 18px 45px #10121e80;
+}
+
+.autumn-entry-notice::backdrop { background: #10121eb3; }
+.autumn-entry-notice h2 { font-size: 1.5rem; font-weight: 700; }
+.autumn-entry-notice p {
+  margin-block: .85rem 1.35rem;
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.autumn-entry-notice button {
+  min-width: 7rem;
+  min-height: 44px;
+  padding-inline: 1rem;
+  border: 1px solid #60455c;
+  border-radius: 4px;
+  background: #60455c;
+  color: #fff5e9;
+  cursor: pointer;
+}
+
 @keyframes autumn-entry-in {
   from { opacity: 0; transform: translateY(8px); }
 }
