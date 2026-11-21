@@ -1,3 +1,4 @@
+import { sunglassesText } from './text'
 import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { forestSunglasses, sceneHeight, sceneWidth } from './scene'
@@ -23,13 +24,13 @@ export function AutumnHangingSunglasses({ discoveries, onShake, onPickup }: {
     return <button type="button"
       className={`autumn-sunglasses-pickup autumn-sunglasses-ground ${animateDrop ? 'autumn-sunglasses-drop' : ''}`}
       style={{ left, top: `${197 / sceneHeight * 100}%`, '--sunglasses-hanging-top': hangingTop } as CSSProperties}
-      aria-label="바닥에 떨어진 검은 선글라스 줍기" onClick={onPickup}>
+      aria-label={sunglassesText.take} onClick={onPickup}>
       <AutumnSunglasses />
     </button>
   }
 
   return <button className="autumn-sunglasses-pickup autumn-sunglasses-hanging" type="button"
-    style={{ left, top: hangingTop }} aria-label="나뭇가지에 걸린 검은 선글라스 흔들기"
+    style={{ left, top: hangingTop }} aria-label={sunglassesText.shake}
     onClick={() => {
       setShake(current => current + 1)
       if (nextTap === taps[taps.length - 1]) setAnimateDrop(true)

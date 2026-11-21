@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, noodleStopperId, plushBoxId, skyPhotoId, thirdLetter, thirdLetterHint } from './clues'
-import { cinemaPosters } from './cinemaHall'
+import { cinemaPosters, constellationText, dogWalkText, finalLetter, firstLetter, firstLetterBack, firstLetterBackHint, fourthLetter, fourthLetterHint, thirdLetter, thirdLetterHint, walkText } from './text'
+import { noodleStopperId, plushBoxId, skyPhotoId } from './clues'
 import { cinemaExit } from './cinemaRoom'
 import { cinemaElevator, cinemaFlyer } from './cinemaScene'
 import cinemaFlyerArt from './cinema-flyer.jpg'
@@ -63,10 +63,10 @@ const thirdLetterId = 'third-letter'
 const fourthLetterId = 'fourth-letter'
 const finalLetterId = 'final-letter'
 const letters = {
-  [firstLetterId]: { title: '첫 편지', text: firstLetter },
-  [thirdLetterId]: { title: '세 번째 편지', text: thirdLetter },
-  [fourthLetterId]: { title: '네 번째 편지', text: fourthLetter },
-  [finalLetterId]: { title: '클리어 성공!', text: finalLetter },
+  [firstLetterId]: { title: walkText.firstLetter, text: firstLetter },
+  [thirdLetterId]: { title: walkText.thirdLetter, text: thirdLetter },
+  [fourthLetterId]: { title: walkText.fourthLetter, text: fourthLetter },
+  [finalLetterId]: { title: walkText.finalLetter, text: finalLetter },
 }
 const letterOrder = [firstLetterId, thirdLetterId, fourthLetterId, finalLetterId] as const
 type LetterId = keyof typeof letters
@@ -262,7 +262,7 @@ export default function AutumnLetter({ progress, save }: {
       lockedExitDialog.current?.showModal()
       return
     }
-    playCinemaDoor()
+    playFootsteps()
     setEndingPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     save({ type: 'discover', id: endingId })
   }
@@ -274,8 +274,8 @@ export default function AutumnLetter({ progress, save }: {
     <audio ref={cinemaDoorAudio} src={cinemaDoorSound} preload="auto" />
     <div className="autumn-stage" inert={ending}>
       <section className={`autumn-scene ${atCinema ? '' : dogTrail ? 'autumn-scene-dog-trail' : closeup ? 'autumn-scene-lake-closeup' : lakeside ? 'autumn-scene-lakeside' : forest ? 'autumn-scene-forest' : walking ? 'autumn-scene-walking' : ''}`}
-        aria-label={cinemaRoom ? '2층 1관 상영관 내부' : cinemaHall ? '여섯 번째 산책로 안쪽, 영화관 2층 1관 앞' : cinema ? '작은 영화관이 있는 여섯 번째 산책로' : dogTrail ? '강아지 둘과 걷는 다섯 번째 산책로' : closeup ? '호숫가 벤치와 가로등' : lakeside ? '별이 뜬 네 번째 산책로' : forest ? '바람 부는 세 번째 산책로' : walking ? '함께 걷는 가을 산책로' : '가을 산책로'}
-        aria-description={cinemaRoom ? '빨간 좌석 사이 계단이 스크린으로 이어지고 옆 출구가 주황빛으로 빛난다.' : cinemaHall ? '상영관 양문 옆에 좌석배치도와 포스터 세 장이 있다.' : cinema ? '주차장 앞 3층 영화관의 1층 유리 너머로 엘리베이터에 불이 켜져 있다. 가까운 큰 자동차 위에 영화표와 영화 전단지가 놓여 있다.' : undefined}>
+        aria-label={cinemaRoom ? walkText.auditorium : cinemaHall ? walkText.cinemaHall : cinema ? walkText.cinema : dogTrail ? walkText.dogTrail : closeup ? walkText.nearBench : lakeside ? walkText.lake : forest ? walkText.forest : walking ? walkText.trail : walkText.entryTrail}
+        aria-description={cinemaRoom ? walkText.auditoriumDescription : cinemaHall ? walkText.hallDescription : cinema ? walkText.cinemaDescription : undefined}>
         <canvas ref={canvas} width={sceneWidth * 2} height={sceneHeight * 2} className="autumn-landscape" aria-hidden="true" />
         {walking && !lakeside && !dogTrail && !atCinema && <div className="autumn-clouds" aria-hidden="true">
           {Array.from({ length: forest ? 9 : 3 }, (_, index) => <i key={index}
@@ -306,7 +306,7 @@ export default function AutumnLetter({ progress, save }: {
         </div>}
         {closeup && !ledKeycapAcquired && <button type="button" className="autumn-lake-keycap-pickup"
           style={{ left: `${(lakesideLetter.x + 18) / sceneWidth * 100}%`, top: `${235 / sceneHeight * 100}%` }}
-          aria-label="가로등 불빛에 반짝이는 금속 조각 줍기"
+          aria-label={walkText.takeKeycap}
           onClick={event => {
             const flashes = Array.from(event.currentTarget.children)
             if (flashes.some(flash => Number(getComputedStyle(flash).opacity) > .05)) {
@@ -316,7 +316,7 @@ export default function AutumnLetter({ progress, save }: {
           {lampFlashStyles.map(style => <i key={style.animationDelay} className="autumn-lake-flash" style={style} aria-hidden="true" />)}
         </button>}
         {silhouetteVisible && <button type="button" className="autumn-lake-silhouette"
-          aria-label="가로등 아래 남자의 손을 잡고 다음 산책로로 가기"
+          aria-label={walkText.takeHand}
           onClick={takeHand}
           style={{
             left: `${lakesideSilhouette.x / sceneWidth * 100}%`,
@@ -327,22 +327,22 @@ export default function AutumnLetter({ progress, save }: {
             ? null
             : <i key={i} style={style as CSSProperties} />)}
         </div>}
-        {closeup && showScenePickup && <button className="autumn-scene-letter" type="button" aria-label="벤치 위 편지 읽기"
+        {closeup && showScenePickup && <button className="autumn-scene-letter" type="button" aria-label={walkText.benchLetter}
           style={{ left: `${lakesideLetter.x / sceneWidth * 100}%`, top: `${lakesideLetter.y / sceneHeight * 100}%` }}
           onClick={() => openLetter(thirdLetterId)} />}
         {map === 'fourth-trail' && <button className="autumn-bench-approach" type="button"
-          aria-label="가로등과 벤치 쪽으로 다가가기" onClick={approachBench} />}
-        {!walking && <button className="autumn-object autumn-person" aria-label="인물에게 편지 받기" disabled={firstLetterAcquired}
+          aria-label={walkText.approachBench} onClick={approachBench} />}
+        {!walking && <button className="autumn-object autumn-person" aria-label={walkText.acceptLetter} disabled={firstLetterAcquired}
           onClick={() => openLetter(firstLetterId)}><Person /></button>}
         {map === 'second-trail' && !lockFound && <button type="button" className="autumn-lock-pile"
           style={{ left: `${lockPile.x / sceneWidth * 100}%`, top: `${lockPile.y / sceneHeight * 100}%` }}
-          aria-label="낙엽 더미 살펴보기" onClick={() => {
+          aria-label={walkText.lookUnderLeaves} onClick={() => {
             save({ type: 'discover', id: leafPileLockId })
             setLockView('chest')
           }} />}
         {map === 'second-trail' && <AutumnShrubPuzzle tree={puzzleTree} discoveries={progress.discoveries}
           discover={id => save({ type: 'discover', id })} />}
-        {forest && !phoneFound && <button className="autumn-phone-ground" type="button" aria-label="길가의 스마트폰 살펴보기" onClick={openPhone}>
+        {forest && !phoneFound && <button className="autumn-phone-ground" type="button" aria-label={walkText.inspectPhone} onClick={openPhone}>
           <span className="autumn-phone-icon" aria-hidden="true" />
         </button>}
         {forest && !sunglassesAcquired && <AutumnHangingSunglasses discoveries={progress.discoveries}
@@ -351,28 +351,28 @@ export default function AutumnLetter({ progress, save }: {
         {dogTrail && <>
           <AutumnDogWalk hatAcquired={dogCapAcquired} treatStyle={leaves[dogTreatLeafIndex] as CSSProperties}
             onFetchHat={() => save({ type: 'discover', id: dogCapId })} />
-          {showScenePickup && <button className="autumn-scene-letter" type="button" aria-label="나무에 놓인 편지 읽기"
+          {showScenePickup && <button className="autumn-scene-letter" type="button" aria-label={walkText.treeLetter}
             style={{ left: `${dogTrailLetter.x / sceneWidth * 100}%`, top: `${dogTrailLetter.y / sceneHeight * 100}%` }}
             onClick={() => openLetter(fourthLetterId)} />}
         </>}
         {cinema && <>
           {showScenePickup && <button className="autumn-scene-letter" type="button"
             style={{ left: `${cinemaFlyer.x / sceneWidth * 100}%`, top: `${cinemaFlyer.y / sceneHeight * 100}%` }}
-            aria-label="자동차 위 영화 전단지 읽기" onClick={openFlyer} />}
+            aria-label={walkText.carFlyer} onClick={openFlyer} />}
           <button className="autumn-scene-letter autumn-cinema-elevator" type="button"
             style={{ left: `${cinemaElevator.x / sceneWidth * 100}%`, top: `${cinemaElevator.y / sceneHeight * 100}%` }}
-            aria-label="엘리베이터를 타고 2층 1관으로 가기"
+            aria-label={walkText.elevator}
             onClick={() => {
               playFootsteps()
               save({ type: 'visit-map', id: 'cinema-hall' })
             }} />
         </>}
-        {cinemaHall && <ul className="autumn-visually-hidden" aria-label="영화 상영 정보">
+        {cinemaHall && <ul className="autumn-visually-hidden" aria-label={walkText.screenings}>
           {cinemaPosters.map(({ title, date, auditorium }) => <li key={title}>{title} · {date} · {auditorium}</li>)}
         </ul>}
         {cinemaRoom && <>
           <AutumnCinemaCredits />
-          <button className="autumn-cinema-exit" type="button" aria-label="상영관 출구 열기"
+          <button className="autumn-cinema-exit" type="button" aria-label={walkText.openExit}
             style={{
               left: `${(cinemaExit.x + cinemaExit.width / 2) / sceneWidth * 100}%`,
               top: `${(cinemaExit.y + cinemaExit.height / 2) / sceneHeight * 100}%`,
@@ -384,44 +384,44 @@ export default function AutumnLetter({ progress, save }: {
       {cinemaHall && flyerAcquired && <img className="autumn-held-flyer" src={cinemaFlyerArt} alt="" />}
       {walking && <div key={map} className={`autumn-walk-fade ${cinemaRoom ? 'autumn-cinema-arrival' : ''}`} aria-hidden="true" />}
       <div className="autumn-walk-inventory" inert={Boolean(cinemaHall && cinemaEntry)}>
-        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired || plushBoxAcquired || dogCapAcquired) && <div className="autumn-walk-items" aria-label="수집 아이템" role="group">
-          {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label="획득한 실버 커플링">
+        {(ringsAcquired || stopperAcquired || sunglassesAcquired || ledKeycapAcquired || plushBoxAcquired || dogCapAcquired) && <div className="autumn-walk-items" aria-label={walkText.collectibles} role="group">
+          {ringsAcquired && <span className="autumn-rings-item" role="img" aria-label={walkText.rings}>
             <span className="autumn-chest-rings" aria-hidden="true"><i /><b /></span>
           </span>}
-          {stopperAcquired && <span className="autumn-collectible-item" role="img" aria-label="획득한 흰 햄스터 도자기 누들 스토퍼">
+          {stopperAcquired && <span className="autumn-collectible-item" role="img" aria-label={walkText.stopper}>
             <AutumnNoodleStopper />
           </span>}
-          {sunglassesAcquired && <span className="autumn-collectible-item" role="img" aria-label="획득한 검은 타원형 선글라스">
+          {sunglassesAcquired && <span className="autumn-collectible-item" role="img" aria-label={walkText.sunglasses}>
             <AutumnSunglasses />
           </span>}
           {ledKeycapAcquired && <AutumnLedKeycap />}
-          {plushBoxAcquired && <span className="autumn-collectible-item" role="img" aria-label="인형뽑기 인형이 담긴 상자">
+          {plushBoxAcquired && <span className="autumn-collectible-item" role="img" aria-label={constellationText.reward}>
             <AutumnPlushBox />
           </span>}
-          {dogCapAcquired && <span className="autumn-collectible-item" role="img" aria-label="획득한 파란색 NBA 모자">
-            <span className="autumn-nba-cap" aria-hidden="true">NBA</span>
+          {dogCapAcquired && <span className="autumn-collectible-item" role="img" aria-label={walkText.cap}>
+            <span className="autumn-nba-cap" aria-hidden="true">{dogWalkText.capMark}</span>
           </span>}
         </div>}
-        <div className="autumn-walk-items" aria-label="기본 아이템" role="group">
-          {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? '보관한 편지 읽기' : '첫 편지 다시 읽기'}
+        <div className="autumn-walk-items" aria-label={walkText.inventory} role="group">
+          {storedLetter && <button className="autumn-walk-control" type="button" aria-label={canBrowseLetters || !firstLetterAcquired ? walkText.readLetters : walkText.rereadFirst}
             onClick={() => openLetter(storedLetter)}>
             <span className="autumn-envelope" aria-hidden="true" />
           </button>}
           {phoneFound && <button className="autumn-walk-control" type="button"
-            aria-label={thirdLetterAcquired ? '스마트폰 다시 보기, 새 알림' : '스마트폰 다시 보기'} onClick={openPhone}>
+            aria-label={thirdLetterAcquired ? walkText.phoneNotification : walkText.reopenPhone} onClick={openPhone}>
             <span className="autumn-phone-icon" aria-hidden="true">
               {thirdLetterAcquired && <i className="autumn-phone-notification" />}
             </span>
           </button>}
           {lockFound && <button className="autumn-walk-control" type="button"
-            aria-label={chestUnlocked ? '열린 상자 보기' : '자물쇠 다시 열기'} onClick={openLock}>
+            aria-label={chestUnlocked ? walkText.viewChest : walkText.reopenLock} onClick={openLock}>
             <span className={chestUnlocked ? 'autumn-chest-icon' : 'autumn-lock-icon'} aria-hidden="true" />
           </button>}
-          {flyerAcquired && <button className="autumn-walk-control" type="button" aria-label="보관한 영화 전단지 보기"
+          {flyerAcquired && <button className="autumn-walk-control" type="button" aria-label={walkText.storedFlyer}
             onClick={openFlyer}>
             <span className="autumn-flyer-icon" aria-hidden="true" />
           </button>}
-          {keyAcquired && <span className="autumn-key-item" role="img" aria-label="획득한 쿼카 키링 열쇠">
+          {keyAcquired && <span className="autumn-key-item" role="img" aria-label={walkText.key}>
             <span className="autumn-key-icon" aria-hidden="true" />
           </span>}
         </div>
@@ -429,7 +429,7 @@ export default function AutumnLetter({ progress, save }: {
       {walking && <>
         <div className="autumn-next" inert={Boolean(cinemaHall && cinemaEntry)}>
           {(forest || lakeside || dogTrail || atCinema) && <button className="autumn-walk-control autumn-walk-back" type="button"
-            aria-label={cinemaRoom ? '1관 복도로 돌아가기' : cinemaHall ? '영화관 주차장으로 돌아가기' : cinema ? '다섯 번째 산책로로 돌아가기' : dogTrail ? '호숫가 벤치로 돌아가기' : closeup ? '호수공원 입구로 돌아가기' : lakeside ? '세 번째 산책로로 돌아가기' : '두 번째 산책로로 돌아가기'}
+            aria-label={cinemaRoom ? walkText.backToHall : cinemaHall ? walkText.backToParking : cinema ? walkText.backToDogs : dogTrail ? walkText.backToBench : closeup ? walkText.backToLake : lakeside ? walkText.backToForest : walkText.backToSecond}
             onClick={() => {
               playFootsteps()
               save({ type: 'visit-map', id: cinemaRoom ? 'cinema-hall' : cinemaHall ? 'sixth-trail' : cinema ? 'fifth-trail' : dogTrail ? 'lakeside-bench' : closeup ? 'fourth-trail' : lakeside ? 'third-trail' : 'second-trail' })
@@ -437,10 +437,10 @@ export default function AutumnLetter({ progress, save }: {
             <span className="autumn-steps" aria-hidden="true"><i /><i /></span>
           </button>}
           {cinemaHall && <button className="autumn-walk-control autumn-cinema-enter" type="button"
-            aria-label="1관 안으로 들어가기" onClick={enterCinemaRoom}>
+            aria-label={walkText.enterAuditorium} onClick={enterCinemaRoom}>
             <span className="autumn-steps" aria-hidden="true"><i /><i /></span>
           </button>}
-          {!closeup && !atCinema && <button className="autumn-walk-control" type="button" aria-label="다음 산책길"
+          {!closeup && !atCinema && <button className="autumn-walk-control" type="button" aria-label={walkText.nextTrail}
             onClick={lakeside ? approachBench : () => {
               playFootsteps()
               save({ type: 'visit-map', id: dogTrail ? 'sixth-trail' : forest ? 'fourth-trail' : 'third-trail' })
@@ -449,7 +449,7 @@ export default function AutumnLetter({ progress, save }: {
           </button>}
         </div>
         <span className="autumn-visually-hidden" role="status">
-          {cinemaRoom ? '1관 안으로 들어왔어.' : cinemaHall ? '2층 1관 앞에 도착했어.' : cinema ? '작은 영화관 앞에 도착했어.' : dogTrail ? '두 강아지와 함께 밤길을 걷기 시작했어.' : closeup ? '호숫가 벤치에 도착했어.' : lakeside ? '별이 뜬 호수공원에 도착했어.' : forest ? '바람 부는 세 번째 산책로에 도착했어.' : '함께 가을 산책을 시작했어.'}
+          {cinemaRoom ? walkText.arrivedAuditorium : cinemaHall ? walkText.arrivedHall : cinema ? walkText.arrivedCinema : dogTrail ? walkText.arrivedDogs : closeup ? walkText.arrivedBench : lakeside ? walkText.arrivedLake : forest ? walkText.arrivedForest : walkText.startedWalk}
         </span>
       </>}
       {cinemaHall && cinemaEntry === 'fade' && <div className="autumn-cinema-fade-out" aria-hidden="true" />}
@@ -461,7 +461,7 @@ export default function AutumnLetter({ progress, save }: {
     <dialog ref={dialog} className={`autumn-dialog ${walking ? '' : 'autumn-dialog-delivery'}`} aria-labelledby="autumn-letter-title">
       {!walking && <div className="autumn-delivery-person" aria-hidden="true"><Person /></div>}
       <div className={`autumn-paper ${canBrowseLetters ? 'autumn-paper-with-nav' : ''}`}>
-        <button className="autumn-close" aria-label="편지 닫기" onClick={() => dialog.current?.close()}>×</button>
+        <button className="autumn-close" aria-label={walkText.closeLetter} onClick={() => dialog.current?.close()}>×</button>
         <article className="autumn-box-letter" aria-live="polite">
           <h2 id="autumn-letter-title">{letters[activeLetter].title}</h2>
           <p key={`${activeLetter}-${letterBack}`} className="autumn-letter-face">
@@ -469,24 +469,24 @@ export default function AutumnLetter({ progress, save }: {
           </p>
           {letterHint && <p className="autumn-letter-hint">{letterHint}</p>}
         </article>
-        {!walking && showingFirst && <button className="autumn-return" onClick={startWalking}>산책로를 걸어보기</button>}
+        {!walking && showingFirst && <button className="autumn-return" onClick={startWalking}>{walkText.startWalking}</button>}
         {canBrowseLetters && <>
           <button className="autumn-letter-nav autumn-letter-prev" type="button"
-            aria-label={previousLetter ? `${letters[previousLetter].title} 보기` : '이전 편지'}
+            aria-label={previousLetter ? walkText.viewLetter(letters[previousLetter].title) : walkText.previousLetter}
             disabled={!previousLetter} onClick={() => previousLetter && selectLetter(previousLetter)}>‹</button>
           <button className="autumn-letter-nav autumn-letter-next" type="button"
-            aria-label={nextLetter ? `${letters[nextLetter].title} 보기` : '다음 편지'}
+            aria-label={nextLetter ? walkText.viewLetter(letters[nextLetter].title) : walkText.nextLetter}
             disabled={!nextLetter} onClick={() => nextLetter && selectLetter(nextLetter)}>›</button>
         </>}
         {walking && showingFirst && <button className="autumn-page-corner" type="button" onClick={flipLetter}
-          aria-label={letterBack ? '편지 앞면 보기' : '편지 뒷면 보기'} />}
+          aria-label={letterBack ? walkText.letterFront : walkText.letterBack} />}
       </div>
     </dialog>
 
     <AutumnFlyer dialog={flyerDialog} />
     <dialog ref={lockDialog}
       className={`autumn-dialog autumn-lock-dialog ${showingChest ? 'autumn-chest-dialog' : ''}`}
-      aria-label={showingOpenChest ? '열린 상자' : showingChest ? '낙엽 아래 숨겨진 상자' : '네 자리 다이얼 자물쇠'}
+      aria-label={showingOpenChest ? walkText.openedChest : showingChest ? walkText.hiddenChest : walkText.dialLock}
       onClose={() => setLockView(null)}
       onClick={event => { if (event.target === event.currentTarget) event.currentTarget.close() }}>
       {showingChest && <div className={`autumn-chest ${showingOpenChest ? 'autumn-chest-open' : ''}`}>
@@ -499,11 +499,11 @@ export default function AutumnLetter({ progress, save }: {
           ringsAcquired={ringsAcquired}
           onTakeRings={() => save({ type: 'discover', id: coupleRingsId })} />}
         <div className="autumn-chest-front" aria-hidden="true" />
-        {!showingOpenChest && <button className="autumn-chest-lock" type="button" aria-label="상자에 걸린 자물쇠 살펴보기" onClick={openLock}>
+        {!showingOpenChest && <button className="autumn-chest-lock" type="button" aria-label={walkText.inspectLock} onClick={openLock}>
           <span className="autumn-chest-shackle" aria-hidden="true" />
           <span className="autumn-chest-padlock" aria-hidden="true"><i /><i /><i /><i /></span>
         </button>}
-        {showingOpenChest && <button className="autumn-chest-close" type="button" aria-label="상자 닫기"
+        {showingOpenChest && <button className="autumn-chest-close" type="button" aria-label={walkText.closeChest}
           onClick={() => lockDialog.current?.close()}>×</button>}
       </div>}
       {(lockView === 'unlocking' || (lockView === 'dial' && !chestUnlocked)) && <div
@@ -513,7 +513,7 @@ export default function AutumnLetter({ progress, save }: {
           <div className="autumn-lock-wheels">
             {digits.map((digit, index) => <button key={index} type="button" className="autumn-lock-wheel"
               ref={index === 0 ? firstDial : undefined}
-              aria-label={`${index + 1}번째 다이얼, 현재 ${digit}`} disabled={lockView === 'unlocking'} onClick={() => rotateDial(index)}>
+              aria-label={walkText.dial(index + 1, digit)} disabled={lockView === 'unlocking'} onClick={() => rotateDial(index)}>
               <span className={`autumn-lock-drum ${turnedDials.includes(index) ? 'autumn-lock-drum-turning' : ''}`}
                 aria-hidden="true" key={digit}>
                 {[-2, -1, 0, 1].map(offset => <span key={offset}>{(digit + 10 + offset) % 10}</span>)}
@@ -525,9 +525,9 @@ export default function AutumnLetter({ progress, save }: {
     </dialog>
     <dialog ref={lockedExitDialog} className="autumn-dialog" aria-labelledby="autumn-locked-exit-title">
       <div className="autumn-paper autumn-conversation">
-        <h2 id="autumn-locked-exit-title">출구가 잠겨 있어.</h2>
-        <p>문을 열려면 열쇠가 필요해.</p>
-        <form method="dialog"><button className="autumn-return">닫기</button></form>
+        <h2 id="autumn-locked-exit-title">{walkText.exitLocked}</h2>
+        <p>{walkText.needKey}</p>
+        <form method="dialog"><button className="autumn-return">{walkText.close}</button></form>
       </div>
     </dialog>
     <AutumnPhone dialog={phoneDialog} save={save} cameraAvailable={thirdLetterAcquired} cameraActive={closeup} discoveries={progress.discoveries} />

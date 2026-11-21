@@ -1,3 +1,4 @@
+import { constellationText } from './text'
 import { useState } from 'react'
 import AutumnPlushBox from './AutumnPlushBox'
 
@@ -46,9 +47,9 @@ export default function AutumnConstellation({ collected, onComplete }: { collect
     }} />
     {stars.map(({ x, y }, index) => <button type="button" key={index} className="autumn-constellation-star"
       style={{ left: `${x}%`, top: `${y}%` }}
-      aria-label={`반짝이는 별 ${index + 1}`} disabled={path.includes(index) || collected}
+      aria-label={constellationText.star(index + 1)} disabled={path.includes(index) || collected}
       onClick={() => connect(index)}><span style={{ animationDelay: `${index * -.32}s` }} aria-hidden="true">✦</span></button>)}
-    {collected && <div className="autumn-constellation-reward" role="img" aria-label="인형뽑기 인형이 담긴 상자">
+    {collected && <div className="autumn-constellation-reward" role="img" aria-label={constellationText.reward}>
       <AutumnPlushBox />
     </div>}
   </div>

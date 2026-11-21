@@ -1,3 +1,4 @@
+import { entryNotice, entryText, nicknames } from './text'
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import AutumnLetter from './AutumnLetter'
@@ -5,12 +6,6 @@ import { entryCode } from './clues'
 import { useAutumnProgress } from './progress'
 import quokkaSeal from './quokka-seal.png'
 import './entry.css'
-
-const nicknames = ['곰찌', '깨비', '오깨', '곰카']
-const entryNotice = {
-  title: '플레이 안내',
-  message: '해당 게임은 접속 시 공유버튼 -> 홈 화면 내보내기를 통해 전체 화면으로 보시기를 권장합니다.',
-}
 
 function EntryNotice({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -25,7 +20,7 @@ function EntryNotice({ onClose }: { onClose: () => void }) {
     <h2 id="autumn-entry-notice-title">{entryNotice.title}</h2>
     <p id="autumn-entry-notice-message">{entryNotice.message}</p>
     <form method="dialog">
-      <button>OKAY</button>
+      <button>{entryText.confirm}</button>
     </form>
   </dialog>
 }
@@ -56,14 +51,14 @@ export default function AutumnEntry() {
       <div className="autumn-entry-margins">
         {nicknames.map(name => <span key={name}>{name}</span>)}
       </div>
-      <img className="autumn-entry-seal" src={quokkaSeal} alt="쿼카 봉인" />
-      <h1>우리가 된 날</h1>
+      <img className="autumn-entry-seal" src={quokkaSeal} alt={entryText.seal} />
+      <h1>{entryText.title}</h1>
       <div className="autumn-entry-password">
         <div className="autumn-entry-slots" aria-hidden="true">
           {Array.from({ length: 4 }, (_, index) =>
             <span key={index} data-filled={index < answer.length}>*</span>)}
         </div>
-        <input aria-label="비밀번호" type="password" inputMode="numeric" autoComplete="off"
+        <input aria-label={entryText.password} type="password" inputMode="numeric" autoComplete="off"
           maxLength={4} required value={answer} aria-invalid={wrong}
           aria-describedby={wrong ? 'entry-response' : undefined}
           onChange={event => {
@@ -71,8 +66,8 @@ export default function AutumnEntry() {
             setWrong(false)
           }} />
       </div>
-      <button disabled={answer.length !== 4}>들어가기</button>
-      {wrong && <p id="entry-response" role="alert">그날을 다시 떠올려 봐.</p>}
+      <button disabled={answer.length !== 4}>{entryText.enter}</button>
+      {wrong && <p id="entry-response" role="alert">{entryText.wrong}</p>}
     </form>
   </main>
 }

@@ -62,6 +62,38 @@
   transform-origin: center 85%;
   animation: autumn-ending-smile var(--ending-duration) ease-in-out both;
 }
+.autumn-ending-heartburst {
+  position: absolute;
+  left: 50%;
+  bottom: min(24cqw, 30cqh);
+  pointer-events: none;
+}
+.autumn-ending-heart {
+  position: absolute;
+  width: var(--heart-size);
+  height: var(--heart-size);
+  background: var(--heart-color);
+  opacity: 0;
+  animation: autumn-ending-heart-flight 1.6s linear both;
+  animation-delay: calc(var(--ending-duration) * .6 + var(--heart-delay));
+}
+.autumn-ending-heart::before, .autumn-ending-heart::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  content: "";
+}
+.autumn-ending-heart::before { translate: 0 -50%; }
+.autumn-ending-heart::after { translate: -50% 0; }
+@keyframes autumn-ending-heart-flight {
+  0% { opacity: 0; transform: translate(0, 0) rotate(45deg) scale(.2); }
+  12% { opacity: 1; transform: translate(calc(var(--heart-x) * .12), calc(var(--heart-rise) * .55)) rotate(40deg) scale(1.16); }
+  36% { transform: translate(calc(var(--heart-x) * .36), var(--heart-rise)) rotate(58deg) scale(1); }
+  59% { transform: translate(calc(var(--heart-x) * .59), calc(var(--heart-rise) * .73)) rotate(46deg) scale(.95); }
+  86% { opacity: .9; }
+  100% { opacity: 0; transform: translate(var(--heart-x), var(--heart-fall)) rotate(75deg) scale(.72); }
+}
 .autumn-ending-title {
   position: relative;
   margin: 0;
@@ -507,7 +539,7 @@
   inset-inline: 0;
   animation: autumn-cinema-roll 28s linear .65s infinite both;
 }
-.autumn-cinema-credits p { margin: 0 0 1.65em; }
+.autumn-cinema-credits p { margin: 0 0 1.65em; white-space: pre-line; }
 @keyframes autumn-cinema-roll {
   from { top: 100%; transform: translateY(0); }
   to { top: 0; transform: translateY(-100%); }
@@ -2069,6 +2101,11 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
   src: url("./cinema-handwriting.woff") format("woff");
   font-display: swap;
 }
+@font-face {
+  font-family: "Cinema Handwriting Korean";
+  src: url("./cinema-handwriting-korean.woff") format("woff");
+  font-display: swap;
+}
 
 .autumn-flyer-icon {
   width: 16px;
@@ -2124,7 +2161,7 @@ button.autumn-lake-silhouette:is(:hover, :focus-visible) canvas {
   word-break: keep-all;
 }
 .autumn-flyer-back .autumn-letter-face {
-  font-family: "Cinema Handwriting", cursive;
+  font-family: "Cinema Handwriting", "Cinema Handwriting Korean", cursive;
   font-size: clamp(.8rem, calc(var(--letter-height) * .039), 1.06rem);
   line-height: 1.36;
 }
