@@ -1,9 +1,4 @@
-export const cinemaPosters = [
-  { title: '화양연화', date: '10월 17일', auditorium: '1관' },
-  { title: '수능, 출제의 비밀', date: '10월 29일', auditorium: '2관' },
-  { title: '최종면접', date: '11월 13일', auditorium: '2관' },
-] as const
-
+import { cinemaHallText, cinemaPosters } from './text'
 export function drawCinemaHall(ctx: CanvasRenderingContext2D, width: number, height: number) {
   function block(color: string | CanvasGradient, x: number, y: number, w: number, h: number) {
     ctx.fillStyle = color
@@ -55,12 +50,12 @@ export function drawCinemaHall(ctx: CanvasRenderingContext2D, width: number, hei
     block('#d4a986', x + 9, 129, 30, 1)
   }
   block('#1b1923', 100, 40, 45, 16)
-  label('1관', 122, 52, 11, '#f7d2a0')
+  label(cinemaHallText.doorSign, 122, 52, 11, '#f7d2a0')
 
   // The seating diagram marks a screen, a central aisle, and six rows.
   block('#896c61', 193, 74, 59, 67)
   block('#302a38', 195, 76, 55, 63)
-  label('좌석배치도', 222, 87, 8, '#f0d5b2')
+  label(cinemaHallText.seatingChart, 222, 87, 8, '#f0d5b2')
   block('#b6a0a4', 204, 94, 36, 2)
   for (let row = 0; row < 6; row++) {
     for (let seat = 0; seat < 8; seat++) {

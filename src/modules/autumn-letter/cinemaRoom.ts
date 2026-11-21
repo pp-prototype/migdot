@@ -1,3 +1,4 @@
+import { cinemaRoomText } from './text'
 export const cinemaScreen = { x: 125, y: 35, width: 230, height: 102 }
 export const cinemaExit = { x: 385, y: 101, width: 30, height: 53 }
 
@@ -35,7 +36,7 @@ export function drawCinemaRoom(ctx: CanvasRenderingContext2D, width: number, hei
   ctx.fillStyle = '#2c2025'
   ctx.font = 'bold 6px sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('출구', exitCenter, y + 7)
+  ctx.fillText(cinemaRoomText.exitSign, exitCenter, y + 7)
 
   // The central aisle widens toward the viewer, with small amber lights on each tread.
   ctx.fillStyle = '#211b27'

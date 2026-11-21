@@ -1,3 +1,4 @@
+import { shrubsText } from './text'
 import { useState } from 'react'
 import type { RefObject } from 'react'
 import AutumnNoodleStopper from './AutumnNoodleStopper'
@@ -28,7 +29,7 @@ export default function AutumnShrubPuzzle({ tree, discoveries, discover }: {
       const touched = discoveries.includes(id)
       return <button key={id} type="button" className="autumn-shrub-touch"
         style={{ ...position(x, y), width: `${width * 2 / sceneWidth * 100}%` }}
-        aria-label={`길가 덤불 ${index + 1} 건드리기`} disabled={touched || acquired}
+        aria-label={shrubsText.touch(index + 1)} disabled={touched || acquired}
         onClick={() => {
           setRustled(current => [...current, id])
           discover(id)
@@ -38,10 +39,10 @@ export default function AutumnShrubPuzzle({ tree, discoveries, discover }: {
     })}
     {treeReady && <button type="button" className="autumn-shrub-tree-touch"
       style={position(shrubPuzzleTree.x, shrubPuzzleTree.y - 65)}
-      aria-label="흔들리는 큰 나무 건드리기" onClick={() => discover(droppedId)} />}
+      aria-label={shrubsText.shakeTree} onClick={() => discover(droppedId)} />}
     {dropped && !acquired && <button type="button" className="autumn-noodle-stopper-pickup"
       style={position(shrubPuzzleTree.x - 2, shrubPuzzleTree.y - 2)}
-      aria-label="흰 햄스터 도자기 누들 스토퍼 줍기" onClick={() => discover(noodleStopperId)}>
+      aria-label={shrubsText.takeStopper} onClick={() => discover(noodleStopperId)}>
       <AutumnNoodleStopper />
     </button>}
   </>

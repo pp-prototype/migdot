@@ -1,3 +1,4 @@
+import { dogWalkText } from './text'
 import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { useSoundEffect } from './useSoundEffect'
@@ -111,7 +112,7 @@ function animateDogWalk(canvas: HTMLCanvasElement, fetching: boolean) {
         ctx.fillStyle = '#eef6ff'
         ctx.font = 'bold 6px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText('NBA', 0, 1)
+        ctx.fillText(dogWalkText.capMark, 0, 1)
         ctx.restore()
       }
     }
@@ -215,14 +216,14 @@ export default function AutumnDogWalk({ hatAcquired, treatStyle, onFetchHat }: {
 
   return <>
     <canvas className="autumn-dog-walk" width={sceneWidth * 2} height={sceneHeight * 2}
-      ref={canvas} role="img" aria-label="두 리드줄 앞에서 걷는 작은 흰 스피츠와 큰 갈색 웰시코기" />
+      ref={canvas} role="img" aria-label={dogWalkText.scene} />
     <audio ref={audioRef} src={barkSound} preload="auto" />
-    <button className="autumn-dog-touch autumn-dog-spitz" type="button" aria-label="작은 흰 스피츠"
+    <button className="autumn-dog-touch autumn-dog-spitz" type="button" aria-label={dogWalkText.spitz}
       onClick={() => bark(4, 330, 1.24)} />
-    <button className="autumn-dog-touch autumn-dog-corgi" type="button" aria-label="큰 갈색 웰시코기"
+    <button className="autumn-dog-touch autumn-dog-corgi" type="button" aria-label={dogWalkText.corgi}
       onClick={() => bark(3, 530, 1)} />
     {!hatAcquired && !fetching && <button type="button" className="autumn-dog-treat" style={treatStyle}
-      aria-label="떨어지는 뼈 모양 강아지 간식 잡기" onClick={fetchHat}>
+      aria-label={dogWalkText.treat} onClick={fetchHat}>
       <span aria-hidden="true"><i /><i /></span>
     </button>}
   </>
