@@ -62,3 +62,17 @@ button.action:disabled {
   opacity: .45;
   cursor: default;
 }
+
+button.action.action[data-labeled] {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  width: auto;
+  height: auto;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 650;
+}

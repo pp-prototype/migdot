@@ -7,7 +7,7 @@ test.use({ baseURL: 'http://127.0.0.1:5176' })
 const uid = '22222222-2222-4222-8222-222222222222'
 async function setup(page: Page) {
   const db = await PGlite.create()
-  for (const file of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202611170001_common_auth_access.sql', 'supabase/migrations/202611170002_executioner_workspace.sql']) await db.exec(await readFile(file, 'utf8'))
+  for (const file of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202611170001_common_auth_access.sql', 'supabase/migrations/202611170002_executioner_workspace.sql', 'supabase/migrations/202611220001_execution_routine_goals.sql', 'supabase/migrations/202611220002_execution_habit_coaching.sql']) await db.exec(await readFile(file, 'utf8'))
   await db.exec(`insert into auth.users(id,email) values('${uid}','tester@example.invalid'); insert into public.app_members(user_id,role) values('${uid}','owner'); select set_config('request.jwt.claim.sub','${uid}',false);`)
   const user = { id: uid, email: 'tester@example.invalid', aud: 'authenticated', role: 'authenticated', created_at: '2026-11-17T00:00:00Z', app_metadata: { provider: 'google' }, user_metadata: {} }
   const token = `${btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))}.${btoa(JSON.stringify({ sub: uid, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test-signature`
@@ -39,7 +39,7 @@ async function setup(page: Page) {
   return { db, controls }
 }
 
-test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침해 복원한다', async ({ page }) => {
+test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침해 복원한다', async ({ page }, testInfo) => {
   const { db } = await setup(page)
   try {
     await page.goto('/execution-tracker')
@@ -64,9 +64,50 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
     await task.getByRole('button', { name: '오늘로 복귀' }).click()
     await page.getByRole('button', { name: '루틴 등록', exact: true }).click()
     await dialog.getByLabel('루틴 이름').fill('책 한 쪽 읽기')
+    await dialog.getByLabel('이 루틴의 목표').fill('매일 읽을 시간을 만들기')
+    await dialog.getByLabel('기대 결과').fill('일주일에 인상 깊은 문장 하나를 남긴다')
+    await dialog.getByLabel('시작 신호').fill('저녁 양치를 마치면')
+    await dialog.getByLabel('가장 작은 실천').fill('책 한 문장 읽기')
+    await expect(dialog.getByRole('spinbutton')).toHaveCount(0)
+    await expect(dialog.getByRole('combobox')).toHaveCount(0)
     await dialog.getByRole('button', { name: '저장', exact: true }).click()
-    await page.getByRole('button', { name: '책 한 쪽 읽기 실천' }).click()
-    await expect(page.getByRole('button', { name: '책 한 쪽 읽기 실천' })).toHaveAttribute('aria-pressed', 'true')
+    const routine = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: '책 한 쪽 읽기' }) })
+    await expect(routine.getByText('오늘 기록 전')).toBeVisible()
+    await expect(routine.getByText('레벨 1', { exact: true })).toBeVisible()
+    await expect(routine.getByText('레벨 2까지 7일')).toBeVisible()
+    await expect(page.getByText('기록하지 않은 루틴 1개', { exact: false })).toBeVisible()
+    await routine.getByRole('button', { name: '책 한 쪽 읽기 실천 기록' }).click()
+    await expect(routine.getByText('오늘 실천 완료')).toBeVisible()
+    await expect(routine.getByText('누적 1 XP · 1일 실천')).toBeVisible()
+    await page.reload()
+    await expect(routine.getByText('매일 읽을 시간을 만들기')).toBeVisible()
+    await expect(routine.getByText('일주일에 인상 깊은 문장 하나를 남긴다')).toBeVisible()
+    await expect(routine.getByText('레벨 2까지 6일')).toBeVisible()
+    await routine.getByRole('button', { name: '책 한 쪽 읽기 실천 취소' }).click()
+    await expect(routine.getByText('레벨 2까지 7일')).toBeVisible()
+    await page.getByRole('button', { name: '하루 마감하기' }).click()
+    await expect(dialog.getByText('오늘 실천 기록이 없는 루틴이 1개 있습니다.')).toBeVisible()
+    await dialog.getByRole('button', { name: '닫기' }).click()
+
+    const result = await db.query<{ data: Workspace }>('select public.get_execution_workspace() as data')
+    const { today, routines } = result.rows[0].data
+    await db.query('update public.execution_routines set created_on=$1,target_days=1 where id=$2', [shift(today, -18), routines[0].id])
+    for (const offset of [-18, -15, -11, -8, -3, -1]) {
+      await db.query('insert into public.execution_routine_checks(owner_id,routine_id,day) values($1,$2,$3)', [uid, routines[0].id, shift(today, offset)])
+    }
+    await page.reload()
+    await expect(routine.getByText('누적 6 XP · 6일 실천')).toBeVisible()
+    await expect(routine.locator('[data-level="1"] svg')).toBeVisible()
+    await routine.getByRole('button', { name: '책 한 쪽 읽기 실천 기록' }).click()
+    await expect(page.getByRole('status').filter({ hasText: '레벨 2 달성!' })).toBeVisible()
+    await expect(routine.getByText('첫 7일 달성')).toBeVisible()
+    await expect(routine.locator('[data-level="2"] svg')).toBeVisible()
+    await page.reload()
+    await expect(routine.getByText('레벨 2', { exact: true })).toBeVisible()
+    await routine.getByRole('button', { name: '책 한 쪽 읽기 실천 취소' }).click()
+    await expect(routine.getByText('레벨 1', { exact: true })).toBeVisible()
+    await routine.getByRole('button', { name: '책 한 쪽 읽기 실천 기록' }).click()
+    await expect(routine.getByText('누적 7 XP · 7일 실천')).toBeVisible()
     await page.getByRole('button', { name: '하루 마감하기' }).click()
     await dialog.getByLabel('오늘 알게 된 것 · 선택').fill('과업을 작게 나누자')
     await dialog.getByLabel('내일의 첫 행동 · 선택').fill('목차부터 다시 읽기')
@@ -79,14 +120,14 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
     await expect(page.getByRole('button', { name: '과업 등록', exact: true })).toBeEnabled()
     await page.getByRole('link', { name: '기록', exact: true }).click()
     await expect(page.getByText(/당일 완료 0 \/ 당시 대상 1 · 이어짐 1/)).toBeVisible()
-    await page.screenshot({ path: 'docs/previews/executioner-cloud-records.png', fullPage: true })
+    await page.screenshot({ path: testInfo.outputPath('executioner-cloud-records.png'), fullPage: true })
     await page.getByRole('link', { name: '오늘', exact: true }).click()
-    await page.screenshot({ path: 'docs/previews/executioner-cloud-desktop.png', fullPage: true })
+    await page.screenshot({ path: testInfo.outputPath('executioner-cloud-desktop.png'), fullPage: true })
     for (const width of [320, 390]) {
       await page.setViewportSize({ width, height: 844 })
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     }
-    await page.screenshot({ path: 'docs/previews/executioner-cloud-mobile.png', fullPage: true })
+    await page.screenshot({ path: testInfo.outputPath('executioner-cloud-mobile.png'), fullPage: true })
   } finally { await db.close() }
 })
 
@@ -149,3 +190,55 @@ test('며칠 접속하지 않아도 이월은 중복되지 않고 과거 완료�
 function shift(day: string, count: number) {
   const value = new Date(`${day}T12:00:00Z`); value.setUTCDate(value.getUTCDate() + count); return value.toISOString().slice(0, 10)
 }
+
+test('루틴 상세 기록을 복원하고 반복과 난이도에 따라 실천을 제안한다', async ({ page }) => {
+  const { db } = await setup(page)
+  try {
+    const title = '점심 뒤 걷기'
+    const fixture = await db.query<{ data: Workspace }>(
+      'select public.change_execution_workspace(0,$1,$2::jsonb) as data',
+      ['create_routine', JSON.stringify({ title, goal: '꾸준히 움직이기', expected_outcome: '가까운 거리를 걸어서 다니기', target_days: 1 })],
+    )
+    const { today, routines: [routine] } = fixture.rows[0].data
+    await page.goto('/execution-tracker')
+    const card = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: title }) })
+    await expect(card.getByRole('heading', { name: '가볍게 시작하기' })).toBeVisible()
+    await card.getByRole('button', { name: /실천 계획 수정/ }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('시작 신호').fill('점심 식사를 마치면')
+    await dialog.getByLabel('가장 작은 실천').fill('건물 밖까지 걷기')
+    await dialog.getByRole('button', { name: '저장', exact: true }).click()
+    await expect(card.getByRole('heading', { name: '같은 신호에서 반복하기' })).toBeVisible()
+
+    await db.query('update public.execution_routines set created_on=$1,plan_since=$1 where id=$2', [shift(today, -13), routine.id])
+    for (const offset of [-11, -8, -6, -4, -2, -1]) {
+      await db.query('insert into public.execution_routine_checks(owner_id,routine_id,day,effort,plan_revision) select $1,id,$3,$4,plan_revision from public.execution_routines where id=$2', [uid, routine.id, shift(today, offset), 'easy'])
+    }
+    await page.reload()
+    const details = card.getByRole('button', { name: `${title} 상세 기록` })
+    await details.click()
+    await dialog.getByLabel('실천 내용').fill('건물 한 바퀴. 오후에 기분이 나아졌다.')
+    await dialog.getByLabel('오늘의 난이도').selectOption('easy')
+    await dialog.getByRole('button', { name: '저장', exact: true }).click()
+    await expect(card.getByRole('heading', { name: '다음 단계 시도하기' })).toBeVisible()
+    await expect(card.getByText('누적 7 XP · 7일 실천')).toBeVisible()
+    await page.reload()
+    await expect(card.getByText('건물 한 바퀴. 오후에 기분이 나아졌다.')).toBeVisible()
+    await details.click()
+    await expect(dialog.getByLabel('오늘의 난이도')).toHaveValue('easy')
+    await dialog.getByLabel('오늘의 난이도').selectOption('hard')
+    await dialog.getByRole('button', { name: '저장', exact: true }).click()
+    await expect(card.getByRole('heading', { name: '작게 다시 시작하기' })).toBeVisible()
+    await expect(card.getByText('누적 7 XP · 7일 실천')).toBeVisible()
+    await page.getByRole('link', { name: '기록', exact: true }).click()
+    await expect(page.getByText('건물 한 바퀴. 오후에 기분이 나아졌다.')).toBeVisible()
+    await expect(page.getByText('버거웠어요')).toBeVisible()
+    await page.getByRole('link', { name: '오늘', exact: true }).click()
+    await card.getByRole('button', { name: /실천 계획 수정/ }).click()
+    await dialog.getByLabel('가장 작은 실천').fill('현관까지 걷기')
+    await dialog.getByRole('button', { name: '저장', exact: true }).click()
+    await expect(card.getByText('현관까지 걷기')).toBeVisible()
+    await expect(card.getByRole('heading', { name: '같은 신호에서 반복하기' })).toBeVisible()
+    await expect(card.getByText('건물 한 바퀴. 오후에 기분이 나아졌다.')).toBeVisible()
+  } finally { await db.close() }
+})
