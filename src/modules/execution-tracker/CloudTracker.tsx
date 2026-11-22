@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { Link, NavLink, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../shared/auth/context'
 import { supabase } from '../../shared/lib/supabase'
 import { shiftDay, validDay } from './data'
 import { dayRows, effortLabels, elapsedDays, FIRST_LEVEL_DAYS, parseWorkspace, routineProgress, seoulDay, type CloudTask, type Routine, type RoutineCheck, type Workspace } from './workspace'
 import Executioner from './Executioner'
+import TrackerNavigation from './TrackerNavigation'
 import ActionButton from './ActionButton'
 import RoutinePanel, { RoutineCheckDetails } from './RoutinePanel'
 import base from './tracker.module.css'
@@ -129,7 +130,7 @@ export default function CloudTracker() {
   return <div className={`${base.tracker} ${styles.workspace}`}>
     <p className={base.breadcrumb}><Link to="/">메인</Link> / 나의 집행록</p><div className={base.heading}><div><p className={base.eyebrow}>EXECUTIONER / 나의 하루 집행록</p><h1>익스큐셔너</h1><p>과업은 이어가고, 계획의 흔적은 남깁니다.</p></div><span className={base.preview}>개인 클라우드 기록</span></div>
     <p className={styles.note}>한국 시간 기준 {today} · 내 계정의 기록만 표시합니다. 미완료 과업은 최초 날짜를 유지하며 오늘 목록에 자동으로 이어집니다.</p>
-    <nav className={base.tabs} aria-label="실행 트래커 메뉴"><NavLink to="/execution-tracker" end>오늘</NavLink><NavLink to="/execution-tracker/records">기록</NavLink></nav>
+    <TrackerNavigation />
     {errorPanel}
     {subpath !== '' && !isRecords ? <p>페이지를 찾을 수 없습니다. <Link to="/execution-tracker">오늘로 이동</Link></p> : <>
       {!isRecords ? <>

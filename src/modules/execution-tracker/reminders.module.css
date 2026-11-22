@@ -1,0 +1,74 @@
+.schedule, .device {
+  margin-block: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--slate);
+}
+
+.heading, .deviceHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px 24px;
+}
+
+.heading h2, .deviceHeading h2 { font-size: 18px; }
+.heading span, .deviceHeading p, .copy p, .install li {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--forest);
+  color: var(--accent);
+}
+
+.copy h3 { font-size: 16px; }
+.copy p, .deviceHeading p { margin-top: 4px; }
+
+.list time {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.install { border-top: 1px solid var(--line); }
+.install summary { padding: 12px 24px; min-height: 44px; font-size: 14px; cursor: pointer; }
+.install summary:focus-visible { outline: 3px solid var(--accent); outline-offset: -4px; }
+.install ul { margin: 0; padding: 0 24px 18px 44px; }
+.install li + li { margin-top: 6px; }
+
+@media (max-width: 480px) {
+  .heading, .deviceHeading, .list li, .install summary { padding-inline: 16px; }
+  .list li { grid-template-columns: 40px minmax(0, 1fr); gap: 8px 12px; }
+  .list time { grid-column: 2; justify-self: start; }
+}
+
+.failure { margin: 0 24px 16px; color: var(--ink); font-size: 14px; }

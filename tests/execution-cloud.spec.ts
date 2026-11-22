@@ -7,7 +7,7 @@ test.use({ baseURL: 'http://127.0.0.1:5176' })
 const uid = '22222222-2222-4222-8222-222222222222'
 async function setup(page: Page) {
   const db = await PGlite.create()
-  for (const file of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202611170001_common_auth_access.sql', 'supabase/migrations/202611170002_executioner_workspace.sql', 'supabase/migrations/202611220001_execution_routine_goals.sql', 'supabase/migrations/202611220002_execution_habit_coaching.sql']) await db.exec(await readFile(file, 'utf8'))
+  for (const file of ['supabase/tests/bootstrap.sql', 'supabase/migrations/202611170001_common_auth_access.sql', 'supabase/migrations/202611170002_executioner_workspace.sql', 'supabase/migrations/202611220001_execution_routine_goals.sql', 'supabase/migrations/202611220002_execution_habit_coaching.sql', 'supabase/migrations/202611220003_execution_push.sql']) await db.exec(await readFile(file, 'utf8'))
   await db.exec(`insert into auth.users(id,email) values('${uid}','tester@example.invalid'); insert into public.app_members(user_id,role) values('${uid}','owner'); select set_config('request.jwt.claim.sub','${uid}',false);`)
   const user = { id: uid, email: 'tester@example.invalid', aud: 'authenticated', role: 'authenticated', created_at: '2026-11-17T00:00:00Z', app_metadata: { provider: 'google' }, user_metadata: {} }
   const token = `${btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))}.${btoa(JSON.stringify({ sub: uid, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test-signature`
@@ -20,6 +20,16 @@ async function setup(page: Page) {
     if (req.method() === 'OPTIONS') return json({})
     if (path.endsWith('/user')) return json(user)
     if (path.endsWith('/get_app_access')) return json({ user_id: uid, approved: true, role: 'owner', module_ids: ['execution-tracker'] })
+    const pushCommand = path.split('/').at(-1)
+    if (pushCommand === 'enable_execution_push' || pushCommand === 'has_execution_push_subscription' || pushCommand === 'disable_execution_push') {
+      const { push_endpoint, encryption_key, browser_secret } = req.postDataJSON()
+      const result = pushCommand === 'enable_execution_push'
+        ? await db.query('select public.enable_execution_push($1,$2,$3)', [push_endpoint, encryption_key, browser_secret])
+        : pushCommand === 'disable_execution_push'
+          ? await db.query('select public.disable_execution_push($1)', [push_endpoint])
+          : await db.query<{ enabled: boolean }>('select public.has_execution_push_subscription($1) as enabled', [push_endpoint])
+      return json('enabled' in (result.rows[0] ?? {}) ? result.rows[0].enabled : null)
+    }
     if (path.endsWith('/get_execution_workspace')) {
       if (controls.failRead) return json({ code: 'unavailable' }, 503)
       const result = await db.query<{ data: unknown }>('select public.get_execution_workspace() as data')
@@ -44,6 +54,11 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
   try {
     await page.goto('/execution-tracker')
     await expect(page.getByText('개인 클라우드 기록')).toBeVisible()
+    const trackerMenu = page.getByRole('navigation', { name: '실행 트래커 메뉴' })
+    await trackerMenu.getByRole('link', { name: '알림 설정' }).click()
+    await expect(page.getByRole('heading', { name: '알림 설정' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '알림 켜기' })).toBeEnabled()
+    await trackerMenu.getByRole('link', { name: '오늘', exact: true }).click()
     await expect(page.getByText('아직 오늘 계획한 과업이 없습니다. 작은 일 하나부터 등록하세요.')).toBeVisible()
     await page.getByRole('button', { name: '과업 등록', exact: true }).click()
     const dialog = page.getByRole('dialog')
@@ -240,5 +255,52 @@ test('루틴 상세 기록을 복원하고 반복과 난이도에 따라 실천�
     await expect(card.getByText('현관까지 걷기')).toBeVisible()
     await expect(card.getByRole('heading', { name: '같은 신호에서 반복하기' })).toBeVisible()
     await expect(card.getByText('건물 한 바퀴. 오후에 기분이 나아졌다.')).toBeVisible()
+  } finally { await db.close() }
+})
+
+
+test('기기 알림을 켜고 새로고침한 뒤 끄면 구독이 해제된다', async ({ page }) => {
+  const { db } = await setup(page)
+  try {
+    await page.context().grantPermissions(['notifications'])
+    const cdp = await page.context().newCDPSession(page)
+    let registrationId: string | undefined
+    cdp.on('ServiceWorker.workerRegistrationUpdated', ({ registrations }) => {
+      registrationId = registrations.find(registration => registration.scopeURL === 'http://127.0.0.1:5176/' && !registration.isDeleted)?.registrationId ?? registrationId
+    })
+    await cdp.send('ServiceWorker.enable')
+    await page.addInitScript(() => {
+      Object.defineProperty(Notification, 'permission', { value: 'granted' })
+      const endpoint = 'https://fcm.googleapis.com/fcm/send/local-ui-test'
+      const subscription = {
+        endpoint,
+        toJSON: () => ({ endpoint, keys: { p256dh: 'A'.repeat(87), auth: 'A'.repeat(22) } }),
+        unsubscribe: async () => { sessionStorage.removeItem('test-push-endpoint'); return true },
+      }
+      PushManager.prototype.getSubscription = async () =>
+        sessionStorage.getItem('test-push-endpoint') ? subscription as PushSubscription : null
+      PushManager.prototype.subscribe = async () => {
+        sessionStorage.setItem('test-push-endpoint', endpoint)
+        return subscription as PushSubscription
+      }
+    })
+    await page.goto('/execution-tracker/reminders')
+    await page.getByRole('button', { name: '알림 켜기' }).click()
+    await expect(page.getByRole('button', { name: '알림 끄기' })).toBeEnabled()
+    await page.reload()
+    await expect(page.getByRole('button', { name: '알림 끄기' })).toBeEnabled()
+    await expect.poll(() => registrationId).toBeDefined()
+    await cdp.send('ServiceWorker.deliverPushMessage', {
+      origin: 'http://127.0.0.1:5176',
+      registrationId: registrationId!,
+      data: JSON.stringify({ kind: 'routines', count: 2, day: '2026-11-22' }),
+    })
+    await expect.poll(() => page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready
+      return (await registration.getNotifications({ tag: 'execution-routines-2026-11-22' })).map(item => item.body)
+    })).toContain('오늘 실천 기록이 없는 루틴이 2개 있어요.')
+    await page.getByRole('button', { name: '알림 끄기' }).click()
+    await expect(page.getByRole('button', { name: '알림 켜기' })).toBeEnabled()
+    expect((await db.query('select id from public.execution_push_subscriptions')).rows).toHaveLength(0)
   } finally { await db.close() }
 })
