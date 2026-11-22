@@ -14,7 +14,7 @@ test('허브와 문서 페이지의 이동·검색·새로고침', async ({ page
   page.on('response', response => { if (response.status() >= 400) console.log('HTTP error:', response.status(), response.url()) })
   await page.goto('/')
   await expect(page.getByRole('heading', { name: 'MIG DOT', exact: true })).toBeVisible()
-  await expect(page.locator('main a.card')).toHaveCount(5)
+  await expect(page.locator('main a.card')).toHaveCount(6)
   await expect(page.locator('.apps-section').getByRole('link', { name: /포스트잇 러너/ })).toBeVisible()
   await expect(page.locator('.recent-list a')).toHaveCount(4)
   await page.screenshot({ path: 'docs/previews/hub-desktop.png', fullPage: true })
@@ -84,7 +84,14 @@ test('앱 탭은 데스크톱과 모바일에서 상단에 고정되고 앱으�
   for (const width of [1440, 320]) {
     await page.setViewportSize({ width, height: 600 })
     await page.goto('/')
-    await expect(appNav.getByRole('link')).toHaveCount(2)
+    const cards = page.locator('.apps-section a.card')
+    await expect(cards).toHaveCount(3)
+    await expect(page.locator('.apps-section').getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
+    await expect(page.locator('.apps-section').getByRole('heading', { name: '메타 월렛', exact: true })).toBeVisible()
+    const hrefs = await cards.evaluateAll(links => links.map(link => link.getAttribute('href')))
+    await expect.poll(() => appNav.getByRole('link').evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual(hrefs)
+    for (const link of await appNav.getByRole('link').all()) await expect(link).toBeInViewport()
+
     expect((await appNav.boundingBox())!.y).toBeGreaterThan(0)
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await expect.poll(() => appNav.evaluate(nav => nav.getBoundingClientRect().top)).toBe(0)
@@ -93,4 +100,6 @@ test('앱 탭은 데스크톱과 모바일에서 상단에 고정되고 앱으�
     await expect(page).toHaveURL('/post-it-learner')
     await expect(learner).toHaveAttribute('aria-current', 'page')
   }
+  await appNav.getByRole('link', { name: '메타 월렛' }).click()
+  await expect(page).toHaveURL('/meta-wallet')
 })
