@@ -12,10 +12,10 @@ export default defineConfig({
     viewport: { width: 1440, height: 1000 },
   },
   webServer: [{
-    command: 'npm run dev -- --host 127.0.0.1 --port 5177 --strictPort',
+    command: 'npm run dev:local -- --host 127.0.0.1 --port 5177 --strictPort',
     url: 'http://127.0.0.1:5177',
     reuseExistingServer: false,
-    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_PUBLISHABLE_KEY: '' },
+    env: { VITE_SUPABASE_URL: 'https://preview-must-ignore.supabase.co', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_preview_must_ignore' },
   }, {
     command: 'npm run dev -- --config vite.auth-test.config.ts --host 127.0.0.1 --port 5176 --strictPort',
     url: 'http://127.0.0.1:5176',

@@ -40,8 +40,21 @@ function Home() {
   </>
 }
 
+function AppNavigation() {
+  const auth = useAuth()
+  const apps = modules.filter(module => module.kind === 'app' && auth.canAccess(module.id))
+
+  if (apps.length === 0) return null
+
+  return <nav className="app-nav" aria-label="내 앱">
+    <div className="app-nav-inner">
+      {apps.map(module => <NavLink key={module.id} to={module.path}>{module.title}</NavLink>)}
+    </div>
+  </nav>
+}
+
 export default function App() {
   const auth = useAuth()
   const recordModules = modules.filter(module => module.kind === 'records' && auth.canAccess(module.id))
-  return <div className="app"><a className="skip-link" href="#main">본문으로 이동</a><header className="site-header"><div className="header-inner"><Link className="brand" to="/" aria-label="MIG DOT 메인">MIG<span className="brand-dot" />DOT</Link><nav aria-label="주 메뉴" style={{ gridTemplateColumns: `repeat(${recordModules.length + 1}, 1fr)` }}><NavLink to="/" end><Icon name="home" /><span>메인</span></NavLink>{recordModules.map(module => <NavLink key={module.id} to={module.path}><Icon name={module.id} /><span>{module.title}</span></NavLink>)}</nav><div className="auth-controls">{auth.status === 'ready' && auth.user ? <><span className="account-name" title={auth.user.email}>내 계정</span>{auth.access?.role === 'owner' && <Link to="/settings/access">권한 관리</Link>}<button onClick={() => void auth.signOut()}>로그아웃</button></> : <Link to="/login">{auth.status === 'preview' ? '로그인 설정' : '로그인'}</Link>}</div></div></header><main id="main" className="main-container"><Routes><Route path="/" element={<Home />} /><Route path="/login" element={<LoginPage />} /><Route path="/auth/callback" element={<AuthCallbackPage />} /><Route path="/settings/access" element={<RequireAccess ownerOnly><AccessAdminPage /></RequireAccess>} />{modules.map(({ id, path, kind, component: Page }) => <Route key={id} path={kind === 'app' ? `${path}/*` : path} element={<RequireAccess moduleId={id}><ModuleBoundary key={`${id}:${auth.user?.id ?? 'preview'}`}><Suspense fallback={<p role="status">모듈을 불러오는 중입니다…</p>}><Page /></Suspense></ModuleBoundary></RequireAccess>} />)}<Route path="*" element={<section className="not-found"><p className="eyebrow">404</p><h1>페이지를 찾을 수 없습니다.</h1><Link className="text-link" to="/">메인으로 이동 <Icon name="arrow" /></Link></section>} /></Routes></main><footer><span className="footer-brand">MIG DOT</span><span>작은 도구들이 연결되는 곳.</span><span className="footer-note">나의 일상을 위한 워크스페이스</span></footer></div>
+  return <div className="app"><a className="skip-link" href="#main">본문으로 이동</a><header className="site-header"><div className="header-inner"><Link className="brand" to="/" aria-label="MIG DOT 메인">MIG<span className="brand-dot" />DOT</Link><nav aria-label="주 메뉴" style={{ gridTemplateColumns: `repeat(${recordModules.length + 1}, 1fr)` }}><NavLink to="/" end><Icon name="home" /><span>메인</span></NavLink>{recordModules.map(module => <NavLink key={module.id} to={module.path}><Icon name={module.id} /><span>{module.title}</span></NavLink>)}</nav><div className="auth-controls">{auth.status === 'ready' && auth.user ? <><span className="account-name" title={auth.user.email}>내 계정</span>{auth.access?.role === 'owner' && <Link to="/settings/access">권한 관리</Link>}<button onClick={() => void auth.signOut()}>로그아웃</button></> : <Link to="/login">{auth.status === 'preview' ? '로그인 설정' : '로그인'}</Link>}</div></div></header><AppNavigation /><main id="main" className="main-container"><Routes><Route path="/" element={<Home />} /><Route path="/login" element={<LoginPage />} /><Route path="/auth/callback" element={<AuthCallbackPage />} /><Route path="/settings/access" element={<RequireAccess ownerOnly><AccessAdminPage /></RequireAccess>} />{modules.map(({ id, path, kind, component: Page }) => <Route key={id} path={kind === 'app' ? `${path}/*` : path} element={<RequireAccess moduleId={id}><ModuleBoundary key={`${id}:${auth.user?.id ?? 'preview'}`}><Suspense fallback={<p role="status">모듈을 불러오는 중입니다…</p>}><Page /></Suspense></ModuleBoundary></RequireAccess>} />)}<Route path="*" element={<section className="not-found"><p className="eyebrow">404</p><h1>페이지를 찾을 수 없습니다.</h1><Link className="text-link" to="/">메인으로 이동 <Icon name="arrow" /></Link></section>} /></Routes></main><footer><span className="footer-brand">MIG DOT</span><span>작은 도구들이 연결되는 곳.</span><span className="footer-note">나의 일상을 위한 워크스페이스</span></footer></div>
 }

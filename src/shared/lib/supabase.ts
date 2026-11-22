@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim()
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
+const isLocalPreviewMode = import.meta.env.DEV && import.meta.env.MODE === 'local-preview'
+const url = isLocalPreviewMode ? undefined : import.meta.env.VITE_SUPABASE_URL?.trim()
+const key = isLocalPreviewMode ? undefined : import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim()
 export const hasSupabaseSettings = Boolean(url || key)
 function createPublicClient() {
   if (!url || !key || key.startsWith('sb_secret_')) return null

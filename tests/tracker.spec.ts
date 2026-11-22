@@ -71,12 +71,15 @@ test('날짜 경계와 필수 과업 진행률', () => {
 })
 
 
-test('과업을 등록·수정·실행·완료·재계획하고 되돌린다', async ({ page }) => {
+test('과업을 등록·수정·실행·완료·재계획하고 되돌린다', async ({ page }, testInfo) => {
   const errors: string[] = []
   const dataRequests: string[] = []
   page.on('pageerror', error => errors.push(error.message))
   page.on('request', request => { if (request.url().includes('supabase.co') || new URL(request.url()).pathname.startsWith('/api/')) dataRequests.push(request.url()) })
   await page.goto('/execution-tracker')
+  const appNav = page.getByRole('navigation', { name: '내 앱' })
+  await expect(appNav.getByRole('link', { name: /실행 트래커/ })).toHaveAttribute('aria-current', 'page')
+  await expect(appNav.getByRole('link', { name: '포스트잇 러너' })).toBeVisible()
   const initialStorage = await page.evaluate(async () => JSON.stringify({ local: { ...localStorage }, databases: await indexedDB.databases() }))
   const createTask = page.getByRole('button', { name: '과업 등록', exact: true })
   await expect(createTask).toHaveCSS('border-radius', '50%')
@@ -99,7 +102,7 @@ test('과업을 등록·수정·실행·완료·재계획하고 되돌린다', a
   await mission.getByRole('button', { name: '물 두 잔 마시기 완료', exact: true }).click()
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2')
   await expect(page.getByRole('img', { name: /완료를 축하하는 중/ })).toBeVisible()
-  await page.screenshot({ path: 'docs/previews/executioner-complete-desktop.png', fullPage: true })
+  await page.screenshot({ path: testInfo.outputPath('executioner-complete-desktop.png'), fullPage: true })
   await page.getByRole('button', { name: '되돌리기', exact: true }).click()
   await expect(page.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1')
   await mission.getByRole('button', { name: '일정 조정', exact: true }).click()

@@ -4,6 +4,7 @@
   "description": "개인용 통합 웹 애플리케이션 플랫폼",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --mode local-preview",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
