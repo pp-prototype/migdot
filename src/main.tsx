@@ -1,8 +1,10 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import AutumnEntry from './modules/autumn-letter/AutumnEntry'
+import WalletPage from './modules/meta-wallet/WalletPage'
 import App from './shell/App'
 import AuthProvider from './shared/auth/AuthProvider'
 import './styles.css'
 
-createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></StrictMode>)
+createRoot(document.getElementById('root')!).render(<StrictMode><BrowserRouter><Routes><Route path="/autumn-letter" element={<AutumnEntry />} /><Route path="/meta-wallet" element={<WalletPage />} /><Route path="*" element={<AuthProvider><App /></AuthProvider>} /></Routes></BrowserRouter></StrictMode>)

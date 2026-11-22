@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Link, NavLink, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { modules } from './modules'
 import { ModuleBoundary } from '../shared/ModuleBoundary'
 import { Icon } from '../shared/Icon'
@@ -11,6 +11,11 @@ import AccessAdminPage from '../modules/account/AccessAdminPage'
 
 function Home() {
   const auth = useAuth()
+  const { search } = useLocation()
+  // Supabase can return a PKCE code to the configured Site URL.
+  if (new URLSearchParams(search).has('code')) {
+    return <Navigate to={{ pathname: '/auth/callback', search }} replace />
+  }
   const apps = modules.filter(module => module.kind === 'app' && auth.canAccess(module.id))
   const recordModules = modules.filter(module => module.kind === 'records' && auth.canAccess(module.id))
   const recent = documents.filter(doc => (doc.category === 'meetings' || doc.category === 'updates') && auth.canAccess(doc.category)).slice(0, 4)
@@ -24,9 +29,17 @@ function Home() {
     {auth.status === 'error' && <div className="auth-callout" role="alert"><p>{auth.error}</p><button onClick={() => void auth.refresh()}>다시 확인</button></div>}
     {auth.status === 'ready' && auth.access?.approved && auth.access.role === 'owner' && <section className="auth-callout" aria-labelledby="owner-title"><p className="eyebrow">WORKSPACE ADMIN</p><h2 id="owner-title">사용자 승인과 모듈 관리</h2><p>새로 로그인한 계정을 확인하고 이용 승인과 모듈별 접근 권한을 관리하세요.</p><Link className="text-link" to="/settings/access">승인 대기 사용자 확인 →</Link></section>}
     <section className="apps-section" aria-labelledby="apps-title">
-      <div className="section-heading"><div><h2 id="apps-title">내 앱</h2><p>필요한 도구를 바로 시작하세요.</p></div><span className="count">{apps.length}개</span></div>
-      {apps.length === 0 && <div className="empty-apps"><span className="empty-icon"><Icon name="grid" /></span><div><h3>{auth.status === 'anonymous' ? '로그인하고 나의 앱을 확인하세요' : '현재 이용 가능한 앱이 없습니다'}</h3><p>이용 승인을 받은 모듈이 이곳에 표시됩니다.</p></div><Link className="text-link" to="/login">로그인 안내 →</Link></div>}
-      <div className="shortcut-grid">{apps.map(module => <Link className="card shortcut" key={module.id} to={module.path}><span className="module-icon"><Icon name="grid" /></span><h3>{module.title} {(module.id !== 'execution-tracker' || auth.status === 'preview') && <span className="preview-label">미리보기</span>}</h3><p>{module.description}</p><Icon name="arrow" /></Link>)}</div>
+      <div className="section-heading"><div><h2 id="apps-title">내 앱</h2><p>필요한 도구를 바로 시작하세요.</p></div><span className="count">{apps.length + 1}개</span></div>
+      {apps.length === 0 && <div className="empty-apps mb-4"><span className="empty-icon"><Icon name="grid" /></span><div><h3>{auth.status === 'anonymous' ? '로그인하고 나의 앱을 확인하세요' : '현재 이용 가능한 앱이 없습니다'}</h3><p>이용 승인을 받은 모듈이 이곳에 표시됩니다.</p></div><Link className="text-link" to="/login">로그인 안내 →</Link></div>}
+      <div className="shortcut-grid">
+        {apps.map(module => <Link className="card shortcut" key={module.id} to={module.path}><span className="module-icon"><Icon name="grid" /></span><h3>{module.title} {(module.id !== 'execution-tracker' || auth.status === 'preview') && <span className="preview-label">미리보기</span>}</h3><p>{module.description}</p><Icon name="arrow" /></Link>)}
+        <Link className="card shortcut" to="/meta-wallet">
+          <span className="module-icon"><Icon name="wallet" /></span>
+          <h3>메타 월렛 <span className="preview-label">사용자 테스트</span></h3>
+          <p>오늘 생활비를 확인하고 지출 일기와 돈 계획을 써 보세요.</p>
+          <Icon name="arrow" />
+        </Link>
+      </div>
     </section>
     {recordModules.length > 0 && <section aria-labelledby="records-title">
       <div className="section-heading"><div><h2 id="records-title">기록과 안내</h2><p>결정의 배경부터 지금의 사용법까지.</p></div></div>

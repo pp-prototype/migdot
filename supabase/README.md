@@ -12,7 +12,7 @@ Google OAuth(PKCE), 공통 세션, 모듈 보호 경로, 홈/메뉴 필터링, �
 2. SQL Editor에서 위 마이그레이션 전체를 한 번 실행합니다. 전체가 트랜잭션으로 처리되며 기존 이름과 충돌하면 적용하지 않고 조사합니다.
 3. Google Cloud에서 웹 OAuth 클라이언트를 준비하고 Supabase Auth의 Google 공급자에 ID와 비밀값을 설정합니다. 비밀값은 Supabase 관리 화면에만 넣고 `VITE_` 환경 변수에 넣지 않습니다.
 4. Google의 승인된 redirect URI는 Supabase가 안내하는 `https://<프로젝트>.supabase.co/auth/v1/callback`입니다. 앱의 `/auth/callback`과 구분합니다.
-5. Supabase URL Configuration의 Site URL을 실제 앱 origin으로 지정하고, 앱의 `/auth/callback`을 허용합니다. `next`와 SDK의 `sb_flow_id` 쿼리가 유지되도록 실제 소유 도메인의 `/auth/callback**` 패턴 등을 공식 문서에 따라 검토합니다. 전체 인터넷 도메인에 대한 wildcard는 사용하지 않습니다.
+5. Supabase의 Authentication → URL Configuration에서 Site URL을 실제 운영 주소(예: `https://app.example.com`)로 지정합니다. Redirect URLs에는 운영 주소의 `https://app.example.com/auth/callback`을 등록합니다. 로컬 개발 서버에서 로그인하려면 `http://localhost:5173/auth/callback`도 추가합니다. `127.0.0.1` 또는 다른 포트를 사용한다면 브라우저 주소창의 호스트와 포트에 맞는 콜백을 등록합니다. Vercel Preview도 접속하는 도메인의 콜백을 별도로 등록합니다. 브라우저는 로그인을 시작한 주소에 PKCE 검증 정보를 저장하므로 같은 주소로 복귀해야 합니다.
 6. `.env.example`을 `.env.local`로 복사하고 URL과 publishable key만 입력합니다. 개발 서버를 재시작합니다.
 7. 앱에서 Google로 로그인합니다. 첫 사용자는 자동 운영자가 되지 않으며 승인 대기 상태입니다.
 8. Auth의 사용자 ID를 확인하고 아래 SQL로 첫 운영자를 지정합니다.
@@ -57,7 +57,7 @@ and owner_id = (select auth.uid())
 
 비로그인 역할에는 업무 데이터 접근을 주지 않습니다. 자식/부모 항목의 사용자 소유권도 외래키·제약으로 검증합니다. 사진은 비공개 Storage 버킷과 객체별 정책이 필요합니다. `service_role`/secret 키는 RLS를 우회하므로 브라우저에 넣지 않습니다. 잘못된 키를 코드가 거부하더라도 `VITE_` 값 자체는 번들에 노출되므로 비밀값 유출을 되돌리는 보호가 아닙니다.
 
-포스트잇 러너는 고정 예시입니다. 익스큐셔너는 아래 추가 마이그레이션 적용 후 개인 클라우드 기록을 사용합니다. 사진·Storage는 연결하지 않았습니다.
+포스트잇 러너와 익스큐셔너는 각 모듈의 추가 마이그레이션을 적용하면 개인 클라우드 기록을 사용합니다.
 
 ## 배포와 정적 문서의 범위
 
@@ -101,3 +101,11 @@ npm run test:ui
 운영 전 실제 두 계정과 두 기기에서 소유권·권한 회수·수정 충돌을 추가 확인합니다. 데이터 백업은 프로젝트 관리자의 PostgreSQL 백업과 복원 절차로 수행합니다. 복원은 먼저 별도 검증 DB에 수행해 마이그레이션·RLS·본인 데이터 수를 확인한 뒤 운영 적용 여부를 결정합니다. 앱 내 백업/복원과 실제 복원 리허설은 아직 제공·검증하지 않았습니다. 장기 누적 시 전체 이력 조회량을 관찰해 페이지 분할을 도입해야 합니다.
 
 익스큐셔너 브라우저 테스트는 Auth 응답을 대체하고 실제 마이그레이션을 실행한 로컬 PGlite SQL 함수에 연결합니다. 원격 Supabase에 업무 데이터를 쓰지 않습니다.
+
+## 포스트잇 러너 개인 기록 적용
+
+공통 인증이 설정된 환경에 [학습 기록 마이그레이션](migrations/202611180001_learning_records.sql)을 적용합니다. 이 마이그레이션은 `learning_topics`와 `learning_notes`를 만들며 공통 인증 테이블의 모듈 등록을 재사용합니다. 이어 [주제 썸네일 마이그레이션](migrations/202611180002_learning_topic_thumbnails.sql)을 적용합니다. 이 파일은 기존 주제에 선택 썸네일 열을 추가합니다. 마지막으로 [포스트잇 사진 마이그레이션](migrations/202611180003_learning_note_photos.sql)을 적용합니다. 썸네일과 포스트잇 사진은 압축본을 각 레코드에 저장합니다.
+
+로그인한 사용자가 포스트잇 러너 모듈 이용 권한을 가지고 있어야 조회와 저장이 가능합니다. 사용자마다 빈 목록으로 시작합니다. 다른 계정으로 주제 주소를 열어 개인 주제와 기록이 표시되지 않는지 확인합니다. 같은 기록을 두 창에 열고 편집한 뒤 두 번째 저장에서 충돌 안내가 표시되는지도 확인합니다.
+
+프로젝트 DB 백업의 복원은 별도 검증 환경에서 진행합니다. 테이블, RLS, 계정별 레코드 수를 확인한 뒤 운영 적용 여부를 결정합니다. 로컬 SQL 검증은 `npm run test:access`로 실행합니다.
