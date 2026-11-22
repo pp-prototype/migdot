@@ -73,6 +73,7 @@ html:has(.app-nav) {
 
 @media (max-width: 760px) {
   .app-nav-inner {
+    flex-wrap: wrap;
     gap: 4px;
     padding-inline: 20px;
   }
@@ -92,4 +93,10 @@ html:has(.app-nav) {
 @keyframes app-nav-enter {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 360px) {
+  html:has(.app-nav) {
+    scroll-padding-top: 104px;
+  }
 }
