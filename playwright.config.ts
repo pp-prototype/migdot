@@ -20,7 +20,8 @@ export default defineConfig({
     command: 'npm run dev -- --config vite.auth-test.config.ts --host 127.0.0.1 --port 5176 --strictPort',
     url: 'http://127.0.0.1:5176',
     reuseExistingServer: false,
-    env: { VITE_SUPABASE_URL: 'http://127.0.0.1:54329', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_ui_test' },
+    env: { VITE_SUPABASE_URL: 'http://127.0.0.1:54329', VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_ui_test',
+      VITE_EXECUTION_VAPID_PUBLIC_KEY: 'BAH4zDUDWv7sI0Aqn6MBMiipmLEd4kCQhTk9DTZIqgB1qHzwLnuY37v-KZYkZhzKukIkUKAAngDF6amqboIse0Y' },
   }, {
     command: 'npm run build -- --outDir node_modules/.cache/migdot-production-test && npm run preview -- --outDir node_modules/.cache/migdot-production-test --host 127.0.0.1 --port 4175 --strictPort',
     url: 'http://127.0.0.1:4175',

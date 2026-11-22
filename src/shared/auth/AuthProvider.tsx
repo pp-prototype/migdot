@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { disconnectExecutionPush } from '../lib/executionPush'
 import { hasSupabaseSettings, localPreview, supabase } from '../lib/supabase'
 import { parseAccess } from './access'
 import { AuthContext, type AuthState } from './context'
@@ -95,6 +96,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     logoutPending.current = true; generation.current++; request.current?.abort(); session.current = null
     setState({ status: 'loading', user: null, access: null, error: '' })
     try {
+      await disconnectExecutionPush().catch(() => undefined)
       const { error } = await supabase.auth.signOut({ scope: 'local' })
       if (error) throw error
       setState({ status: 'anonymous', user: null, access: null, error: '' })

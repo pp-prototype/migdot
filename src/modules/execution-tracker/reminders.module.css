@@ -70,3 +70,5 @@
   .list li { grid-template-columns: 40px minmax(0, 1fr); gap: 8px 12px; }
   .list time { grid-column: 2; justify-self: start; }
 }
+
+.failure { margin: 0 24px 16px; color: var(--ink); font-size: 14px; }
