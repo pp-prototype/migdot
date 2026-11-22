@@ -1,4 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useAuth } from '../../shared/auth/context'
+import CloudLearner from './CloudLearner'
+import TopicCard from './TopicCard'
+import { cloudRecords, trialRecords } from './records'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { sampleWorkspace } from './sample-data'
 import { boardPage, notePosition } from './board-layout'
@@ -22,6 +26,22 @@ function NoteDetail({ note, close }: { note: Note; close: () => void }) {
 }
 
 export default function LearnerPage() {
+  const { status, user } = useAuth()
+  const owner = user?.id
+  const records = useMemo(() => owner ? cloudRecords(owner) : null, [owner])
+  if (status === 'preview') return <DevelopmentLearner />
+  return records ? <CloudLearner key={owner} records={records} /> : null
+}
+
+function DevelopmentLearner() {
+  const { '*': path = '' } = useParams()
+  const [records] = useState(trialRecords)
+  return path === 'try' || path.startsWith('try/')
+    ? <CloudLearner records={records} trial />
+    : <PreviewLearner />
+}
+
+function PreviewLearner() {
   const { '*': subpath = '' } = useParams()
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
@@ -38,10 +58,13 @@ export default function LearnerPage() {
   return <div className={styles.learner}>
     <p className={styles.breadcrumb}><Link to="/">메인</Link> / <Link to={root}>포스트잇 러너</Link>{topic && <> / {topic.name}</>}</p>
     <div className={styles.title}><div><h1>{topic?.name ?? '포스트잇 러너'}</h1><p>{topic?.description ?? '학습 대상을 고르고 작은 배움을 펼쳐보세요.'}</p></div><span className={styles.badge}>미리보기</span></div>
-    <p className={styles.notice}>예시 데이터로 둘러보는 화면입니다. 개인 기록을 불러오거나 저장하지 않습니다.</p>
+    <div className={styles.notice}>
+      <p>예시 데이터로 둘러보는 화면입니다. 개인 기록을 불러오거나 저장하지 않습니다.</p>
+      <Link className={styles.trialLink} to={`${root}/try`}>기록 기능 체험하기</Link>
+    </div>
     {invalid ? <section className={styles.empty}><h2>학습 대상을 찾을 수 없습니다.</h2><Link to={root}>학습 대상 목록으로</Link></section> : <>
       <div className={styles.toolbar}>{topic ? <Link to={root}>← 학습 대상 목록</Link> : <h2>학습 대상 <span>{sampleWorkspace.topics.length}</span></h2>}<label className={styles.search}><span>{topic ? '포스트잇 검색' : '학습 대상 검색'}</span><input type="search" aria-label={topic ? '포스트잇 검색' : '학습 대상 검색'} placeholder="제목이나 내용으로 찾기" value={query} onChange={event => updateQuery(event.target.value)} /></label></div>
-      {!topic ? <div className={styles.topics}>{sampleWorkspace.topics.filter(item => `${item.name} ${item.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(item => <Link className={styles.topicCard} key={item.id} to={`${root}/topics/${item.id}`}><img src={images[item.id] ?? designImage} alt={`${item.name} 예시 일러스트`} /><div><h3>{item.name}</h3><p>{item.description}</p><span>포스트잇 {sampleWorkspace.notes.filter(note => note.topic === item.id).length}장 <b>보드 열기 ↗</b></span></div></Link>)}{sampleWorkspace.topics.every(item => !`${item.name} ${item.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())) && <p role="status">일치하는 학습 대상이 없습니다.</p>}</div> : <>
+      {!topic ? <div className={styles.topics}>{sampleWorkspace.topics.filter(item => `${item.name} ${item.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(item => <TopicCard key={item.id} to={`${root}/topics/${item.id}`} cover={images[item.id] ?? designImage} name={item.name} description={item.description} noteCount={sampleWorkspace.notes.filter(note => note.topic === item.id).length} />)}{sampleWorkspace.topics.every(item => !`${item.name} ${item.description}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())) && <p role="status">일치하는 학습 대상이 없습니다.</p>}</div> : <>
         <section className={styles.frame} aria-label={`${topic.name} 코르크 보드`}><div className={styles.board}>{stack.notes.map((note, index) => <button key={note.id} className={`${styles.note} ${styles[note.color]}`} style={notePosition(index)} onClick={() => { const next = new URLSearchParams(params); next.set('note', note.id); setParams(next) }}><span className={styles.pin} /><div className={styles.polaroid}><img src={images[note.topic] ?? designImage} alt="학습 주제 예시 일러스트" /><span>{note.date.slice(0, 10)}</span></div><h3>{note.title}</h3><p># {note.tag}</p></button>)}{notes.length === 0 && <p className={styles.empty} role="status">일치하는 기록이 없습니다.</p>}</div></section>
         <div className={styles.pagination}><span>{notes.length}장의 예시 기록 · 한 보드에 최대 12장</span><div><button disabled={stack.page === 0} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(stack.page - 1)); setParams(next) }}>최근</button><span>{stack.page + 1} / {stack.pages}</span><button disabled={stack.page === stack.pages - 1} onClick={() => { const next = new URLSearchParams(params); next.set('page', String(stack.page + 1)); setParams(next) }}>이전 기록</button></div></div>
         <p className={styles.caption}>카드를 선택하면 자세히 볼 수 있습니다. 겹친 카드는 마우스를 올리거나 키보드로 선택하면 앞으로 나옵니다.</p>
