@@ -44,6 +44,11 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
   try {
     await page.goto('/execution-tracker')
     await expect(page.getByText('개인 클라우드 기록')).toBeVisible()
+    const trackerMenu = page.getByRole('navigation', { name: '실행 트래커 메뉴' })
+    await trackerMenu.getByRole('link', { name: '알림 설정' }).click()
+    await expect(page.getByRole('heading', { name: '알림 설정' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '알림 켜기' })).toBeDisabled()
+    await trackerMenu.getByRole('link', { name: '오늘', exact: true }).click()
     await expect(page.getByText('아직 오늘 계획한 과업이 없습니다. 작은 일 하나부터 등록하세요.')).toBeVisible()
     await page.getByRole('button', { name: '과업 등록', exact: true }).click()
     const dialog = page.getByRole('dialog')
