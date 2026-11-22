@@ -82,3 +82,14 @@ html:has(.app-nav) {
     font-size: 13px;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-nav-inner {
+    animation: app-nav-enter .2s ease-out both;
+  }
+}
+
+@keyframes app-nav-enter {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
