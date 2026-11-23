@@ -208,7 +208,7 @@ Edge Functions의 시크릿은 함수가 읽고, Vault의 시크릿은 Cron이 �
 1. 운영 MIG DOT 도메인을 배포하는 프로젝트를 엽니다.
    - **Cloudflare Pages**를 사용하는 경우 **Workers & Pages → Pages 프로젝트 → Settings**의 환경 변수 메뉴에서 **Production**에 추가합니다. [Cloudflare 빌드 환경 변수 안내](https://developers.cloudflare.com/pages/configuration/build-configuration/)
    - **Vercel**을 사용하는 경우 **Project → Settings → Environment Variables**에서 환경을 **Production**으로 선택합니다. [Vercel 환경 변수 안내](https://vercel.com/docs/environment-variables/managing-environment-variables)
-2. 이름은 `VITE_EXECUTION_VAPID_PUBLIC_KEY`, 값은 3번의 `VAPID_PUBLIC_KEY`로 저장합니다. 웹사이트에는 공개 키만 넣습니다.
+2. 이름은 `VITE_EXECUTION_VAPID_PUBLIC_KEY`, 값은 3번의 `VAPID_PUBLIC_KEY`로 저장합니다. 웹사이트에는 공개 키만 넣습니다. Vercel에서 **Keep This Value Private** 경고가 보이면 **Change to Config**를 누르고 `VITE_` 접두사는 유지하세요. 브라우저가 구독에 사용하는 공개 키이므로 클라이언트 빌드에 포함됩니다. 비공개 키와 Cron 비밀값은 각각 3번과 5번의 서버 설정에 보관합니다. [Vite 환경 변수 안내](https://vite.dev/guide/env-and-mode.html#env-variables)
 3. 푸시 기능 코드가 들어 있는 커밋으로 **새 운영 배포**를 실행합니다. 배포 화면에서 해당 커밋이 운영 도메인에 반영됐는지 확인합니다. 기존 배포는 환경 변수를 저장한 뒤에도 예전 빌드를 계속 사용합니다.
 
 **완료 확인** 배포된 HTTPS 사이트에서 **익스큐셔너 → 알림 설정**을 열었을 때 발송 설정이 연결되지 않았다는 안내가 사라집니다. iPhone·iPad는 Safari에서 **홈 화면에 추가**한 후 홈 화면 아이콘으로 앱을 다시 열어야 알림 권한을 요청할 수 있습니다. Android에서는 Chrome에서 앱을 설치해 확인할 수 있습니다. [Apple 홈 화면 Web Push 안내](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
