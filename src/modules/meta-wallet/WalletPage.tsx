@@ -1,6 +1,7 @@
 import PlanAccounts, { type AccountEditor, type AccountPayment, type PlanAccount } from './PlanAccounts'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useAuth } from '../../shared/auth/context'
+import { supabase } from '../../shared/lib/supabase'
 import { Icon } from '../../shared/Icon'
 import styles from './wallet.module.css'
 
@@ -17,7 +18,6 @@ const dateLabel = (date: string) => new Intl.DateTimeFormat('ko-KR', {
   month: 'long', day: 'numeric', timeZone: 'UTC',
 }).format(new Date(date))
 const categories = ['수입', '상환', '저축', '특수비', '고정비', '필수 지출', '생활비 예약']
-const storageKey = 'meta-wallet-workspace-v2'
 
 type View = 'home' | 'journal' | 'plan'
 type Entry = { amount: number | null; approximate: boolean; note: string }
@@ -26,19 +26,6 @@ type PlanChange = { date: string; before?: Event; after?: Event; dailyBefore: nu
 type Plan = { balance: number | null; confirmed: string; horizon: string; events: Event[]; history?: PlanChange[]; accounts?: PlanAccount[] }
 type Workspace = { journal: Record<string, Entry>; plan: Plan }
 const blank: Workspace = { journal: {}, plan: { balance: null, confirmed: '', horizon: '', events: [] } }
-
-function readWorkspace(): Workspace {
-  try {
-    const item = localStorage.getItem(storageKey)
-    if (item) return JSON.parse(item)
-    const previous = JSON.parse(localStorage.getItem('meta-wallet-journal-v1') ?? '{}')
-    const sampleNotes = ['점심과 커피', '야근하고 배달 주문', '집에서 식사']
-    const journal = Object.fromEntries(Object.entries(previous as Record<string, Entry>).filter(([, entry]) => !sampleNotes.includes(entry.note)))
-    return { ...blank, journal }
-  } catch {
-    return blank
-  }
-}
 
 function makeSample(): Workspace {
   return {
@@ -101,8 +88,94 @@ type Draft = { id?: string; title: string; amount: string; date: string; categor
 const newEvent = (): Draft => ({ title: '', amount: '', date: today, category: '상환' })
 const amountOkay = (value: string) => value !== '' && Number.isSafeInteger(Number(value)) && Number(value) >= 0 && Number(value) <= 100_000_000
 
+type StoredWorkspace = { workspace: Workspace; revision: string | null }
+
 export default function WalletPage() {
-  const [workspace, setWorkspace] = useState(readWorkspace)
+  const { user } = useAuth()
+  const [attempt, setAttempt] = useState(0)
+
+  return user && <PersonalWallet key={JSON.stringify([user.id, attempt])} ownerId={user.id} reload={() => setAttempt(value => value + 1)} />
+}
+
+function PersonalWallet({ ownerId, reload }: { ownerId: string; reload: () => void }) {
+  const [stored, setStored] = useState<StoredWorkspace | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+  const [saveState, setSaveState] = useState<'saving' | 'failed' | 'conflict' | null>(null)
+  const pending = useRef<StoredWorkspace | null>(null)
+  const saving = useRef(false)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    async function load() {
+      try {
+        const { data, error } = await supabase!.from('meta_wallet_workspaces')
+          .select('workspace, revision').eq('owner_id', ownerId).abortSignal(controller.signal).maybeSingle()
+        if (error) throw error
+        if (!controller.signal.aborted) setStored(data ?? { workspace: blank, revision: null })
+      } catch {
+        if (!controller.signal.aborted) setLoadFailed(true)
+      }
+    }
+    void load()
+    return () => controller.abort()
+  }, [ownerId])
+
+  async function save(next: Workspace) {
+    if (!stored || saving.current) return
+    const change = pending.current ?? { workspace: next, revision: crypto.randomUUID() }
+    pending.current = change
+    saving.current = true
+    setSaveState('saving')
+    try {
+      const table = supabase!.from('meta_wallet_workspaces')
+      const write = stored.revision === null
+        ? table.insert({ owner_id: ownerId, ...change })
+        : table.update(change).eq('owner_id', ownerId).eq('revision', stored.revision)
+      const { data, error } = await write.select('revision').maybeSingle()
+      if (error && error.code !== '23505') throw error
+      if (!data) {
+        // A retry may follow a committed write whose response never arrived.
+        const latest = await supabase!.from('meta_wallet_workspaces')
+          .select('revision').eq('owner_id', ownerId).maybeSingle()
+        if (latest.error) throw latest.error
+        if (latest.data?.revision !== change.revision) {
+          setSaveState('conflict')
+          return
+        }
+      }
+      setStored(change)
+      pending.current = null
+      setSaveState(null)
+    } catch {
+      setSaveState('failed')
+    } finally {
+      saving.current = false
+    }
+  }
+
+  if (loadFailed) return <section className="access-panel" role="alert">
+    <h1>지갑을 불러오지 못했습니다.</h1>
+    <button onClick={reload}>다시 불러오기</button>
+  </section>
+  if (!stored) return <p role="status">개인 지갑을 불러오는 중입니다…</p>
+
+  return <>
+    {saveState === 'saving' && <p role="status">지갑에 저장하는 중입니다…</p>}
+    {saveState === 'failed' && <div className="access-panel" role="alert">
+      <p>변경 내용을 저장하지 못했습니다.</p>
+      <button onClick={() => { if (pending.current) void save(pending.current.workspace) }}>저장 다시 시도</button>
+    </div>}
+    {saveState === 'conflict' && <div className="access-panel" role="alert">
+      <p>지갑이 다른 곳에서 변경되었거나 접근 권한이 바뀌어 이 변경을 저장하지 못했습니다.</p>
+      <button onClick={reload}>최신 지갑 불러오기</button>
+    </div>}
+    <div inert={saveState !== null}>
+      <WalletEditor workspace={stored.workspace} save={next => void save(next)} />
+    </div>
+  </>
+}
+
+function WalletEditor({ workspace, save }: { workspace: Workspace; save: (next: Workspace) => void }) {
   const [sample, setSample] = useState<Workspace | null>(null)
   const [view, setView] = useState<View>('home')
   const [date, setDate] = useState(today)
@@ -150,13 +223,9 @@ export default function WalletPage() {
   const total = recorded.reduce((sum, item) => sum + (item.amount ?? 0), 0)
   const max = Math.max(1, ...recorded.map(item => item.amount ?? 0))
 
-  useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(workspace)) } catch { /* Browser storage may be blocked. */ }
-  }, [workspace])
-
   function update(next: Workspace) {
     if (sample) setSample(next)
-    else setWorkspace(next)
+    else save(next)
   }
 
   function navigate(next: View) {
@@ -372,15 +441,13 @@ export default function WalletPage() {
   </section>
 
   return <div className={styles.wallet}>
-    <a className="skip-link" href="#wallet-main">본문으로 이동</a>
     <header className={styles.header}>
       <div className={styles.brand}><span className={styles.logo} aria-hidden="true">₩</span>메타 월렛</div>
       <nav className={styles.tabs} aria-label="메타 월렛 메뉴">
         {([['home', '홈'], ['journal', '지출 일기'], ['plan', '돈 계획']] as const).map(([id, title]) => <button key={id} aria-current={view === id ? 'page' : undefined} onClick={() => navigate(id)}>{title}</button>)}
       </nav>
-      <Link className={styles.back} to="/">MIG DOT</Link>
     </header>
-    <main id="wallet-main" className={styles.main}>
+    <div className={styles.main}>
       <div className={styles.heading}>
         <div><p className={styles.date}><Icon name="calendar" />{dateLabel(today)} 기준</p><h1>{view === 'home' ? '오늘의 지갑' : view === 'journal' ? '지출 일기' : '돈 계획'}</h1></div>
         <button className={styles.demo} onClick={changeExample}>{sample ? '내 지갑으로 돌아가기' : '예시로 둘러보기'}</button>
@@ -492,6 +559,6 @@ export default function WalletPage() {
           <p className={styles.notice} role="status">{status}</p>
         </section>
       </div></div>}
-    </main>
+    </div>
   </div>
 }

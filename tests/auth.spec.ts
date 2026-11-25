@@ -9,6 +9,7 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
   const token = `${btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))}.${btoa(JSON.stringify({ sub: userId, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test-signature`
   const session = { access_token: token, refresh_token: 'test-refresh', token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user }
   const control = { fail: false, mismatch: false, moduleIds: options.moduleIds ?? ['post-it-learner'], exchanges: 0, verifier: '', approved: options.approved ?? true, members: [{ user_id: guestId, email: 'friend@example.invalid', role: 'member', active: false, module_ids: [] as string[] }] }
+  let wallet: { revision: string; workspace: unknown } | null = null
   if (options.signedIn !== false) await page.addInitScript(value => localStorage.setItem('migdot-127-0-0-1-54329-auth', JSON.stringify(value)), session)
   await page.route('http://127.0.0.1:54329/**', async route => {
     const request = route.request()
@@ -24,6 +25,11 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
       if (options.delay) await new Promise(resolve => setTimeout(resolve, options.delay))
       if (control.fail) return json({ message: 'Unavailable' }, 503)
       return json({ user_id: control.mismatch ? guestId : userId, approved: control.approved, role: control.approved ? options.role ?? 'member' : null, module_ids: control.approved ? control.moduleIds : [] })
+    }
+    if (path === '/rest/v1/meta_wallet_workspaces') {
+      if (!control.approved || !control.moduleIds.includes('meta-wallet')) return json({ message: 'Forbidden' }, 403)
+      if (request.method() !== 'GET') wallet = request.postDataJSON()
+      return json(wallet ? [wallet] : [])
     }
     if (path.endsWith('/admin_list_app_members')) return json(control.members)
     if (path.endsWith('/admin_set_app_member')) {
@@ -42,11 +48,12 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
   return control
 }
 
-test('비로그인 사용자도 앱 목록에서 메타 월렛을 테스트할 수 있다', async ({ page }) => {
-  await mockAuth(page, { signedIn: false })
+test('권한이 있는 사용자는 메타 월렛에 개인 기록을 저장할 수 있다', async ({ page }) => {
+  const control = await mockAuth(page, { moduleIds: ['meta-wallet'] })
   await page.goto('/')
   await page.locator('.apps-section').getByRole('link', { name: /메타 월렛/ }).click()
   await expect(page).toHaveURL('/meta-wallet')
+  await expect(page.getByRole('navigation', { name: '내 앱' }).getByRole('link', { name: '메타 월렛' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: '오늘의 지갑' })).toBeVisible()
   const balance = page.getByRole('region', { name: '오늘 생활비' })
   await expect(balance).toContainText('계산 전')
@@ -83,10 +90,15 @@ test('비로그인 사용자도 앱 목록에서 메타 월렛을 테스트할 �
   await page.reload()
   await expect(balance).toContainText('10,000')
   await expect(page.getByRole('region', { name: '오늘 쓴 돈' })).toContainText('저녁 식사')
+  control.moduleIds = []
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '메타 월렛' })).toHaveCount(0)
+  await expect(page.getByText('저녁 식사')).toHaveCount(0)
 })
 
 test('메타 월렛은 계좌 잔액과 실제 예정 지출을 구분해 생활비를 계산한다', async ({ page }) => {
-  await mockAuth(page, { signedIn: false })
+  await mockAuth(page, { moduleIds: ['meta-wallet'] })
   await page.goto('/meta-wallet')
   await page.getByRole('button', { name: '예시로 둘러보기' }).click()
   await page.getByRole('button', { name: '생활비 계산 근거' }).click()
@@ -124,7 +136,7 @@ test('메타 월렛은 계좌 잔액과 실제 예정 지출을 구분해 생활
 })
 
 test('메타 월렛은 미처리 납부를 이월하고 확인 잔액에 다시 차감하지 않는다', async ({ page }) => {
-  await mockAuth(page, { signedIn: false })
+  await mockAuth(page, { moduleIds: ['meta-wallet'] })
   await page.goto('/meta-wallet')
   await page.getByRole('button', { name: '예시로 둘러보기' }).click()
   await page.getByRole('button', { name: '생활비 계산 근거' }).click()
@@ -156,9 +168,11 @@ test('비로그인은 홈에서 보호 모듈을 보지 못하고 직접 주소�
   await page.goto('/')
   await expect(page.getByRole('heading', { name: '로그인하고 나의 앱을 확인하세요' })).toBeVisible()
   await expect(page.locator('main a.card:not([href="/meta-wallet"])')).toHaveCount(0)
-  await expect(page.locator('main a.card')).toHaveCount(1)
-  await expect(page.getByRole('navigation', { name: '내 앱' }).getByRole('link')).toHaveText(['메타 월렛'])
+  await expect(page.locator('main a.card')).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: '내 앱' })).toHaveCount(0)
   await expect(page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link')).toHaveCount(1)
+  await page.goto('/meta-wallet')
+  await expect(page).toHaveURL('/login?next=%2Fmeta-wallet')
   await page.goto('/post-it-learner')
   await expect(page).toHaveURL('/login?next=%2Fpost-it-learner')
   await expect(page.getByRole('button', { name: 'Google로 계속하기' })).toBeVisible()
@@ -174,10 +188,12 @@ test('승인·모듈 권한·운영자 권한은 사용자 메타데이터와 �
   await expect(page.locator('main a.card:not([href="/meta-wallet"])')).toHaveCount(1)
   await expect(page.locator('.apps-section').getByRole('link', { name: /포스트잇 러너/ })).toBeVisible()
   const appNav = page.getByRole('navigation', { name: '내 앱' })
-  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너', '메타 월렛'])
+  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너'])
   await appNav.getByRole('link', { name: '포스트잇 러너' }).click()
   await expect(appNav.getByRole('link', { name: '포스트잇 러너' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('link', { name: /권한 관리/ })).toHaveCount(0)
+  await page.goto('/meta-wallet')
+  await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
   await page.goto('/execution-tracker/records')
   await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
   await expect(page.getByRole('heading', { name: '익스큐셔너', exact: true })).toHaveCount(0)
@@ -204,15 +220,15 @@ test('권한 확인 전에는 콘텐츠가 노출되지 않고 회수 후에는 
   const appNav = page.getByRole('navigation', { name: '내 앱' })
   await page.goto('/post-it-learner')
   await expect(page.getByRole('status')).toHaveText('접근 권한을 확인하는 중입니다…')
-  await expect(appNav.getByRole('link')).toHaveText(['메타 월렛'])
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
-  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너', '메타 월렛'])
+  await expect(appNav.getByRole('link')).toHaveText(['포스트잇 러너'])
   await expect(appNav.getByRole('link', { name: '포스트잇 러너' })).toHaveAttribute('aria-current', 'page')
   control.moduleIds = []
   await page.evaluate(() => window.dispatchEvent(new Event('focus')))
   await expect(page.getByRole('heading', { name: '이 공간의 이용 권한이 필요합니다.' })).toBeVisible()
-  await expect(appNav.getByRole('link')).toHaveText(['메타 월렛'])
+  await expect(appNav).toHaveCount(0)
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
 })
 
@@ -222,7 +238,7 @@ test('로그아웃은 보호 모듈과 저장된 인증 세션을 제거한다',
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toBeVisible()
   await page.getByRole('button', { name: '로그아웃', exact: true }).click()
   await expect(page).toHaveURL('/login?next=%2Fpost-it-learner')
-  await expect(page.getByRole('navigation', { name: '내 앱' }).getByRole('link')).toHaveText(['메타 월렛'])
+  await expect(page.getByRole('navigation', { name: '내 앱' })).toHaveCount(0)
   await expect.poll(() => page.evaluate(() => localStorage.getItem('migdot-127-0-0-1-54329-auth'))).toBeNull()
   await expect(page.getByRole('heading', { name: '포스트잇 러너', exact: true })).toHaveCount(0)
 })
