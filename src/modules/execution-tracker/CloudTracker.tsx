@@ -127,21 +127,51 @@ export default function CloudTracker() {
     return <section className={styles.panel} data-surface={surface}><div className={styles.panelHeading}><h2>{title} <span>{tasks.length}</span></h2></div>{tasks.length ? <ul className={styles.taskList}>{tasks.map(taskCard)}</ul> : <p className={styles.empty}>{empty}</p>}</section>
   }
   return <div className={`${base.tracker} ${styles.workspace}`}>
-    <p className={base.breadcrumb}><Link to="/">메인</Link> / 나의 집행록</p><div className={base.heading}><div><p className={base.eyebrow}>EXECUTIONER / 나의 하루 집행록</p><h1>익스큐셔너</h1><p>과업은 이어가고, 계획의 흔적은 남깁니다.</p></div><span className={base.preview}>개인 클라우드 기록</span></div>
-    <p className={styles.note}>한국 시간 기준 {today} · 내 계정의 기록만 표시합니다. 미완료 과업은 최초 날짜를 유지하며 오늘 목록에 자동으로 이어집니다.</p>
-    <nav className={base.tabs} aria-label="실행 트래커 메뉴"><NavLink to="/execution-tracker" end>오늘</NavLink><NavLink to="/execution-tracker/records">기록</NavLink></nav>
+    <header className={styles.workspaceHeader}>
+      <div>
+        <h1>익스큐셔너</h1>
+        <p><time dateTime={today}>{today}</time> · 한국 시간</p>
+      </div>
+      <nav className={base.tabs} aria-label="실행 트래커 메뉴">
+        <NavLink to="/execution-tracker" end>오늘</NavLink>
+        <NavLink to="/execution-tracker/records">기록</NavLink>
+      </nav>
+    </header>
     {errorPanel}
     {subpath !== '' && !isRecords ? <p>페이지를 찾을 수 없습니다. <Link to="/execution-tracker">오늘로 이동</Link></p> : <>
       {!isRecords ? <>
-        <section className={`${scene.scene} ${styles.scene}`}><div className={scene.sceneCopy}><span className={scene.chapter}>나의 하루 집행록</span><h2>{closed ? <>오늘의 집행은 여기까지.<br /><em>다시 열어도 괜찮다.</em></> : current ? <>하나의 과업에,<br /><em>지금의 나를 모으자.</em></> : carried.length ? <>이어온 일을 확인했다.<br /><em>오늘은 하나부터 살펴보자.</em></> : <>작은 과업 하나로,<br /><em>오늘의 나를 실행하자.</em></>}</h2><p>{current ? `지금 집중 · ${current.title}` : `오늘 계획 ${fresh.length}개 · 이어온 미완료 ${carried.length}개 · 오늘 완료 ${completed.length}개`}</p><p className={styles.note}>{notice || '날짜를 넘긴 사실은 기록한다. 다음 행동은 작게 정하자.'}</p></div><div className={scene.characterArea}><Executioner mood={closed ? 'rest' : current ? 'working' : notice.startsWith('집행 완료') ? 'proud' : 'ready'} /></div></section>
-        <div className={styles.toolbar}><ActionButton icon="plus" label="과업 등록" tone="primary" disabled={readOnly} onClick={() => setEditor({ kind: 'task' })} /><ActionButton icon="refresh" label="기록 새로고침" disabled={locked} onClick={() => void load()} />{closed ? <ActionButton icon="unlock" label="마감 다시 열기" disabled={locked} onClick={() => void change('reopen_day', { day: today }, '오늘의 마감을 다시 열었습니다.')} /> : <ActionButton icon="moon" label="하루 마감하기" disabled={locked} onClick={() => setEditor({ kind: 'journal', day: today })} />}</div>
+        <div className={styles.toolbar} role="group" aria-label="오늘의 작업">
+          <ActionButton icon="plus" label="과업 등록" visibleLabel="과업 등록" tone="primary" disabled={readOnly} onClick={() => setEditor({ kind: 'task' })} />
+          {closed
+            ? <ActionButton icon="unlock" label="마감 다시 열기" visibleLabel="마감 다시 열기" disabled={locked} onClick={() => void change('reopen_day', { day: today }, '오늘의 마감을 다시 열었습니다.')} />
+            : <ActionButton icon="moon" label="하루 마감하기" visibleLabel="하루 마감" disabled={locked} onClick={() => setEditor({ kind: 'journal', day: today })} />}
+          <ActionButton icon="refresh" label="기록 새로고침" disabled={locked} onClick={() => void load()} />
+        </div>
+        <section className={`${scene.scene} ${styles.scene}`}>
+          <div className={scene.sceneCopy}>
+            <h2>{closed ? '오늘의 집행은 여기까지.' : current ? '하나의 과업에 집중하자.' : carried.length ? '이어온 일부터 하나씩.' : '작은 과업 하나로 시작하자.'}</h2>
+            {current && <p>지금 집중 · {current.title}</p>}
+            <ul className={styles.daySummary}>
+              <li>오늘 계획 <strong>{fresh.length}</strong></li>
+              <li>이어온 미완료 <strong>{carried.length}</strong></li>
+              <li>오늘 완료 <strong>{completed.length}</strong></li>
+            </ul>
+          </div>
+          <div className={scene.characterArea}><Executioner mood={closed ? 'rest' : current ? 'working' : notice.startsWith('집행 완료') ? 'proud' : 'ready'} /></div>
+        </section>
         {closed && <div className={styles.closed}><h2>오늘을 정리했습니다.</h2><p>남은 일은 완료로 바뀌지 않습니다. 다음 날 자동으로 이어집니다.</p><p>오늘 알게 된 것 · {dayJournal?.reflection || '남긴 회고가 없습니다.'}</p><p>내일의 첫 행동 · {dayJournal?.tomorrow || '아직 정하지 않았습니다.'}</p></div>}
-        <RoutinePanel routines={routines} readOnly={readOnly} edit={routine => setEditor({ kind: 'routine', routine })} editCheck={(routine, check) => setEditor({ kind: 'check', routine, day: today, check })} change={change} today={today} />
-        {taskGroup('오늘 계획한 과업', fresh, '아직 오늘 계획한 과업이 없습니다. 작은 일 하나부터 등록하세요.')}
-        {taskGroup('이전부터 이어온 과업', carried, '이전 날짜에서 이어온 미완료 과업이 없습니다.', 'carry')}
-        {carried.length > 0 && <p className={styles.note}>경과 일수는 미완료 상태로 지난 기간입니다. 직접 미룬 횟수나 성향을 뜻하지 않습니다. 첫 행동을 줄이거나, 일정을 조정하거나, 보류할 수 있습니다.</p>}
-        {taskGroup('오늘 완료한 과업', completed, '오늘 완료한 과업이 아직 없습니다.', 'done')}
-        {(future.length > 0 || paused.length > 0) && <details className={styles.panel} data-surface="carry"><summary>예정·보류한 과업 {future.length + paused.length}개</summary><ul className={styles.taskList}>{[...future, ...paused].map(taskCard)}</ul></details>}
+        <div className={styles.todayLayout}>
+          <div>
+            {taskGroup('오늘 계획한 과업', fresh, '아직 오늘 계획한 과업이 없습니다. 작은 일 하나부터 등록하세요.')}
+            {taskGroup('이전부터 이어온 과업', carried, '이전 날짜에서 이어온 미완료 과업이 없습니다.', 'carry')}
+            {carried.length > 0 && <p className={styles.note}>경과 일수는 미완료 상태로 지난 기간입니다. 직접 미룬 횟수나 성향을 뜻하지 않습니다. 첫 행동을 줄이거나, 일정을 조정하거나, 보류할 수 있습니다.</p>}
+            {taskGroup('오늘 완료한 과업', completed, '오늘 완료한 과업이 아직 없습니다.', 'done')}
+            {(future.length > 0 || paused.length > 0) && <details className={styles.panel} data-surface="carry"><summary>예정·보류한 과업 {future.length + paused.length}개</summary><ul className={styles.taskList}>{[...future, ...paused].map(taskCard)}</ul></details>}
+          </div>
+          <div>
+            <RoutinePanel routines={routines} readOnly={readOnly} edit={routine => setEditor({ kind: 'routine', routine })} editCheck={(routine, check) => setEditor({ kind: 'check', routine, day: today, check })} change={change} today={today} />
+          </div>
+        </div>
       </> : <>
         <section className={styles.panel}><div className={base.dateBrowser}><button disabled={date <= '2000-01-01'} aria-label="이전 날짜" onClick={() => setParams({ date: shiftDay(date, -1) })}>←</button><label>조회 날짜<input type="date" min="2000-01-01" max={today} value={date} onChange={e => { if (validDay(e.target.value)) setParams({ date: e.target.value }) }} /></label><button disabled={date >= today} aria-label="다음 날짜" onClick={() => setParams({ date: shiftDay(date, 1) })}>→</button><button onClick={() => setParams({ date: today })}>오늘</button></div><div className={styles.panelHeading}><div><h2>{date} 계획과 결과</h2><p>당일 완료 {rows.filter(r => r.completed).length} / 당시 대상 {rows.length} · 이어짐 {rows.filter(r => r.carried).length} · 일정 조정 {rows.filter(r => r.moved).length}</p><p className={styles.note}>과업 수는 작업량이 아닙니다. 이후 완료는 과거 당일 완료율을 바꾸지 않습니다.</p></div></div><ul className={styles.taskList}>{rows.map(row => <li key={row.task.id} className={styles.task}><div><h3>{row.task.title}</h3><p>{row.completed ? '당일 완료' : row.moved ? `일정 조정 → ${row.task.scheduled_date}` : row.task.status === 'paused' ? '보류' : row.task.status === 'cancelled' ? '취소' : '미완료 · 다음 날로 이어짐'}</p>{!row.completed && row.current.status === 'completed' && row.current.completed_at && seoulDay(row.current.completed_at) > date && <p>이후 {seoulDay(row.current.completed_at)} 완료</p>}</div></li>)}</ul>{!rows.length && <p className={styles.empty}>이 날짜의 과업 기록이 없습니다.</p>}</section>
         <section className={styles.panel} data-surface="routine"><div className={styles.panelHeading}><h2>루틴 실천 기록</h2></div><ul className={styles.taskList}>{w.routines.filter(r => r.created_on <= date).map(r => {

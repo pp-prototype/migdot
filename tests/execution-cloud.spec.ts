@@ -43,7 +43,7 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
   const { db } = await setup(page)
   try {
     await page.goto('/execution-tracker')
-    await expect(page.getByText('개인 클라우드 기록')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '익스큐셔너', exact: true })).toBeVisible()
     await expect(page.getByText('아직 오늘 계획한 과업이 없습니다. 작은 일 하나부터 등록하세요.')).toBeVisible()
     await page.getByRole('button', { name: '과업 등록', exact: true }).click()
     const dialog = page.getByRole('dialog')
@@ -123,10 +123,20 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
     await page.screenshot({ path: testInfo.outputPath('executioner-cloud-records.png'), fullPage: true })
     await page.getByRole('link', { name: '오늘', exact: true }).click()
     await page.screenshot({ path: testInfo.outputPath('executioner-cloud-desktop.png'), fullPage: true })
-    for (const width of [320, 390]) {
-      await page.setViewportSize({ width, height: 844 })
+    const taskHeading = page.getByRole('heading', { name: /오늘 계획한 과업/ })
+    const routineHeading = page.getByRole('heading', { name: '오늘의 루틴' })
+    const register = page.getByRole('button', { name: '과업 등록', exact: true })
+    expect((await routineHeading.boundingBox())!.x).toBeGreaterThan((await taskHeading.boundingBox())!.x)
+    for (const width of [320, 390, 768]) {
+      await page.setViewportSize({ width, height: 720 })
+      await page.evaluate(() => window.scrollTo(0, 0))
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      await expect(register).toBeInViewport()
+      await expect(taskHeading).toBeInViewport()
+      expect((await register.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+      expect((await routineHeading.boundingBox())!.y).toBeGreaterThan((await taskHeading.boundingBox())!.y)
     }
+    await page.setViewportSize({ width: 390, height: 844 })
     await page.screenshot({ path: testInfo.outputPath('executioner-cloud-mobile.png'), fullPage: true })
   } finally { await db.close() }
 })

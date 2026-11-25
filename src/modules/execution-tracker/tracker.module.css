@@ -22,3 +22,13 @@
 @media(max-width:900px){.todayGrid{grid-template-columns:1fr}.heatmap{grid-template-columns:repeat(7,minmax(0,1fr))}.recordHeading{align-items:flex-start;flex-direction:column}}
 @media(max-width:760px){.heading h1{font-size:27px}.heading>div>p:last-child{font-size:13px}.notice{padding:14px;font-size:12px}.summary{padding:20px}.summary h2{font-size:20px}.fraction{font-size:27px}.fraction small{font-size:15px}.summary>p{font-size:11px}.sectionTitle{padding:20px}.taskList li,.routineList li{padding:18px 20px;gap:10px}.taskList h3,.routineList h3{font-size:14px}.routineState{font-size:10px}.recordHeading h2{font-size:19px}.recordHeading p{font-size:12px}.dateBrowser{padding:18px 16px;gap:7px}.dateBrowser label{flex:1;min-width:0}.dateBrowser input{width:100%;padding:9px 6px;font-size:12px}.dateBrowser button{padding:8px;min-width:40px}.routineTabs{padding:18px 16px 8px;gap:6px}.routineTabs button{font-size:11px;padding:10px}.heatmapHeading{margin:16px}.heatmapHeading h3{font-size:15px}.heatmapHeading>span{font-size:10px}.heatmap{padding:0 16px;gap:6px}.heatmap button{font-size:11px;min-height:38px}.legend{padding:18px 16px;gap:12px;font-size:10px}.selectedState{padding:14px 16px}.period{font-size:11px}}
 @media(max-width:360px){.dateBrowser{flex-wrap:wrap}.dateBrowser label{min-width:130px}.routineList li{gap:8px}.routineState{white-space:normal;max-width:36px}}
+
+:global(.main-container):has(> .tracker) {
+  max-width: 1320px;
+  padding: 20px 28px 48px;
+}
+
+@media (max-width: 760px) {
+  :global(.main-container):has(> .tracker) { padding: 10px 8px 24px; }
+  .tracker { padding: 12px; border-radius: 14px; }
+}

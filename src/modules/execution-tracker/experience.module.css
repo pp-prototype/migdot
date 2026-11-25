@@ -11,3 +11,20 @@
 .routineCopy { flex: 1; min-width: 0; color: var(--ink); font-size: 13px; overflow-wrap: anywhere; }
 .ritualIcon { flex: 0 0 34px; }
 .closePanel > button { flex-basis: auto; }
+
+/* Keep preview actions near the top on narrow screens. */
+@media (max-width: 760px) {
+  .experience .scene {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    min-height: 0;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .experience .sceneCopy, .experience .characterArea { padding: 0; }
+  .experience .scene h2 { font-size: 21px; margin: 0; }
+  .experience .sceneCopy > p { font-size: 14px; margin-top: 6px; }
+  .experience .sceneMeta { font-size: 12px; margin-top: 8px; }
+  .experience .chapter, .experience .characterTag, .experience .characterName { display: none; }
+  .dialog :is(input, textarea, select) { font-size: 16px; }
+}
