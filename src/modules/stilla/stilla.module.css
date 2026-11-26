@@ -189,3 +189,32 @@
   color: var(--ink);
 }
 .translationInput input { border: 0; border-radius: 0 24px 24px 0; }
+
+.flashHeading { display: flex; align-items: center; gap: 10px; color: var(--accent); }
+.flashDone { padding: 10px 12px; background: var(--wash); border-radius: 8px; }
+.flashOptions, .flashGrades { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.flashOptions label { display: grid; gap: 4px; font-weight: 600; }
+.flashStudy { max-width: 660px; margin-inline: auto; display: grid; gap: 12px; }
+.flashStudy .sectionLine { margin: 0; }
+.flashStudy progress { width: 100%; height: 8px; accent-color: var(--accent); }
+.app .flashSurface {
+  display: grid;
+  justify-items: center;
+  grid-template-rows: auto 1fr auto;
+  gap: 18px;
+  min-height: min(300px, 45vh);
+  width: 100%;
+  padding: 24px 18px;
+  border-radius: 18px;
+  background: var(--sheet);
+  text-align: center;
+}
+.app .flashSurface[data-side='back'] { background: var(--wash); border-color: #a2b5a6; }
+.flashSide, .flashPrompt { color: var(--muted); }
+.flashContent { display: grid; place-content: center; gap: 8px; width: 100%; }
+.flashText { font-size: clamp(1.45rem, 4vw, 2.6rem); line-height: 1.25; white-space: pre-line; }
+.app .flashGrades button { flex-direction: column; gap: 2px; }
+.flashGrades span { font-size: .85rem; font-weight: 400; }
+@media (min-width: 560px) {
+  .flashGrades { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

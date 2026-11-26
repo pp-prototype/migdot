@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent } from 'react'
+import Flashcards from './Flashcards'
 import Sentences from './Sentences'
 import { Icon } from '../../shared/Icon'
 import { useAuth } from '../../shared/auth/context'
-import { compareTranslation, empty, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, removeWord, saveWorkspace, shuffledCardIds, studyCards, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
+import { compareTranslation, empty, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, ratings, removeWord, saveWorkspace, shuffledCardIds, studyCards, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
 import styles from './stilla.module.css'
 
-type View = 'review' | 'words' | 'capture' | 'sentences'
+type View = 'review' | 'words' | 'capture' | 'sentences' | 'flashcards'
 type Commit = (workspace: Workspace) => Promise<boolean>
 
 export default function StillaPage() {
@@ -79,7 +80,8 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
       <div className={styles.brand}><span><Icon name="stilla" /></span><div><h1>스틸라</h1><p lang="en">Stilla</p></div></div>
       {workspace && <nav className={styles.tabs} aria-label="스틸라 메뉴">
         <button type="button" disabled={busy} aria-current={view === 'review' ? 'page' : undefined} onClick={() => open('review')}>복습</button>
-        <button type="button" disabled={busy} aria-current={view === 'words' ? 'page' : undefined} onClick={() => open('words')}>단어장</button>
+        <button type="button" disabled={busy} aria-current={view === 'flashcards' ? 'page' : undefined} onClick={() => open('flashcards')}>플래시카드</button>
+        <button type="button" disabled={busy} aria-current={view === 'words'  ? 'page' : undefined} onClick={() => open('words')}>단어장</button>
         <button type="button" disabled={busy} aria-current={view === 'sentences' ? 'page' : undefined} onClick={() => open('sentences')}>문장</button>
         <button type="button" disabled={busy} className={styles.primary} aria-current={view === 'capture' ? 'page' : undefined} onClick={() => open('capture')}><Icon name="plus" /> 단어 담기</button>
       </nav>}
@@ -89,6 +91,7 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
     {busy && <p className={styles.notice} role="status">저장 중…</p>}
     {!workspace && (loadError ? <section className={styles.panel}><p role="alert">기록을 불러오지 못했습니다.</p><button onClick={() => { setLoadError(false); setAttempt(attempt + 1) }}>다시 불러오기</button></section> : <p role="status">스틸라 기록을 불러오는 중…</p>)}
     {workspace && <>
+      {view === 'flashcards' && <Flashcards workspace={workspace} cards={cards} due={due} busy={busy} commit={commit} onCapture={() => open(unfinished ? 'words' : 'capture')} />}
       <div hidden={view !== 'sentences'}><Sentences workspace={workspace} busy={busy} commit={commit} openWord={openWord} /></div>
       <div hidden={view !== 'capture'}><Capture workspace={workspace} busy={busy} commit={commit} onSaved={openWord} /></div>
       {view === 'review' && (current && workspace.session ? <ReviewCard key={current.id} card={current} busy={busy}
@@ -257,7 +260,7 @@ function WordDetail({ word, workspace, busy, commit, onDeleted }: { word: Word; 
   return <section className={styles.panel}>
     <p className={styles.eyebrow}>{word.language}</p>
     <h2 className={styles.expression} ref={heading} tabIndex={-1}>{word.text}</h2>
-    <p className={styles.muted}>예문 {linked.length}개{last && ` · 지난 뜻 복습: ${last.grade === 'remembered' ? '기억함' : '다시'}`}</p>
+    <p className={styles.muted}>예문 {linked.length}개{last && ` · 지난 뜻 복습: ${ratings[last.grade].label}`}</p>
     {!draft && <p>{word.meaning || '뜻 미정리'}</p>}
     {draft ? <form className={styles.form} onSubmit={saveWord}>
       <label>단어<input autoFocus value={draft.text} onChange={event => setDraft({ ...draft, text: event.target.value })} required disabled={busy} /></label>

@@ -3,14 +3,22 @@ import { supabase } from '../../shared/lib/supabase'
 export type Word = { id: string; language: string; text: string; meaning: string }
 export type Example = { id: string; text: string; translation: string; language?: string }
 export type Connection = { id: string; wordId: string; exampleId: string; gap: string; gapStart: number }
-type Grade = 'again' | 'remembered'
+export type Grade = 'again' | 'hard' | 'remembered' | 'easy'
+export const ratings = {
+  again: { label: '다시', interval: '10분 후', delay: 10 * 60_000 },
+  hard: { label: '어려움', interval: '6시간 후', delay: 6 * 60 * 60_000 },
+  remembered: { label: '기억함', interval: '1일 후', delay: 24 * 60 * 60_000 },
+  easy: { label: '쉬움', interval: '4일 후', delay: 4 * 24 * 60 * 60_000 },
+}
+type Session = { cards: string[]; cursor: number }
 type Review = { cardId: string; grade: Grade; due: number; at: number }
 export type Workspace = {
   words: Word[]
   examples: Example[]
   connections: Connection[]
   reviews: Review[]
-  session: { cards: string[]; cursor: number } | null
+  session: Session | null
+  flashSession?: Session | null
 }
 export type Snapshot = { workspace: Workspace; revision: string | null }
 export const empty: Snapshot = {
@@ -71,13 +79,13 @@ export function latestReviews(workspace: Workspace) {
   return new Map(workspace.reviews.map(review => [review.cardId, review]))
 }
 
-export function gradeCard(workspace: Workspace, cardId: string, position: number, grade: Grade): Workspace {
+export function gradeCard(workspace: Workspace, cardId: string, position: number, grade: Grade, sessionKey: 'session' | 'flashSession' = 'session'): Workspace {
   const at = Date.now()
-  const delay = grade === 'again' ? 10 * 60_000 : 24 * 60 * 60_000
+  const session = workspace[sessionKey]
   return {
     ...workspace,
-    reviews: [...workspace.reviews, { cardId, grade, at, due: at + delay }],
-    session: workspace.session ? { ...workspace.session, cursor: position + 1 } : null,
+    reviews: [...workspace.reviews, { cardId, grade, at, due: at + ratings[grade].delay }],
+    [sessionKey]: session ? { ...session, cursor: position + 1 } : null,
   }
 }
 
@@ -112,17 +120,18 @@ export function removeWord(workspace: Workspace, wordId: string): Workspace {
     .filter(link => link.wordId === wordId)
     .map(link => link.id)])
   const keepCard = (id: string) => !removedCards.has(id)
-  const { session } = workspace
+  const keepSession = (session?: Session | null) => session ? {
+    cards: session.cards.filter(keepCard),
+    cursor: session.cards.slice(0, session.cursor).filter(keepCard).length,
+  } : null
 
   return {
     ...workspace,
     words: workspace.words.filter(word => word.id !== wordId),
     connections: workspace.connections.filter(link => link.wordId !== wordId),
     reviews: workspace.reviews.filter(review => keepCard(review.cardId)),
-    session: session ? {
-      cards: session.cards.filter(keepCard),
-      cursor: session.cards.slice(0, session.cursor).filter(keepCard).length,
-    } : null,
+    session: keepSession(workspace.session),
+    flashSession: keepSession(workspace.flashSession),
   }
 }
 
