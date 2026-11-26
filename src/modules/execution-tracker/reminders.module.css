@@ -1,3 +1,7 @@
+.intro { margin-top: 16px; }
+.intro h2 { font-size: 20px; }
+.intro p { margin-top: 4px; color: var(--muted); font-size: 14px; }
+
 .schedule, .device {
   margin-block: 20px;
   border: 1px solid var(--line);

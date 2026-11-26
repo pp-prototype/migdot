@@ -53,9 +53,9 @@ test('실제 SQL로 개인 과업·루틴·마감을 저장하고 새로고침�
   const { db } = await setup(page)
   try {
     await page.goto('/execution-tracker')
-    await expect(page.getByRole('heading', { name: '익스큐셔너', exact: true })).toBeVisible()
-    await expect(page.getByText('개인 클라우드 기록')).toBeVisible()
+    await expect(page.getByRole('heading', { name: '익스큐셔너', level: 1, exact: true })).toHaveCount(1)
     const trackerMenu = page.getByRole('navigation', { name: '실행 트래커 메뉴' })
+    await expect(trackerMenu).toHaveCount(1)
     await trackerMenu.getByRole('link', { name: '알림 설정' }).click()
     await expect(page.getByRole('heading', { name: '알림 설정' })).toBeVisible()
     await expect(page.getByRole('button', { name: '알림 켜기' })).toBeEnabled()

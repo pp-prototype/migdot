@@ -10,7 +10,6 @@ import { useAuth } from '../../shared/auth/context'
 import CloudTracker from './CloudTracker'
 import TrackerHeader from './TrackerHeader'
 import ReminderSettingsPage from './ReminderSettingsPage'
-import TrackerNavigation from './TrackerNavigation'
 
 const root = '/execution-tracker'
 function TaskList({ items }: { items: Task[] }) {
@@ -19,8 +18,9 @@ function TaskList({ items }: { items: Task[] }) {
 export default function TrackerPage() {
   const auth = useAuth()
   const { '*': subpath } = useParams()
-  if (auth.status === 'preview') return <PreviewTracker />
-  return subpath === 'reminders' ? <ReminderSettingsPage /> : <CloudTracker />
+  return <div className={styles.surface}>
+    {auth.status === 'preview' ? <PreviewTracker /> : subpath === 'reminders' ? <ReminderSettingsPage /> : <CloudTracker />}
+  </div>
 }
 function PreviewTracker() {
   const [journal, setJournal] = useState(createJournal)
@@ -40,7 +40,6 @@ function PreviewTracker() {
   return <div className={styles.tracker}>
     <TrackerHeader day={sampleDay} preview />
     <div className={styles.notice}><Icon name="documentations" /><p>예시 데이터로 체험 중입니다. 변경 내용은 저장되지 않으며 새로고침하거나 모듈을 벗어나면 초기화됩니다. 예시 기준일: {sampleDay}.</p></div>
-    <TrackerNavigation />
     {subpath !== '' && !isRecords ? <section className={styles.empty}><h2>페이지를 찾을 수 없습니다.</h2><Link to={root}>오늘 화면으로 이동</Link></section> : !isRecords ? <Experience journal={journal} setJournal={setJournal} /> : <>
       <div className={styles.recordHeading}><div><h2>꾸준함의 기록</h2><p>최근 28일의 루틴 실천과 날짜별 과업을 확인하세요.</p></div><span className={styles.period}>{days[0]} ~ {sampleDay}</span></div>
       <section className={styles.panel}><div className={styles.dateBrowser}><button aria-label="이전 날짜" disabled={date <= days[0]} onClick={() => selectDate(shiftDay(date, -1))}>←</button><label>조회 날짜<input type="date" aria-label="조회 날짜" min={days[0]} max={sampleDay} value={date} onChange={event => selectDate(event.target.value)} /></label><button aria-label="다음 날짜" disabled={date >= sampleDay} onClick={() => selectDate(shiftDay(date, 1))}>→</button><button onClick={() => selectDate(sampleDay)}>기준일</button></div>
