@@ -1,7 +1,7 @@
 import { supabase } from '../../shared/lib/supabase'
 
 export type Word = { id: string; language: string; text: string; meaning: string }
-export type Example = { id: string; text: string; translation: string }
+export type Example = { id: string; text: string; translation: string; language?: string }
 export type Connection = { id: string; wordId: string; exampleId: string; gap: string; gapStart: number }
 type Grade = 'again' | 'remembered'
 type Review = { cardId: string; grade: Grade; due: number; at: number }
@@ -18,10 +18,10 @@ export const empty: Snapshot = {
   workspace: { words: [], examples: [], connections: [], reviews: [], session: null },
 }
 
-export type Card = { id: string; prompt: string; answer: string; context: string; kind: string }
+export type Card = { id: string; prompt: string; answer: string; context: string; kind: '뜻 떠올리기' | '빈칸 채우기' | '문장 해석' }
 
 export function studyCards(workspace: Workspace): Card[] {
-  return workspace.words.flatMap(word => {
+  const wordCards = workspace.words.flatMap(word => {
     const cards: Card[] = word.meaning ? [{
       id: word.id, prompt: word.text, answer: word.meaning, kind: '뜻 떠올리기',
       context: workspace.examples.find(example => workspace.connections.some(link => link.wordId === word.id && link.exampleId === example.id))?.text ?? '',
@@ -37,6 +37,34 @@ export function studyCards(workspace: Workspace): Card[] {
     }
     return cards
   })
+  const translations: Card[] = workspace.examples.filter(example => example.translation.trim()).map(example => ({
+    id: example.id, prompt: example.text, answer: example.translation, context: '', kind: '문장 해석',
+  }))
+  return [...wordCards, ...translations]
+}
+
+export function shuffledCardIds(cards: Card[], limit: number) {
+  const ids = cards.map(card => card.id)
+  const count = Math.min(limit, ids.length)
+  for (let index = 0; index < count; index++) {
+    const other = index + Math.floor(Math.random() * (ids.length - index))
+    const id = ids[index]
+    ids[index] = ids[other]
+    ids[other] = id
+  }
+  return ids.slice(0, count)
+}
+
+const answerTerms = (value: string) => value.normalize('NFKC').toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) ?? []
+
+export function compareTranslation(input: string, reference: string) {
+  const terms = answerTerms(input)
+  const expected = answerTerms(reference)
+  const entered = new Set(terms)
+  return {
+    exact: expected.length > 0 && terms.join(' ') === expected.join(' '),
+    common: [...new Set(expected)].filter(term => entered.has(term)),
+  }
 }
 
 export function latestReviews(workspace: Workspace) {

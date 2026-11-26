@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent } from 'react'
+import Sentences from './Sentences'
 import { Icon } from '../../shared/Icon'
 import { useAuth } from '../../shared/auth/context'
-import { empty, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, removeWord, saveWorkspace, studyCards, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
+import { compareTranslation, empty, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, removeWord, saveWorkspace, shuffledCardIds, studyCards, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
 import styles from './stilla.module.css'
 
-type View = 'review' | 'words' | 'capture'
+type View = 'review' | 'words' | 'capture' | 'sentences'
 type Commit = (workspace: Workspace) => Promise<boolean>
 
 export default function StillaPage() {
@@ -67,6 +68,7 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
   const pending = workspace?.session?.cards.slice(workspace.session.cursor) ?? []
   const current = pending.map(id => cards.find(card => card.id === id)).find(Boolean)
   const position = current ? (workspace?.session?.cards.indexOf(current.id) ?? 0) : 0
+  const blank = !workspace?.words.length && !workspace?.examples.length
   const unfinished = workspace?.words.filter(item => !item.meaning).length ?? 0
 
   function open(next: View) { setView(next); setMessage('') }
@@ -78,6 +80,7 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
       {workspace && <nav className={styles.tabs} aria-label="스틸라 메뉴">
         <button type="button" disabled={busy} aria-current={view === 'review' ? 'page' : undefined} onClick={() => open('review')}>복습</button>
         <button type="button" disabled={busy} aria-current={view === 'words' ? 'page' : undefined} onClick={() => open('words')}>단어장</button>
+        <button type="button" disabled={busy} aria-current={view === 'sentences' ? 'page' : undefined} onClick={() => open('sentences')}>문장</button>
         <button type="button" disabled={busy} className={styles.primary} aria-current={view === 'capture' ? 'page' : undefined} onClick={() => open('capture')}><Icon name="plus" /> 단어 담기</button>
       </nav>}
     </header>
@@ -86,6 +89,7 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
     {busy && <p className={styles.notice} role="status">저장 중…</p>}
     {!workspace && (loadError ? <section className={styles.panel}><p role="alert">기록을 불러오지 못했습니다.</p><button onClick={() => { setLoadError(false); setAttempt(attempt + 1) }}>다시 불러오기</button></section> : <p role="status">스틸라 기록을 불러오는 중…</p>)}
     {workspace && <>
+      <div hidden={view !== 'sentences'}><Sentences workspace={workspace} busy={busy} commit={commit} openWord={openWord} /></div>
       <div hidden={view !== 'capture'}><Capture workspace={workspace} busy={busy} commit={commit} onSaved={openWord} /></div>
       {view === 'review' && (current && workspace.session ? <ReviewCard key={current.id} card={current} busy={busy}
         position={position + 1} total={workspace.session.cards.length}
@@ -94,11 +98,14 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
           <div className={styles.ripples} aria-hidden="true"><i /><i /><i /><Icon name="stilla" /></div>
           <div className={styles.heroText}>
             <p className={styles.eyebrow}>오늘의 복습</p>
-            <h2>{workspace.words.length === 0 ? '내가 만난 말을\n한 방울씩.' : due.length ? `복습할 카드 ${due.length}장` : cards.length ? '지금 복습할 카드가 없어요.' : '단어장을 채워보세요.'}</h2>
-            <p>{workspace.words.length === 0 ? '기억하고 싶은 단어부터 담아보세요.' : due.length ? '뜻과 문장 속 표현을 떠올려 보세요.' : unfinished ? `뜻을 채울 단어가 ${unfinished}개 있어요.` : '오늘 만난 표현을 또 담아보세요.'}</p>
+            <h2>{blank ? '내가 만난 말을\n한 방울씩.' : due.length ? `복습할 카드 ${due.length}장` : cards.length ? '지금 복습할 카드가 없어요.' : '뜻이나 해석을 담아보세요.'}</h2>
+            <p>{blank ? '기억하고 싶은 단어부터 담아보세요.' : due.length ? '단어 뜻이나 문장 해석을 떠올려 보세요.' : unfinished ? `뜻을 채울 단어가 ${unfinished}개 있어요.` : '오늘 만난 표현을 또 담아보세요.'}</p>
             {due.length > 0
               ? <button className={styles.primary} disabled={busy} onClick={() => void commit({ ...workspace, session: { cards: due.slice(0, 5).map(card => card.id), cursor: 0 } })}>{Math.min(5, due.length)}장 복습하기 <Icon name="arrow" /></button>
-              : <button className={styles.primary} disabled={busy} onClick={() => open(unfinished ? 'words' : 'capture')}>{unfinished ? '단어장 열기' : workspace.words.length ? '단어 담기' : '첫 단어 담기'} <Icon name="arrow" /></button>}
+              : <button className={styles.primary} disabled={busy} onClick={() => open(unfinished ? 'words' : workspace.examples.length ? 'sentences' : 'capture')}>{unfinished ? '단어장 열기' : workspace.examples.length ? '문장 열기' : workspace.words.length ? '단어 담기' : '첫 단어 담기'} <Icon name="arrow" /></button>}
+            {cards.length > 0 && <button disabled={busy} onClick={() => void commit({
+              ...workspace, session: { cards: shuffledCardIds(cards, 5), cursor: 0 },
+            })}>무작위로 공부하기</button>}
           </div>
         </section>
         {workspace.words.length > 0 && <section className={styles.recent}>
@@ -302,17 +309,27 @@ function ReviewCard({ card, position, total, busy, grade }: { card: Card; positi
   const [answer, setAnswer] = useState('')
   const [revealed, setRevealed] = useState(false)
   const normalize = (value: string) => value.trim().normalize('NFC').toLowerCase()
+  const translation = card.kind === '문장 해석'
+  const comparison = revealed && card.kind !== '빈칸 채우기' && answer.trim() ? compareTranslation(answer, card.answer) : null
   return <section className={`${styles.panel} ${styles.review}`}>
     <p className={styles.eyebrow}>{card.kind} · {position} / {total}</p>
     <progress value={position - 1} max={total} aria-label="복습 진행" />
     <h2>{card.prompt}</h2>
     <form className={styles.form} onSubmit={event => { event.preventDefault(); setRevealed(true) }}>
-      <label>떠올린 답<input value={answer} onChange={event => setAnswer(event.target.value)} placeholder="입력하거나 마음속으로 떠올려 보세요" readOnly={revealed} /></label>
-      {!revealed && <button className={styles.primary} type="submit">답 보기</button>}
+      {translation ? <label>내 해석<span className={styles.translationInput}><Icon name="search" /><input
+        value={answer} onChange={event => setAnswer(event.target.value)} placeholder="이 문장을 어떻게 해석했나요?" readOnly={revealed}
+      /></span></label> : <label>떠올린 답<input value={answer} onChange={event => setAnswer(event.target.value)} placeholder="입력하거나 마음속으로 떠올려 보세요" readOnly={revealed} /></label>}
+      {!revealed && <button className={styles.primary} type="submit">{translation && answer.trim() ? '해석 비교' : '답 보기'}</button>}
     </form>
     {revealed && <div className={styles.answer} aria-live="polite">
-      {answer.trim() && <p className={styles.muted}>{normalize(answer) === normalize(card.answer) ? '기록된 답과 같아요.' : '기록된 답과 비교해 보세요.'}</p>}
+      {card.kind === '빈칸 채우기' && answer.trim() && <p className={styles.muted}>{normalize(answer) === normalize(card.answer) ? '기록된 답과 같아요.' : '기록된 답과 비교해 보세요.'}</p>}
+      {translation && <p className={styles.eyebrow}>저장한 해석</p>}
       <h3>{card.answer}</h3>
+      {comparison && <>
+        <p>{comparison.exact ? '기록된 답과 같아요.' : comparison.common.length
+          ? `겹치는 표현 · ${comparison.common.join(', ')}` : '같은 표기의 표현을 찾지 못했어요.'}</p>
+        <p className={styles.muted}>표현을 비교한 결과예요. 의미가 같은지는 아래에서 직접 판단해 주세요.</p>
+      </>}
       {card.context && <p>{card.context}</p>}
       <div className={styles.grades}><button disabled={busy} onClick={() => void grade('again')}>다시</button><button className={styles.primary} disabled={busy} onClick={() => void grade('remembered')}>기억함</button></div>
     </div>}
