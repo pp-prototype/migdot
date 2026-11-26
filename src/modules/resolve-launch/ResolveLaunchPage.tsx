@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from '
 import { useAuth } from '../../shared/auth/context'
 import { Icon } from '../../shared/Icon'
 import styles from './launch.module.css'
+import MechaModel from './MechaModel'
 
 type Condition = { id: string; text: string; minutes: number }
 type Topic = { id: string; name: string; conditions: Condition[] }
@@ -31,17 +32,14 @@ function loadTopics(key?: string): Topic[] {
   } catch { return [example] }
 }
 
-function Mecha({ stage, view }: { stage: number; view: View }) {
-  return <div className={styles.hangar} data-stage={stage} data-view={view} aria-hidden="true">
+const assembly = ['동력 프레임', '센서 결합', '하체 도킹', '상체 도킹', '장갑 잠금', '추진기 결합']
+
+function Mecha({ progress, view }: { progress: number; view: View }) {
+  return <div className={styles.hangar} data-stage={Math.floor(progress)} data-view={view} aria-hidden="true">
     <div className={styles.hangarGrid} />
     <div className={styles.ring} />
-    <div className={styles.robot}>
-      <div className={styles.legs}><i /><i /></div>
-      <div className={styles.arms}><i /><i /></div>
-      <div className={styles.body}><i /></div>
-      <div className={styles.helmet}><i /></div>
-    </div>
     <div className={styles.deck} />
+    <MechaModel progress={progress} launched={view === 'approved'} className={styles.robot} />
     <div className={styles.steam}><i /><i /><i /><i /></div>
   </div>
 }
@@ -103,6 +101,16 @@ function Gear({ condition, deadline, now, engaged, lock, unlock, start }: {
 }
 
 function TopicForm({ initial, cancel, save }: { initial?: Topic; cancel: () => void; save: (topic: Topic) => void }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const node = dialog.current
+    const trigger = document.activeElement
+    node?.showModal()
+    return () => {
+      node?.close()
+      if (trigger instanceof HTMLElement) trigger.focus()
+    }
+  }, [])
   const [name, setName] = useState(initial?.name ?? '')
   const [conditions, setConditions] = useState(() => initial?.conditions ?? Array.from({ length: 3 }, emptyCondition))
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -110,8 +118,9 @@ function TopicForm({ initial, cancel, save }: { initial?: Topic; cancel: () => v
     if (!name.trim() || conditions.some(condition => !condition.text.trim())) return
     save({ id: initial?.id ?? crypto.randomUUID(), name: name.trim(), conditions: conditions.map(condition => ({ ...condition, text: condition.text.trim() })) })
   }
-  return <form className={styles.editor} onSubmit={submit}>
-    <h2>{initial ? '출격 주제 수정' : '새 출격 주제'}</h2>
+  return <dialog ref={dialog} className={styles.editorDialog} aria-labelledby="resolve-topic-editor" onCancel={event => { event.preventDefault(); cancel() }}>
+    <form className={styles.editor} onSubmit={submit}>
+    <h2 id="resolve-topic-editor">{initial ? '출격 주제 수정' : '새 출격 주제'}</h2>
     <label>주제 이름<input required maxLength={60} value={name} onChange={event => setName(event.target.value)} placeholder="예: 새 운동화 사기" /></label>
     {conditions.map((condition, index) => <fieldset key={condition.id}>
       <legend>확인 조건 {index + 1}</legend>
@@ -131,7 +140,8 @@ function TopicForm({ initial, cancel, save }: { initial?: Topic; cancel: () => v
       <button type="button" className={styles.secondary} onClick={cancel}>닫기</button>
       <button className={styles.primary}>주제 저장</button>
     </div>
-  </form>
+    </form>
+  </dialog>
 }
 
 export default function ResolveLaunchPage() {
@@ -145,13 +155,14 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
   const [selected, setSelected] = useState(topics[0]?.id ?? '')
   const [editor, setEditor] = useState<Topic | 'new' | null>(null)
   const [view, setView] = useState<View>('ready')
+  const [railOpen, setRailOpen] = useState(true)
   const [locked, setLocked] = useState<string[]>([])
   const [deadlines, setDeadlines] = useState<Record<string, number>>({})
   const [now, setNow] = useState(Date.now)
   const [storageError, setStorageError] = useState(false)
   const topic = topics.find(item => item.id === selected)
   const complete = Boolean(topic && locked.length === topic.conditions.length)
-  const stage = topic ? complete ? 3 : Math.floor(locked.length * 3 / topic.conditions.length) : 0
+  const progress = topic ? locked.length * 5 / topic.conditions.length : 0
   const waiting = Object.values(deadlines).some(deadline => deadline > now)
 
   useEffect(() => {
@@ -186,50 +197,73 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
     setLocked(items => items.includes(condition.id) ? items : [...items, condition.id])
   }
 
-  const status = view === 'approved' ? '출격 승인' : view === 'deferred' ? '격납고 복귀' : complete ? '합체 완료 · 출격 준비' : '출격 대기'
+  const status = view === 'approved' ? '출격 승인' : view === 'deferred' ? '격납고 복귀' : complete ? '합체 완료 · 출격 준비' : view === 'checking' ? '합체 진행 중' : '출격 대기'
   return <div className={styles.surface}><div className={styles.room}>
     <header className={styles.header}>
-      <h1><span aria-hidden="true"><Icon name="check" /></span>결심 출격 관제실</h1>
-      <button className={styles.secondary} onClick={() => setEditor('new')}>새 출격 주제</button>
+      <h1><span className={styles.emblem} aria-hidden="true"><i /></span>결심 출격 관제실</h1>
+      <button className={styles.secondary} onClick={() => setEditor('new')}><Icon name="plus" />새 출격 주제</button>
     </header>
     {storageError && <p role="alert">브라우저에 주제를 저장하지 못했습니다. 이번 화면에서는 계속 사용할 수 있습니다.</p>}
-    {editor ? <TopicForm initial={editor === 'new' ? undefined : editor} cancel={() => setEditor(null)} save={saveTopic} /> : <>
-      <div className={styles.topicBar}>
-        <label>출격 주제<select value={selected} onChange={event => { setSelected(event.target.value); reset('ready') }}>
-          {!topics.length && <option value="">등록된 주제가 없습니다</option>}
-          {topics.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select></label>
-        {topic && <button className={styles.secondary} onClick={() => setEditor(topic)}>주제 수정</button>}
-      </div>
-      {topic && <div className={styles.control} data-view={view} data-complete={complete}>
-        <section className={styles.display} aria-label="격납고">
-          <p role="status">{status}</p>
-          <Mecha stage={stage} view={view} />
-          {view === 'checking' && <p className={styles.counter} aria-live="polite">잠금 {locked.length} / {topic.conditions.length}</p>}
-        </section>
-        <section className={styles.console} aria-labelledby="launch-topic">
-          <h2 id="launch-topic">{topic.name}</h2>
-          {view === 'ready' && <div className={styles.actions}><button className={styles.primary} onClick={() => reset('checking')}>출격 요청</button></div>}
-          {view === 'checking' && <>
-            <ul className={styles.conditions}>{topic.conditions.map(condition => <Gear key={condition.id} condition={condition}
-              deadline={deadlines[condition.id]} now={now} engaged={locked.includes(condition.id)}
-              lock={() => lockCondition(condition)} unlock={() => setLocked(items => items.filter(id => id !== condition.id))}
-              start={() => {
-                const started = Date.now()
-                setNow(started)
-                setDeadlines(items => ({ ...items, [condition.id]: started + condition.minutes * 60_000 }))
-              }} />)}</ul>
-            <div className={styles.actions}>
-              <button className={styles.secondary} onClick={() => reset('deferred')}>격납고 복귀</button>
-              <button className={styles.primary} disabled={!complete} onClick={() => { if (complete) setView('approved') }}>최종 출격 승인</button>
-            </div>
+    <div className={styles.control} data-view={view} data-complete={complete}>
+      <section className={styles.display} aria-label="격납고">
+        <div className={styles.displayHead}><span>격납고</span><p role="status">{status}</p></div>
+        <Mecha progress={progress} view={view} />
+        <div className={styles.displayFoot}>
+          <ol className={styles.phases} aria-label="메카 결합 단계">
+            {assembly.map((label, index) => <li key={label} data-ready={index <= Math.floor(progress)}>
+              <span aria-hidden="true" />{label}
+            </li>)}
+          </ol>
+        </div>
+      </section>
+      <aside className={styles.rail} aria-label="승인 조작">
+        <div className={styles.railHead}>
+          <h2>승인 목록</h2>
+          {topic && <span className={styles.counter} aria-live="polite">잠금 {locked.length} / {topic.conditions.length}</span>}
+          <button className={styles.railToggle} aria-controls="resolve-launch-rail" aria-expanded={railOpen}
+            aria-label={railOpen ? '승인 목록 접기' : '승인 목록 펼치기'} onClick={() => setRailOpen(value => !value)}><Icon name="chevron" /></button>
+        </div>
+        <div id="resolve-launch-rail" className={styles.console} data-open={railOpen}>
+          <div className={styles.topicBar}>
+            <label>출격 주제<select value={selected} onChange={event => { setSelected(event.target.value); reset('ready') }}>
+              {!topics.length && <option value="">등록된 주제가 없습니다</option>}
+              {topics.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+            </select></label>
+            {topic && <button className={styles.secondary} onClick={() => setEditor(topic)}>주제 수정</button>}
+          </div>
+          {topic && <>
+            {view === 'ready' && <>
+              <ul className={styles.previewConditions} aria-label="선택한 주제의 확인 조건">
+                {topic.conditions.map(condition => <li key={condition.id}>
+                  <span>{condition.text}</span>
+                  {condition.minutes > 0 && <small>{condition.minutes}분 대기</small>}
+                </li>)}
+              </ul>
+              <div className={styles.actions}><button className={styles.primary} onClick={() => reset('checking')}>출격 요청</button></div>
+            </>}
+            {view === 'checking' && <>
+              <ul className={styles.conditions}>{topic.conditions.map(condition => <Gear key={condition.id} condition={condition}
+                deadline={deadlines[condition.id]} now={now} engaged={locked.includes(condition.id)}
+                lock={() => lockCondition(condition)} unlock={() => setLocked(items => items.filter(id => id !== condition.id))}
+                start={() => {
+                  const started = Date.now()
+                  setNow(started)
+                  setDeadlines(items => ({ ...items, [condition.id]: started + condition.minutes * 60_000 }))
+                }} />)}</ul>
+              <div className={styles.actions}>
+                <button className={styles.secondary} onClick={() => reset('deferred')}>격납고 복귀</button>
+                <button className={styles.primary} disabled={!complete} onClick={() => { if (complete) setView('approved') }}>최종 출격 승인</button>
+              </div>
+            </>}
+            {(view === 'approved' || view === 'deferred') && <>
+              <p>{view === 'approved' ? '조건 확인을 마치고 출격을 결정했어요.' : '지금은 출격하지 않기로 했어요.'}</p>
+              <div className={styles.actions}><button className={styles.primary} onClick={() => reset('ready')}>관제실로 돌아가기</button></div>
+            </>}
           </>}
-          {(view === 'approved' || view === 'deferred') && <>
-            <p>{view === 'approved' ? '조건 확인을 마치고 출격을 결정했어요.' : '지금은 출격하지 않기로 했어요.'}</p>
-            <div className={styles.actions}><button className={styles.primary} onClick={() => reset('ready')}>관제실로 돌아가기</button></div>
-          </>}
-        </section>
-      </div>}
-    </>}
+        </div>
+      </aside>
+    </div>
+    {editor && <TopicForm key={editor === 'new' ? 'new' : editor.id}
+      initial={editor === 'new' ? undefined : editor} cancel={() => setEditor(null)} save={saveTopic} />}
   </div></div>
 }
