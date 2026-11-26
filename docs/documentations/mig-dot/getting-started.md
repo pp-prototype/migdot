@@ -40,6 +40,7 @@ Supabase 설정이 전혀 없는 일반 개발 서버는 안내와 함께 예시
 | [포스트잇 러너](../post-it-learner/overview.md) | 학습 주제를 만들고 보드에 포스트잇을 기록합니다. |
 | [익스큐셔너](../execution-tracker/overview.md) | 과업·루틴·회고를 기록하고 기기별 알림을 설정합니다. |
 | [메타 월렛](../meta-wallet/overview.md) | 오늘 생활비를 확인하고 지출 일기와 돈 계획을 작성합니다. |
+| [결심 출격 관제실](../resolve-launch/overview.md) | 내가 정한 조건을 확인하고 출격을 승인하거나 보류합니다. |
 | [가을 편지](../autumn-letter/overview.md) | 별도 주소에서 입장 코드를 입력해 체험을 시작합니다. |
 
 ## 문서 조회
