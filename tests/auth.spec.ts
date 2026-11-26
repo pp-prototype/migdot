@@ -9,12 +9,13 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
   const token = `${btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))}.${btoa(JSON.stringify({ sub: userId, role: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 }))}.test-signature`
   const session = { access_token: token, refresh_token: 'test-refresh', token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, user }
   const control = { fail: false, mismatch: false, moduleIds: options.moduleIds ?? ['post-it-learner'], exchanges: 0, verifier: '', approved: options.approved ?? true, members: [{ user_id: guestId, email: 'friend@example.invalid', role: 'member', active: false, module_ids: [] as string[] }] }
+  const walletControl = { failSave: false, conflict: false }
   let wallet: { revision: string; workspace: unknown } | null = null
   if (options.signedIn !== false) await page.addInitScript(value => localStorage.setItem('migdot-127-0-0-1-54329-auth', JSON.stringify(value)), session)
   await page.route('http://127.0.0.1:54329/**', async route => {
     const request = route.request()
     const path = new URL(request.url()).pathname
-    const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS', 'content-type': 'application/json' }
+    const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS', 'content-type': 'application/json' }
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 200, headers, body: '{}' })
     const json = (value: unknown, status = 200) => route.fulfill({ status, headers, body: JSON.stringify(value) })
     if (path === '/auth/v1/user') return json(user)
@@ -28,7 +29,15 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
     }
     if (path === '/rest/v1/meta_wallet_workspaces') {
       if (!control.approved || !control.moduleIds.includes('meta-wallet')) return json({ message: 'Forbidden' }, 403)
-      if (request.method() !== 'GET') wallet = request.postDataJSON()
+      if (request.method() === 'POST' || request.method() === 'PATCH') {
+        if (walletControl.failSave) return json({ message: 'Unavailable' }, 503)
+        if (walletControl.conflict && wallet) {
+          wallet = { ...wallet, revision: 'another-device' }
+          walletControl.conflict = false
+        }
+        if (request.method() === 'PATCH' && new URL(request.url()).searchParams.get('revision') !== `eq.${wallet?.revision}`) return json([])
+        wallet = request.postDataJSON()
+      }
       return json(wallet ? [wallet] : [])
     }
     if (path.endsWith('/admin_list_app_members')) return json(control.members)
@@ -45,7 +54,7 @@ async function mockAuth(page: Page, options: { signedIn?: boolean; role?: 'owner
     }
     return json({ message: 'Unexpected test request' }, 400)
   })
-  return control
+  return Object.assign(control, { wallet: walletControl })
 }
 
 test('권한이 있는 사용자는 메타 월렛에 개인 기록을 저장할 수 있다', async ({ page }) => {
@@ -80,7 +89,7 @@ test('권한이 있는 사용자는 메타 월렛에 개인 기록을 저장할 
   await expect(page.getByLabel('이름', { exact: true })).toHaveValue('배달 비용')
   await page.getByLabel('금액 (원)', { exact: true }).fill('25000')
   await page.getByRole('button', { name: '돈 계획에 반영' }).click()
-  await expect(page.getByRole('button', { name: '배달 비용 수정' })).toBeVisible()
+  await expect(page.locator('summary[aria-label="배달 비용 관리"]')).toBeVisible()
   await page.getByRole('button', { name: '홈', exact: true }).click()
   await expect(week.getByRole('heading', { name: '잡아둔 생활비' })).toBeVisible()
   await page.getByRole('button', { name: '내 지갑으로 돌아가기' }).click()
@@ -125,10 +134,11 @@ test('메타 월렛은 계좌 잔액과 실제 예정 지출을 구분해 생활
   await page.getByLabel('금액 (원)', { exact: true }).fill('7000')
   await page.getByLabel('날짜', { exact: true }).fill(tomorrow)
   await page.getByRole('button', { name: '돈 계획에 반영' }).click()
+  await page.locator('summary[aria-label="생활 대출 관리"]').click()
   await page.getByRole('button', { name: '생활 대출 수정', exact: true }).click()
   await page.getByLabel('다음 상환액 (원)').fill('28000')
   await page.getByRole('button', { name: '계좌 저장' }).click()
-  await expect(page.getByRole('button', { name: '생활 대출 수정', exact: true })).toHaveCount(1)
+  await expect(page.locator('summary[aria-label="생활 대출 관리"]')).toHaveCount(1)
   await page.getByRole('button', { name: '홈', exact: true }).click()
   const balance = page.getByRole('region', { name: '오늘 생활비' })
   await expect(balance).toContainText('8,000')
@@ -140,6 +150,7 @@ test('메타 월렛은 미처리 납부를 이월하고 확인 잔액에 다시 
   await page.goto('/meta-wallet')
   await page.getByRole('button', { name: '예시로 둘러보기' }).click()
   await page.getByRole('button', { name: '생활비 계산 근거' }).click()
+  await page.locator('summary[aria-label="카드 대금 관리"]').click()
   await page.getByRole('button', { name: '카드 대금 수정' }).click()
   const yesterday = await page.evaluate(() => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(Date.now() - 86400000))
   await page.getByLabel('날짜', { exact: true }).fill(yesterday)
@@ -161,6 +172,82 @@ test('메타 월렛은 미처리 납부를 이월하고 확인 잔액에 다시 
   const card = page.getByRole('region', { name: '오늘 생활비' })
   await expect(card).toContainText('15,000')
   await expect(card).toContainText('280,000원')
+})
+
+test('메타 월렛 돈주머니 소계와 저축 반영을 320px에서 확인한다', async ({ page }) => {
+  await mockAuth(page, { moduleIds: ['meta-wallet'] })
+  await page.setViewportSize({ width: 320, height: 720 })
+  await page.goto('/meta-wallet')
+  await page.getByRole('button', { name: '예시로 둘러보기' }).click()
+  await page.getByRole('button', { name: '돈 계획', exact: true }).click()
+  const pockets = page.getByRole('region', { name: '돈주머니' })
+  await expect(pockets.getByRole('button', { name: /갚을 돈 200,000원/ })).toBeVisible()
+  await expect(pockets.getByRole('button', { name: /써야 할 돈 105,000원/ })).toBeVisible()
+  await pockets.getByRole('button', { name: /모을 돈 70,000원/ }).click()
+  await pockets.getByRole('button', { name: '저축 추가' }).click()
+  await expect(page.getByLabel('항목')).toHaveValue('저축')
+  await expect(page.getByRole('heading', { name: '일정 추가' })).toBeFocused()
+  await page.getByLabel('이름', { exact: true }).fill('비상금 모으기')
+  await page.getByLabel('금액 (원)', { exact: true }).fill('50000')
+  await expect(page.getByText('반영 시 오늘 생활비 15,000원 → 7,857원')).toBeVisible()
+  await expect(pockets.getByRole('button', { name: /모을 돈 70,000원/ })).toBeVisible()
+  await page.getByRole('button', { name: '돈 계획에 반영' }).click()
+  await expect(pockets.getByRole('button', { name: /모을 돈 120,000원/ })).toBeVisible()
+  await expect(pockets).toHaveText(/오늘 생활비 7,857원/)
+  await pockets.getByRole('button', { name: '비상금 모으기 계획 수정' }).click()
+  await expect(page.getByLabel('금액 (원)', { exact: true })).toHaveValue('50000')
+  await page.getByRole('button', { name: '취소', exact: true }).click()
+  await page.getByRole('button', { name: '저축 계좌 추가' }).click()
+  await page.getByLabel('계좌 이름').fill('저축 통장')
+  await page.getByLabel('현재 저축액 (원)').fill('0')
+  await page.getByRole('button', { name: '계좌 저장' }).click()
+  await pockets.getByRole('button', { name: '비상금 모으기 계획 수정' }).click()
+  await page.getByLabel('계좌 연결 (선택)').selectOption({ label: '저축 통장' })
+  await page.getByRole('button', { name: '돈 계획에 반영' }).click()
+  await expect(pockets.getByRole('button', { name: /모을 돈 120,000원/ })).toBeVisible()
+  await pockets.getByRole('button', { name: '비상금 모으기 계획 수정' }).click()
+  await expect(page.getByLabel('다음 납입액 (원)')).toHaveValue('50000')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+})
+
+test('메타 월렛은 실패와 충돌 복구 후에도 저장할 입력을 유지한다', async ({ page }) => {
+  const control = await mockAuth(page, { moduleIds: ['meta-wallet'] })
+  await page.goto('/meta-wallet')
+  await page.getByLabel('하루 지출 (원)').fill('1000')
+  control.wallet.failSave = true
+  await page.getByRole('button', { name: '하루 기록 저장' }).click()
+  await expect(page.getByRole('alert')).toContainText('입력은 유지됩니다')
+  await expect(page.getByText('하루 기록을 저장했어요.')).toHaveCount(0)
+  control.wallet.failSave = false
+  await page.getByRole('button', { name: '저장 다시 시도' }).click()
+  await expect(page.getByText('하루 기록을 저장했어요.')).toBeVisible()
+
+  await page.getByRole('region', { name: '오늘 쓴 돈' }).getByRole('button', { name: '수정' }).click()
+  await page.getByLabel('하루 지출 (원)').fill('2000')
+  control.wallet.conflict = true
+  await page.getByRole('button', { name: '하루 기록 저장' }).click()
+  await page.getByRole('button', { name: '최신 지갑 불러오기' }).click()
+  await expect(page.getByLabel('하루 지출 (원)')).toHaveValue('2000')
+  await page.getByRole('button', { name: '하루 기록 저장' }).click()
+  await expect(page.getByRole('region', { name: '오늘 쓴 돈' })).toContainText('2,000원')
+})
+
+test('메타 월렛은 날짜가 바뀌어도 작성 중인 일기의 날짜를 유지한다', async ({ page }) => {
+  await mockAuth(page, { moduleIds: ['meta-wallet'] })
+  await page.goto('/meta-wallet')
+  const date = await page.locator('time').getAttribute('datetime')
+  expect(date).toBeTruthy()
+  const midnight = new Date(`${date}T15:00:00.000Z`)
+  const tomorrow = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(midnight)
+  await page.getByLabel('하루 지출 (원)').fill('4500')
+  await page.clock.setFixedTime(midnight)
+  await expect(page.locator('time')).toHaveAttribute('datetime', tomorrow)
+  await expect(page.getByLabel('하루 지출 (원)')).toHaveValue('4500')
+  await page.getByRole('button', { name: '하루 기록 저장' }).click()
+  await expect(page.getByRole('region', { name: '오늘 쓴 돈' })).toBeVisible()
+  await page.getByRole('button', { name: '지출 일기', exact: true }).click()
+  await page.getByLabel('기록 날짜').fill(date!)
+  await expect(page.getByRole('region', { name: /지출 기록/ })).toContainText('4,500원')
 })
 
 test('비로그인은 홈에서 보호 모듈을 보지 못하고 직접 주소는 로그인으로 연결된다', async ({ page }, testInfo) => {
