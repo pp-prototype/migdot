@@ -225,6 +225,7 @@ Edge Functions의 시크릿은 함수가 읽고, Vault의 시크릿은 Cron이 �
 | ‘이 환경의 푸시 발송 설정이 아직 연결되지 않았습니다’ | 6번 변수의 이름, 배포 대상 환경, 변수 저장 후 새 빌드 여부를 확인합니다. |
 | 구독 저장에 실패함 | 1번 DB 마이그레이션, 로그인 계정의 익스큐셔너 권한, 기기 알림 권한을 확인합니다. |
 | Cron 작업이 목록에 없음 | 5번의 Vault 이름과 예약 등록 SQL의 실행 결과를 확인합니다. |
+| Cron 로그에 `schema "net" does not exist`가 표시됨 | 운영 DB에서 `pg_net`을 활성화하고 다음 예약을 확인합니다. [장애 복구 기록](../docs/documentations/execution-tracker/push-cron-recovery.md) |
 | Cron 이력은 성공인데 알림이 없음 | Cron 성공은 HTTP 요청을 큐에 넣었다는 뜻일 수 있습니다. **Edge Functions → send-execution-reminders → Logs**에서 응답을 확인하세요. `401`이면 Vault와 함수의 예약 비밀값이 같은지 확인합니다. 정상 호출이어도 미완료·미기록 대상이 없거나 알림 권한이 꺼져 있으면 받을 알림이 없습니다. |
 
 발송 서비스가 만료된 구독에 `404` 또는 `410`을 반환하면 해당 구독을 제거합니다. 예약 발송을 멈추려면 **Cron → Jobs**에서 `send-execution-reminders`를 비활성화합니다.

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 const pages = [
-  { path: '/meetings', title: '회의록', document: '2026-11-16 메인 허브 구성' },
+  { path: '/meetings', title: '회의록', document: '메인 허브 구성' },
   { path: '/updates', title: '개발업데이트', document: '메인 허브와 문서별 라우팅' },
   { path: '/documentations', title: '문서', document: 'MIG DOT 시작하기' },
 ]
@@ -31,7 +31,7 @@ test('허브와 문서 페이지의 이동·검색·새로고침', async ({ page
     await page.getByRole('searchbox').fill('존재하지않는문서xyz987')
     await expect(page.getByText('검색 결과가 없습니다.')).toBeVisible()
     await page.getByRole('searchbox').fill(item.document)
-    await expect(page.locator('aside li')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: item.document, exact: true })).toBeVisible()
     await expect(page.locator('article.markdown h1')).toHaveText(item.document)
     await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '메인', exact: true }).click()
   }
@@ -42,6 +42,15 @@ test('허브와 문서 페이지의 이동·검색·새로고침', async ({ page
   await page.goto('/unknown-page')
   await expect(page.getByRole('heading', { name: '페이지를 찾을 수 없습니다.' })).toBeVisible()
   expect(errors).toEqual([])
+})
+
+test('시작하기의 앱 안내에서 관련 문서로 이동한다', async ({ page }) => {
+  await page.goto('/documentations?doc=%2Fdocs%2Fdocumentations%2Fmig-dot%2Fgetting-started.md')
+  const article = page.locator('article.markdown')
+  await article.getByRole('link', { name: '메타 월렛', exact: true }).click()
+  await expect(article.getByRole('heading', { name: '메타 월렛 생활비와 돈 계획 사용 안내' })).toBeVisible()
+  await article.getByRole('link', { name: '메타 월렛 개발·디자인 원칙', exact: true }).click()
+  await expect(article.getByRole('heading', { name: '메타 월렛 개발·디자인 원칙', level: 1 })).toBeVisible()
 })
 
 test('모바일에서 모든 메뉴와 문서가 화면 안에 표시된다', async ({ page }) => {
