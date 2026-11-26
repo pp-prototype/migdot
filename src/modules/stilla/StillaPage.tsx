@@ -3,7 +3,7 @@ import Flashcards from './Flashcards'
 import Sentences from './Sentences'
 import { Icon } from '../../shared/Icon'
 import { useAuth } from '../../shared/auth/context'
-import { compareTranslation, empty, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, ratings, removeWord, saveWorkspace, shuffledCardIds, studyCards, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
+import { compareTranslation, empty, emptyWordCells, gapPositions, gradeCard, latestReviews, loadWorkspace, classifyWords, ratings, removeWord, saveWorkspace, shuffledCardIds, studyCards, wordColumns, wordKey, WorkspaceConflict, type Card, type Snapshot, type Word, type WordCells, type Workspace } from './workspace'
 import styles from './stilla.module.css'
 
 type View = 'review' | 'words' | 'capture' | 'sentences' | 'flashcards'
@@ -125,7 +125,7 @@ function Stilla({ owner, preview }: { owner?: string; preview?: boolean }) {
 }
 
 function Capture({ workspace, busy, commit, onSaved }: { workspace: Workspace; busy: boolean; commit: Commit; onSaved: (id: string) => void }) {
-  const [cells, setCells] = useState<WordCells[]>([['', '']])
+  const [cells, setCells] = useState<WordCells[]>(() => [emptyWordCells()])
   const [pasteError, setPasteError] = useState('')
   const [language, setLanguage] = useState('영어')
   const rows = classifyWords(cells, language, workspace.words)
@@ -133,40 +133,46 @@ function Capture({ workspace, busy, commit, onSaved }: { workspace: Workspace; b
   const duplicates = rows.filter(row => row.state === 'duplicate').length
   const invalid = rows.some(row => row.state === 'invalid')
 
-  function updateCells(rowIndex: number, column: 0 | 1, values: string[][]) {
+  function updateCells(rowIndex: number, column: number, values: string[][]) {
     setPasteError('')
     setCells(previous => {
-      const next: WordCells[] = previous.map(([text, meaning]) => [text, meaning])
+      const next: WordCells[] = previous.slice()
       values.forEach((row, offset) => {
         const index = rowIndex + offset
-        const entry = next[index] ?? ['', '']
+        const entry: WordCells = next[index] ? [...next[index]] : emptyWordCells()
         for (const [cell, value] of row.entries()) entry[column + cell] = value
         next[index] = entry
       })
-      if (next.at(-1)?.some(value => value.trim())) next.push(['', ''])
+      if (next.at(-1)?.some(value => value.trim())) next.push(emptyWordCells())
       return next
     })
   }
 
-  function paste(event: ClipboardEvent<HTMLInputElement>, row: number, column: 0 | 1) {
+  function paste(event: ClipboardEvent<HTMLInputElement>, row: number, column: number) {
     const text = event.clipboardData.getData('text/plain')
     if (!/[\t\r\n]/.test(text)) return
     event.preventDefault()
     const lines = text.replace(/\r\n?/g, '\n').replace(/\n+$/, '').split('\n')
     const values = lines.map(line => line.split('\t'))
-    if (values.some(value => value.length > 2 - column)) {
-      setPasteError('붙여넣을 열이 표의 범위를 벗어나요. 단어와 뜻을 함께 붙여넣을 때는 단어 셀에서 시작해 주세요.')
+    if (values.some(value => value.length > wordColumns.length - column)) {
+      setPasteError('붙여넣을 열이 표의 범위를 벗어나요. 시작 셀과 복사한 열 수를 확인해 주세요.')
       return
     }
-    updateCells(row, column, values)
+    const wordAndMeaning = column === 0 && values.every(value => value.length <= 2)
+    const pasted = wordAndMeaning ? values.map((value, offset) => value.length === 2
+      ? [value[0], cells[row + offset]?.[1] ?? '', value[1]]
+      : value) : values
+    updateCells(row, column, pasted)
   }
 
   async function save(event: FormEvent) {
     event.preventDefault()
     if (!language.trim() || !fresh.length || invalid) return
-    const words = fresh.map(row => ({ id: crypto.randomUUID(), language: language.trim(), text: row.text, meaning: row.meaning }))
+    const words = fresh.map(({ text, pronunciation, meaning, notes }) => ({
+      id: crypto.randomUUID(), language: language.trim(), text, pronunciation, meaning, notes,
+    }))
     if (await commit({ ...workspace, words: [...workspace.words, ...words] })) {
-      setCells([['', '']])
+      setCells([emptyWordCells()])
       setPasteError('')
       onSaved(words[0].id)
     }
@@ -176,22 +182,22 @@ function Capture({ workspace, busy, commit, onSaved }: { workspace: Workspace; b
     <h2>단어 담기</h2>
     <form className={styles.form} onSubmit={save}>
       <label>학습 언어<input value={language} onChange={event => setLanguage(event.target.value)} required maxLength={40} disabled={busy} /></label>
-      <p className={styles.muted} id="stilla-capture-help">Tab으로 다음 칸에 이동해요. 스프레드시트에서 단어와 뜻을 복사해 붙여넣을 수도 있어요.</p>
-      <table className={styles.captureTable} aria-label="담을 단어" aria-describedby="stilla-capture-help">
-        <thead><tr><th scope="col"><span aria-label="행 번호">#</span></th><th scope="col">단어</th><th scope="col">뜻 <small>(선택)</small></th></tr></thead>
+      <p className={styles.muted} id="stilla-capture-help">원어만 입력해도 담을 수 있어요. Tab으로 다음 칸에 이동하고, 스프레드시트에서 복사한 행은 원어 칸에 붙여넣으세요.</p>
+      <div className={styles.captureScroll}><table className={styles.captureTable} aria-label="담을 단어" aria-describedby="stilla-capture-help">
+        <thead><tr><th scope="col"><span aria-label="행 번호">#</span></th>{wordColumns.map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead>
         <tbody>{cells.map((row, index) => <tr key={index}>
           <th scope="row">{index + 1}</th>
-          {([0, 1] as const).map(column => <td key={column}><input
-            aria-label={`${index + 1}행 ${column === 0 ? '단어' : '뜻'}`}
+          {wordColumns.map((label, column) => <td key={column}><input
+            aria-label={`${index + 1}행 ${label}`}
             aria-invalid={column === 0 && rows[index].state === 'invalid' ? true : undefined}
             value={row[column]} disabled={busy}
             onChange={event => updateCells(index, column, [[event.target.value]])}
             onPaste={event => paste(event, index, column)}
           /></td>)}
         </tr>)}</tbody>
-      </table>
+      </table></div>
       {pasteError && <p className={styles.error} role="alert">{pasteError}</p>}
-      {invalid && <p className={styles.error}>뜻만 입력된 행에 단어를 적어 주세요.</p>}
+      {invalid && <p className={styles.error}>발음, 뜻 또는 비고를 입력한 행에 원어를 적어 주세요.</p>}
       {rows.some(row => row.state !== 'empty') && <p className={styles.muted} role="status">새 단어 {fresh.length}개 · 중복 {duplicates}개</p>}
       <button className={styles.primary} disabled={busy || !language.trim() || !fresh.length || invalid}><Icon name="stilla" />{fresh.length ? `${fresh.length}개 담기` : '저장하기'}</button>
     </form>
@@ -200,11 +206,11 @@ function Capture({ workspace, busy, commit, onSaved }: { workspace: Workspace; b
 
 function WordList({ workspace, selected, select, busy, onAdd }: { workspace: Workspace; selected: string; select: (id: string) => void; busy: boolean; onAdd: () => void }) {
   const [query, setQuery] = useState('')
-  const found = workspace.words.filter(word => `${word.text} ${word.meaning} ${word.language}`.toLowerCase().includes(query.trim().toLowerCase())).reverse()
+  const found = workspace.words.filter(word => `${word.text} ${word.meaning} ${word.language} ${word.pronunciation ?? ''} ${word.notes ?? ''}`.toLowerCase().includes(query.trim().toLowerCase())).reverse()
   return <section className={styles.panel} aria-label="단어 목록">
     <div className={styles.sectionLine}><h2>단어장</h2><span className={styles.muted}>{workspace.words.length}개</span></div>
     {workspace.words.length ? <>
-      <label className={styles.search}><Icon name="search" /><input type="search" aria-label="단어 검색" placeholder="단어, 뜻, 언어 검색" value={query} onChange={event => setQuery(event.target.value)} /></label>
+      <label className={styles.search}><Icon name="search" /><input type="search" aria-label="단어 검색" placeholder="원어, 발음, 뜻, 비고 검색" value={query} onChange={event => setQuery(event.target.value)} /></label>
       {found.map(word => <button className={styles.wordRow} aria-pressed={word.id === selected} type="button" key={word.id} disabled={busy} onClick={() => select(word.id)}><strong>{word.text}</strong><span>{word.meaning || '뜻 미정리'}</span><Icon name="arrow" /></button>)}
       {!found.length && <p role="status">일치하는 단어가 없어요.</p>}
     </> : <><p>아직 담은 단어가 없어요.</p><button className={styles.primary} onClick={onAdd}>첫 단어 담기</button></>}
@@ -230,7 +236,10 @@ function WordDetail({ word, workspace, busy, commit, onDeleted }: { word: Word; 
   const invalid = Boolean(gap.trim() && gapStart === -1)
   const last = latestReviews(workspace).get(word.id)
 
-  const edited = draft && { ...draft, text: draft.text.trim(), language: draft.language.trim(), meaning: draft.meaning.trim() }
+  const edited = draft && {
+    ...draft, text: draft.text.trim(), language: draft.language.trim(), meaning: draft.meaning.trim(),
+    pronunciation: draft.pronunciation?.trim(), notes: draft.notes?.trim(),
+  }
   const duplicate = edited && workspace.words.some(other => other.id !== word.id
     && wordKey(other.language, other.text) === wordKey(edited.language, edited.text))
 
@@ -261,11 +270,17 @@ function WordDetail({ word, workspace, busy, commit, onDeleted }: { word: Word; 
     <p className={styles.eyebrow}>{word.language}</p>
     <h2 className={styles.expression} ref={heading} tabIndex={-1}>{word.text}</h2>
     <p className={styles.muted}>예문 {linked.length}개{last && ` · 지난 뜻 복습: ${ratings[last.grade].label}`}</p>
-    {!draft && <p>{word.meaning || '뜻 미정리'}</p>}
+    {!draft && <dl className={styles.wordFields}>
+      {word.pronunciation && <><dt>발음</dt><dd>{word.pronunciation}</dd></>}
+      <dt>뜻</dt><dd>{word.meaning || '뜻 미정리'}</dd>
+      {word.notes && <><dt>비고</dt><dd>{word.notes}</dd></>}
+    </dl>}
     {draft ? <form className={styles.form} onSubmit={saveWord}>
-      <label>단어<input autoFocus value={draft.text} onChange={event => setDraft({ ...draft, text: event.target.value })} required disabled={busy} /></label>
+      <label>원어<input autoFocus value={draft.text} onChange={event => setDraft({ ...draft, text: event.target.value })} required disabled={busy} /></label>
       <label>학습 언어<input value={draft.language} onChange={event => setDraft({ ...draft, language: event.target.value })} required maxLength={40} disabled={busy} /></label>
+      <label>발음 (선택)<input value={draft.pronunciation ?? ''} onChange={event => setDraft({ ...draft, pronunciation: event.target.value })} disabled={busy} /></label>
       <label>뜻 (선택)<input value={draft.meaning} onChange={event => setDraft({ ...draft, meaning: event.target.value })} disabled={busy} /></label>
+      <label>비고 (선택)<textarea rows={3} value={draft.notes ?? ''} onChange={event => setDraft({ ...draft, notes: event.target.value })} disabled={busy} /></label>
       {duplicate && <p className={styles.error} role="status">같은 언어에 이미 등록된 단어예요.</p>}
       <div className={styles.grades}>
         <button className={styles.primary} disabled={busy || !edited?.text || !edited.language || Boolean(duplicate)}>변경 저장</button>
