@@ -64,6 +64,7 @@
 .control {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(285px, 28vw, 440px);
+  grid-template-areas: "hangar console";
   align-items: start;
   gap: 12px;
   margin-top: 12px;
@@ -78,7 +79,7 @@
   min-width: 0;
 }
 
-.display { overflow: hidden; background: var(--monitor); transition: background-color .35s, border-color .35s; }
+.display { grid-area: hangar; overflow: hidden; background: var(--monitor); transition: background-color .35s, border-color .35s; }
 .displayHead, .railHead {
   display: flex;
   min-height: 48px;
@@ -93,7 +94,7 @@
 }
 .displayHead > p { color: var(--signal); }
 .displayFoot { border-top: 1px solid #506773; padding: 10px 14px; }
-.rail { position: sticky; top: 76px; }
+.rail { grid-area: console; position: sticky; top: 76px; }
 .railHead h2 { font-size: 1rem; font-weight: 750; }
 .railToggle { display: none; }
 .counter { color: var(--signal); font-variant-numeric: tabular-nums; font-size: .875rem; font-weight: 750; }
@@ -225,12 +226,13 @@
 @media (max-width: 760px) {
   .room { padding: 10px 12px 28px; }
   .header { padding: 9px 10px; }
-  .control { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .control { grid-template-columns: minmax(0, 1fr); grid-template-areas: "console" "hangar"; gap: 10px; }
   .hangar { height: clamp(260px, 63vw, 350px); }
   .phases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .phases li { font-size: .8125rem; }
   .rail { position: static; }
   .console { max-height: none; }
+  .console .previewConditions { display: none; }
   .console[data-open="false"] { display: none; }
   .railToggle { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #667680; border-radius: 5px; }
   .railToggle[aria-expanded="true"] svg { rotate: 180deg; }
@@ -269,3 +271,22 @@
 .displayHead, .railHead, .phases {
   font-family: "IBM Plex Mono", ui-monospace, "Apple SD Gothic Neo", "Malgun Gothic", monospace;
 }
+
+.intro { margin: 10px 0 0; color: #d1dfe6; }
+.examples { display: grid; gap: 7px; }
+.examples p, .gearHelp { color: #c8d8e0; font-size: .875rem; }
+.gearHelp { margin-block: 5px 8px; }
+.outcome { display: grid; gap: 5px; border-inline-start: 3px solid #8eb7cf; padding: 8px 12px; background: #22343e; overflow-wrap: anywhere; }
+.outcome[data-outcome="approved"] { border-color: var(--signal); }
+.shutters { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.shutters::before, .shutters::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 50%;
+  background: repeating-linear-gradient(180deg, #253a46 0 2px, #192832 2px 32px);
+  transition: transform .55s ease-in-out;
+}
+.shutters::before { left: 0; transform: translateX(-101%); border-right: 2px solid #54727f; }
+.shutters::after { right: 0; transform: translateX(101%); border-left: 2px solid #54727f; }
+.hangar[data-view="deferred"] .shutters::before, .hangar[data-view="deferred"] .shutters::after { transform: translateX(0); }

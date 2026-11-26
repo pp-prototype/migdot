@@ -13,10 +13,30 @@ const example: Topic = {
   id: 'delivery',
   name: '야식 배달',
   conditions: [
-    { id: 'food', text: '집에 먹을 게 있는지 확인했다.', minutes: 0 },
-    { id: 'budget', text: '이번 주 배달 예산 안이다.', minutes: 0 },
-    { id: 'wait', text: '잠깐 기다린 뒤에도 주문하고 싶다.', minutes: 10 },
+    { id: 'food', text: '집에 바로 먹을 수 있는 음식이 있는지 확인했나요?', minutes: 0 },
+    { id: 'budget', text: '배달비까지 포함해 이번 주 예산 안인가요?', minutes: 0 },
+    { id: 'wait', text: '잠깐 기다린 뒤에도 주문하고 싶나요?', minutes: 10 },
   ],
+}
+
+const purchaseExample: Topic = {
+  id: 'purchase',
+  name: '할인 상품 구매',
+  conditions: [
+    { id: 'budget', text: '배송비까지 포함해서 여유 예산 안인가요?', minutes: 0 },
+    { id: 'duplicate', text: '이미 가진 물건으로 대신할 수 없는지 확인했나요?', minutes: 0 },
+    { id: 'wait', text: '잠깐 기다린 뒤에도 필요한 물건인가요?', minutes: 10 },
+  ],
+}
+const examples = [example, purchaseExample]
+
+function loadDeadlines(key?: string): Record<string, number> {
+  if (!key) return {}
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(key) ?? '{}')
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {}
+    return Object.fromEntries(Object.entries(saved).filter(([, value]) => Number.isFinite(value) && value > 0))
+  } catch { return {} }
 }
 
 function loadTopics(key?: string): Topic[] {
@@ -40,6 +60,7 @@ function Mecha({ progress, view }: { progress: number; view: View }) {
     <div className={styles.ring} />
     <div className={styles.deck} />
     <MechaModel progress={progress} launched={view === 'approved'} className={styles.robot} />
+    <div className={styles.shutters} />
     <div className={styles.steam}><i /><i /><i /><i /></div>
   </div>
 }
@@ -57,7 +78,7 @@ function Gear({ condition, deadline, now, engaged, lock, unlock, start }: {
   const dragStart = useRef(0)
   const remaining = deadline ? Math.max(0, Math.ceil((deadline - now) / 1000)) : 0
   const waiting = condition.minutes > 0 && (!deadline || remaining > 0)
-  const clock = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`
+  const clock = remaining >= 60 ? `${Math.ceil(remaining / 60)}분` : `${remaining}초`
   function pointerPosition(event: PointerEvent<HTMLInputElement>) {
     const travel = Math.max(1, event.currentTarget.clientWidth - 38)
     return Math.round(Math.min(1, Math.max(0, (event.clientX - dragStart.current) / travel)) * 100)
@@ -65,13 +86,18 @@ function Gear({ condition, deadline, now, engaged, lock, unlock, start }: {
   return <li className={styles.condition} data-locked={engaged}>
     <div className={styles.conditionTitle}>
       <label htmlFor={`gear-${condition.id}`}>{condition.text}</label>
-      <span>{engaged ? '잠금 완료' : waiting ? '대기' : '확인 대기'}</span>
+      <span>{engaged ? '잠금 완료' : waiting ? '대기' : '아직 확인 전'}</span>
     </div>
     {waiting ? <div className={styles.wait}>
-      {deadline ? <p>남은 대기 시간 <strong>{clock}</strong></p> : <button className={styles.secondary} onClick={start}>{condition.minutes}분 대기 시작</button>}
-    </div> : <div className={styles.gearRow}>
+      {deadline ? <p role="timer"><strong>{clock}</strong> 뒤에 다시 확인할 수 있어요.</p> : <button className={styles.secondary} onClick={start}>{condition.minutes}분 대기 시작</button>}
+    </div> : <>
+      {!engaged && <p id={`gear-help-${condition.id}`} className={styles.gearHelp}>
+        {deadline && '대기가 끝났어요. 질문을 다시 확인해 주세요. '}
+        끝까지 밀거나 End 키를 누르세요. 확인 버튼도 쓸 수 있어요.
+      </p>}
+      <div className={styles.gearRow}>
       <input className={styles.gear} id={`gear-${condition.id}`} type="range" min="0" max="100" step="1"
-        disabled={engaged} value={engaged ? 100 : position} aria-valuetext={engaged ? '잠금 완료' : `${position}%`}
+        disabled={engaged} aria-describedby={engaged ? undefined : `gear-help-${condition.id}`} value={engaged ? 100 : position} aria-valuetext={engaged ? '잠금 완료' : `${position}%`}
         onChange={event => {
           const next = Number(event.target.value)
           setPosition(next === 100 ? 0 : next)
@@ -96,7 +122,7 @@ function Gear({ condition, deadline, now, engaged, lock, unlock, start }: {
       <button className={styles.secondary} onClick={engaged ? unlock : lock} aria-label={`${condition.text} ${engaged ? '잠금 해제' : '확인'}`}>
         {engaged ? '해제' : '확인'}
       </button>
-    </div>}
+    </div></>}
   </li>
 }
 
@@ -124,11 +150,11 @@ function TopicForm({ initial, cancel, save }: { initial?: Topic; cancel: () => v
     <label>주제 이름<input required maxLength={60} value={name} onChange={event => setName(event.target.value)} placeholder="예: 새 운동화 사기" /></label>
     {conditions.map((condition, index) => <fieldset key={condition.id}>
       <legend>확인 조건 {index + 1}</legend>
-      <label>조건 문구<input required maxLength={110} value={condition.text} onChange={event => {
+      <label>조건 문구<input required placeholder="예: 이번 주 예산 안인가요?" maxLength={110} value={condition.text} onChange={event => {
         const text = event.target.value
         setConditions(items => items.map(item => item.id === condition.id ? { ...item, text } : item))
       }} /></label>
-      <label>대기 시간 (분)<input required type="number" min="0" max="1440" step="1" value={condition.minutes} onChange={event => {
+      <label>대기 시간 (분, 선택)<input type="number" min="0" max="1440" step="1" value={condition.minutes} onChange={event => {
         const minutes = Number(event.target.value)
         setConditions(items => items.map(item => item.id === condition.id ? { ...item, minutes } : item))
       }} /></label>
@@ -145,8 +171,8 @@ function TopicForm({ initial, cancel, save }: { initial?: Topic; cancel: () => v
 }
 
 export default function ResolveLaunchPage() {
-  const { user } = useAuth()
-  const storageKey = user ? `migdot-resolve-launch:${user.id}` : undefined
+  const { user, status } = useAuth()
+  const storageKey = user ? `migdot-resolve-launch:${user.id}` : status === 'preview' ? 'migdot-resolve-launch:preview' : undefined
   return <ControlRoom key={storageKey ?? 'preview'} storageKey={storageKey} />
 }
 
@@ -157,13 +183,38 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
   const [view, setView] = useState<View>('ready')
   const [railOpen, setRailOpen] = useState(true)
   const [locked, setLocked] = useState<string[]>([])
-  const [deadlines, setDeadlines] = useState<Record<string, number>>({})
+  const deadlineKey = storageKey ? `${storageKey}:deadlines` : undefined
+  const [deadlines, setDeadlines] = useState(() => loadDeadlines(deadlineKey))
+  const outcome = useRef<HTMLHeadingElement>(null)
+  const checking = useRef<HTMLParagraphElement>(null)
   const [now, setNow] = useState(Date.now)
   const [storageError, setStorageError] = useState(false)
   const topic = topics.find(item => item.id === selected)
   const complete = Boolean(topic && locked.length === topic.conditions.length)
   const progress = topic ? locked.length * 5 / topic.conditions.length : 0
-  const waiting = Object.values(deadlines).some(deadline => deadline > now)
+  const deadlineFor = (condition: Condition) => deadlines[JSON.stringify([selected, condition.id])]
+  const waiting = topic?.conditions.some(condition => (deadlineFor(condition) ?? 0) > now)
+
+  useEffect(() => {
+    if (view === 'checking') checking.current?.focus()
+    if (view === 'approved' || view === 'deferred') outcome.current?.focus()
+  }, [view])
+
+  function updateDeadlines(next: Record<string, number>) {
+    setDeadlines(next)
+    if (!deadlineKey) return
+    try {
+      localStorage.setItem(deadlineKey, JSON.stringify(next))
+    } catch {
+      setStorageError(true)
+    }
+  }
+
+  function clearTopicDeadlines(current: Topic) {
+    const next = { ...deadlines }
+    for (const condition of current.conditions) delete next[JSON.stringify([current.id, condition.id])]
+    updateDeadlines(next)
+  }
 
   useEffect(() => {
     if (!waiting || view !== 'checking') return
@@ -173,7 +224,6 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
 
   function reset(next: View) {
     setLocked([])
-    setDeadlines({})
     setView(next)
   }
 
@@ -185,6 +235,8 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
       if (storageKey) localStorage.setItem(storageKey, JSON.stringify(updated))
       setStorageError(false)
     } catch { setStorageError(true) }
+    const previous = topics.find(item => item.id === next.id)
+    if (previous) clearTopicDeadlines(previous)
     setTopics(updated)
     setSelected(next.id)
     setEditor(null)
@@ -193,29 +245,19 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
 
   function lockCondition(condition: Condition) {
     if (view !== 'checking') return
-    if (condition.minutes && !(deadlines[condition.id] && deadlines[condition.id] <= now)) return
+    if (condition.minutes && (deadlineFor(condition) ?? Infinity) > now) return
     setLocked(items => items.includes(condition.id) ? items : [...items, condition.id])
   }
 
-  const status = view === 'approved' ? '출격 승인' : view === 'deferred' ? '격납고 복귀' : complete ? '합체 완료 · 출격 준비' : view === 'checking' ? '합체 진행 중' : '출격 대기'
+  const status = view === 'approved' ? '출격 승인' : view === 'deferred' ? '격납 완료' : complete ? '합체 완료 · 출격 준비' : view === 'checking' ? '합체 진행 중' : '출격 대기'
   return <div className={styles.surface}><div className={styles.room}>
     <header className={styles.header}>
       <h1><span className={styles.emblem} aria-hidden="true"><i /></span>결심 출격 관제실</h1>
       <button className={styles.secondary} onClick={() => setEditor('new')}><Icon name="plus" />새 출격 주제</button>
     </header>
     {storageError && <p role="alert">브라우저에 주제를 저장하지 못했습니다. 이번 화면에서는 계속 사용할 수 있습니다.</p>}
+    <p className={styles.intro}>내가 정한 조건을 확인하고, 지금 할지 결정해요.</p>
     <div className={styles.control} data-view={view} data-complete={complete}>
-      <section className={styles.display} aria-label="격납고">
-        <div className={styles.displayHead}><span>격납고</span><p role="status">{status}</p></div>
-        <Mecha progress={progress} view={view} />
-        <div className={styles.displayFoot}>
-          <ol className={styles.phases} aria-label="메카 결합 단계">
-            {assembly.map((label, index) => <li key={label} data-ready={index <= Math.floor(progress)}>
-              <span aria-hidden="true" />{label}
-            </li>)}
-          </ol>
-        </div>
-      </section>
       <aside className={styles.rail} aria-label="승인 조작">
         <div className={styles.railHead}>
           <h2>승인 목록</h2>
@@ -224,6 +266,14 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
             aria-label={railOpen ? '승인 목록 접기' : '승인 목록 펼치기'} onClick={() => setRailOpen(value => !value)}><Icon name="chevron" /></button>
         </div>
         <div id="resolve-launch-rail" className={styles.console} data-open={railOpen}>
+          {view === 'ready' && <div className={styles.examples}>
+            <p>예시로 바로 시작하기</p>
+            <div className={styles.actions}>{examples.map(sample => <button key={sample.id} className={styles.secondary} onClick={() => {
+              if (topics.some(item => item.id === sample.id)) setSelected(sample.id)
+              else saveTopic(sample)
+              reset('checking')
+            }}>{sample.name}</button>)}</div>
+          </div>}
           <div className={styles.topicBar}>
             <label>출격 주제<select value={selected} onChange={event => { setSelected(event.target.value); reset('ready') }}>
               {!topics.length && <option value="">등록된 주제가 없습니다</option>}
@@ -239,29 +289,44 @@ function ControlRoom({ storageKey }: { storageKey?: string }) {
                   {condition.minutes > 0 && <small>{condition.minutes}분 대기</small>}
                 </li>)}
               </ul>
-              <div className={styles.actions}><button className={styles.primary} onClick={() => reset('checking')}>출격 요청</button></div>
+              <div className={styles.actions}><button className={styles.primary} onClick={() => reset('checking')}>조건 확인 시작</button></div>
             </>}
             {view === 'checking' && <>
+              <p ref={checking} tabIndex={-1} className={styles.gearHelp}>질문을 읽고, 내가 정한 기준을 충족했을 때 기어를 잠그세요.</p>
               <ul className={styles.conditions}>{topic.conditions.map(condition => <Gear key={condition.id} condition={condition}
-                deadline={deadlines[condition.id]} now={now} engaged={locked.includes(condition.id)}
+                deadline={deadlineFor(condition)} now={now} engaged={locked.includes(condition.id)}
                 lock={() => lockCondition(condition)} unlock={() => setLocked(items => items.filter(id => id !== condition.id))}
                 start={() => {
                   const started = Date.now()
                   setNow(started)
-                  setDeadlines(items => ({ ...items, [condition.id]: started + condition.minutes * 60_000 }))
+                  updateDeadlines({ ...deadlines, [JSON.stringify([topic.id, condition.id])]: started + condition.minutes * 60_000 })
                 }} />)}</ul>
               <div className={styles.actions}>
-                <button className={styles.secondary} onClick={() => reset('deferred')}>격납고 복귀</button>
-                <button className={styles.primary} disabled={!complete} onClick={() => { if (complete) setView('approved') }}>최종 출격 승인</button>
+                <button className={styles.secondary} onClick={() => { clearTopicDeadlines(topic); setView('deferred') }}>오늘은 보류</button>
+                <button className={styles.primary} disabled={!complete} onClick={() => { if (complete) { clearTopicDeadlines(topic); setView('approved') } }}>최종 출격 승인</button>
               </div>
             </>}
             {(view === 'approved' || view === 'deferred') && <>
-              <p>{view === 'approved' ? '조건 확인을 마치고 출격을 결정했어요.' : '지금은 출격하지 않기로 했어요.'}</p>
+              <div className={styles.outcome} data-outcome={view}>
+                <h3 ref={outcome} tabIndex={-1}>{view === 'approved' ? '출격을 결정했어요' : '오늘은 보류했어요'}</h3>
+                <p>{topic.name} · {view === 'approved' ? '정해 둔 조건을 모두 확인했어요.' : '다음에 이 주제를 다시 열어 확인할 수 있어요.'}</p>
+              </div>
               <div className={styles.actions}><button className={styles.primary} onClick={() => reset('ready')}>관제실로 돌아가기</button></div>
             </>}
           </>}
         </div>
       </aside>
+      <section className={styles.display} aria-label="격납고">
+        <div className={styles.displayHead}><span>격납고</span><p role="status">{status}</p></div>
+        <Mecha progress={progress} view={view} />
+        <div className={styles.displayFoot}>
+          <ol className={styles.phases} aria-label="메카 결합 단계">
+            {assembly.map((label, index) => <li key={label} data-ready={index <= Math.floor(progress)}>
+              <span aria-hidden="true" />{label}
+            </li>)}
+          </ol>
+        </div>
+      </section>
     </div>
     {editor && <TopicForm key={editor === 'new' ? 'new' : editor.id}
       initial={editor === 'new' ? undefined : editor} cancel={() => setEditor(null)} save={saveTopic} />}
