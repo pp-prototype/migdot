@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Icon } from '../../shared/Icon'
 import { useAuth } from '../../shared/auth/context'
 import {
@@ -7,7 +6,7 @@ import {
   executionPushSupport, registerExecutionPush,
 } from '../../shared/lib/executionPush'
 import ActionButton from './ActionButton'
-import TrackerNavigation from './TrackerNavigation'
+import TrackerHeader from './TrackerHeader'
 import base from './tracker.module.css'
 import styles from './reminders.module.css'
 
@@ -101,9 +100,11 @@ function DeviceControls() {
 
 export default function ReminderSettingsPage() {
   return <div className={base.tracker}>
-    <p className={base.breadcrumb}><Link to="/">메인</Link> / <Link to="/execution-tracker">익스큐셔너</Link> / 알림 설정</p>
-    <div className={base.heading}><div><h1>알림 설정</h1><p>과업과 루틴을 마무리할 시간을 알려드려요.</p></div></div>
-    <TrackerNavigation />
+    <TrackerHeader />
+    <div className={styles.intro}>
+      <h2>알림 설정</h2>
+      <p>과업과 루틴을 마무리할 시간을 알려드려요.</p>
+    </div>
     <section className={styles.schedule} aria-labelledby="reminder-schedule">
       <header className={styles.heading}><h2 id="reminder-schedule">알림 일정</h2><span>매일 · 한국 시간</span></header>
       <ul className={styles.list}>{reminders.map(reminder => <li key={reminder.time}>

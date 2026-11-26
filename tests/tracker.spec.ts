@@ -45,13 +45,18 @@ test('실행 미리보기의 과업·루틴 구분과 날짜별 기록 탐색', 
 })
 
 test('실행 미리보기 모바일 레이아웃과 공통 메뉴 유지', async ({ page }) => {
-  for (const width of [320, 390, 768]) {
+  for (const width of [320, 390, 440, 768]) {
     await page.setViewportSize({ width, height: 844 })
-    for (const path of ['/execution-tracker', '/execution-tracker/records']) {
+    for (const path of ['/execution-tracker', '/execution-tracker/records', '/execution-tracker/reminders']) {
       await page.goto(path)
+      await expect(page.getByRole('heading', { name: '익스큐셔너', exact: true, level: 1 })).toHaveCount(1)
+      const appTabs = page.getByRole('navigation', { name: '실행 트래커 메뉴' })
+      await expect(appTabs).toHaveCount(1)
+      await expect(appTabs.getByRole('link')).toHaveText(['오늘', '기록', '알림 설정'])
+      await expect(page.locator('main')).toHaveCSS('background-color', 'rgb(27, 35, 40)')
       await expect(page.getByRole('heading', { name: '익스큐셔너', exact: true })).toBeVisible()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-      if (width === 390) await page.screenshot({ path: `docs/previews/tracker-${path.endsWith('records') ? 'records' : 'today'}-mobile.png`, fullPage: true })
+      if (width === 390 && !path.endsWith('reminders')) await page.screenshot({ path: `docs/previews/tracker-${path.endsWith('records') ? 'records' : 'today'}-mobile.png`, fullPage: true })
     }
   }
   await page.setViewportSize({ width: 390, height: 844 })
