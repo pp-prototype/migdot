@@ -1,10 +1,10 @@
-# 2026-11-16 포스트잇 러너 참조 조사
+# 포스트잇 러너 참조 조사
 
-- 일시: 2026-11-16 (Asia/Seoul)
+- 논의일 2026-11-16 (Asia/Seoul)
 - 요청: 로컬 post-it-learner를 참조하되 코드는 가져오지 않음
-- 대상: /Users/migdracios/overmind/apps/post-it-learner
+- 대상 /Users/migdracios/overmind/apps/post-it-learner
 - 기준 커밋: f304de0 · 조사 전후 원본 git status 변경 없음
-- 상태: 코드·문서 조사 결과 및 이식 제안 · 이식 미실행
+- 상태 코드·문서 조사 결과 및 이식 제안 · 이식 미실행
 
 ## 배경과 조사 범위
 
