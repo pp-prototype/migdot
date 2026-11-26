@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import RecordEditor, { type Draft } from './RecordEditor'
 import TopicCard from './TopicCard'
+import LearnerHeader from './LearnerHeader'
+import LearnerTools from './LearnerTools'
+import { Icon } from '../../shared/Icon'
+import shell from './learner-shell.module.css'
 import { type LearningRecords, type NoteRecord, type TopicRecord } from './records'
 import { thumbnailUrl } from './thumbnail'
 import defaultCover from './assets/design.svg'
@@ -122,20 +126,17 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
   const missing = invalid || (topicId && library && !topic)
 
   return <div className={styles.learner}>
-    <nav className={styles.breadcrumb} aria-label="현재 위치">
-      <Link to="/">메인</Link> / <Link to={root}>포스트잇 러너</Link>{topic && <> / {topic.name}</>}
-    </nav>
-    <header className={styles.heading}>
-      <div>
-        <h1>{topic?.name ?? '포스트잇 러너'}</h1>
-        {topic?.description && <p>{topic.description}</p>}
+    <LearnerHeader root={root} inTopic={Boolean(topicId)} />
+    {library && !missing && (
+      <div className={styles.heading}>
+        <div>
+          <h2 id={topic ? undefined : 'learning-topic-list'}>
+            {topic ? topic.name : <>학습 대상 <span>{visibleTopics.length}개</span></>}
+          </h2>
+          {topic?.description && <p>{topic.description}</p>}
+        </div>
       </div>
-      {library && !missing && <div className={styles.actions}>
-        {topic
-          ? <button onClick={() => setDraft({ kind: 'topic', id: topic.id, record: topic })}>주제 수정</button>
-          : <button className={styles.primary} onClick={() => setDraft({ kind: 'topic', id: crypto.randomUUID() })}>새 학습 주제</button>}
-      </div>}
-    </header>
+    )}
 
     {trial && <div className={styles.feedback}>
       <p>기록 기능 체험 · 작성한 기록은 이 탭에서만 유지되며 새로고침하면 초기화됩니다.</p>
@@ -149,13 +150,22 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
     {missing ? <div className={styles.feedback}><h2>학습 주제를 찾을 수 없습니다.</h2><Link to={root}>학습 주제 목록</Link></div>
       : !library ? !error && <p role="status">기록을 불러오는 중입니다.</p>
         : <>
-          <div className={styles.toolbar}>
-            <label>
-              {topic ? '포스트잇 검색' : '학습 주제 검색'}
-              <input type="search" value={query} onChange={event => updateParam('q', event.target.value, true)} />
-            </label>
-            <button onClick={refresh}>새로고침</button>
-          </div>
+          <LearnerTools
+            label={topic ? '포스트잇 검색' : '학습 주제 검색'}
+            query={query}
+            onSearch={value => updateParam('q', value, true)}
+            create={<button ref={topic ? addNote : undefined} className={shell.create} onClick={() => {
+              const id = crypto.randomUUID()
+              setDraft(topic ? { kind: 'note', id, topic: topic.id } : { kind: 'topic', id })
+            }}>
+              <span className={`${shell.logo} ${shell.createPaper}`} aria-hidden="true"><Icon name="plus" /></span>
+              {topic ? '새 포스트잇' : '새 학습 주제'}
+            </button>}
+            management={{ label: topic ? '보드 관리' : '목록 관리', actions: <>
+              {topic && <button onClick={() => setDraft({ kind: 'topic', id: topic.id, record: topic })}><Icon name="edit" />주제 수정</button>}
+              <button onClick={refresh}><Icon name="refresh" />새로고침</button>
+            </> }}
+          />
           {noteId && (
             <section key={noteId} ref={detail} id="learning-note-detail" className={styles.detail} aria-label="포스트잇 상세" tabIndex={-1}>
               <div className={styles.detailHeading}>
@@ -166,18 +176,12 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
                 {selected.photo_jpeg && <img className={styles.detailPhoto} src={thumbnailUrl(selected.photo_jpeg)} alt="포스트잇 첨부 사진" />}
                 <p className={styles.body}>{selected.body}</p>
                 <p className={styles.meta}>{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
-                <button onClick={() => setDraft({ kind: 'note', id: selected.id, topic: selected.topic_id, record: selected })}>포스트잇 수정</button>
+                <button className={shell.detailAction} onClick={() => setDraft({ kind: 'note', id: selected.id, topic: selected.topic_id, record: selected })}><Icon name="edit" />포스트잇 수정</button>
               </> : <p role="status">포스트잇을 찾을 수 없습니다.</p>}
             </section>
           )}
-          {topic ? (
+          {topic ? visibleNotes.length > 0 && (
             <ul className={styles.board} aria-label="포스트잇 보드">
-              <li>
-                <button ref={addNote} className={styles.addNote} onClick={() => setDraft({ kind: 'note', id: crypto.randomUUID(), topic: topic.id })}>
-                  <span className={styles.addSymbol} aria-hidden="true">+</span>
-                  <span>새 포스트잇</span>
-                </button>
-              </li>
               {visibleNotes.map(note => <li key={note.id}>
                 <button
                   className={styles.note}
@@ -196,7 +200,6 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
             </ul>
           ) : (
             <section className={styles.topicList} aria-labelledby="learning-topic-list">
-              <h2 id="learning-topic-list">학습 대상 <span>{visibleTopics.length}개</span></h2>
               <ul className={styles.grid}>
                 {visibleTopics.map(item => <li key={item.id}>
                   <TopicCard

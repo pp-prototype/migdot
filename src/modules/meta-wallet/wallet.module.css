@@ -1,5 +1,4 @@
 .wallet {
-  min-height: 100vh;
   background: #f4f5fa;
   color: #24243d;
   font-variant-numeric: tabular-nums;
@@ -9,19 +8,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 max(24px, calc((100% - 1080px) / 2));
+  padding: 0 max(24px, calc((100% - 1152px) / 2));
   background: #fff;
   border-bottom: 1px solid #e3e3ee;
 }
 .brand { display: flex; align-items: center; gap: 11px; font-size: 20px; font-weight: 800; white-space: nowrap; }
 .logo { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: #30275e; color: #e3f6a7; }
-.back { color: #53536d; font-size: 14px; font-weight: 750; white-space: nowrap; }
-.main { max-width: 1128px; margin: auto; padding: 40px 24px 56px; }
+.main { max-width: 1200px; margin: auto; padding: 20px 24px 48px; }
 .heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 22px; }
-.heading h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.2; font-weight: 800; }
+.heading h2 { font-size: clamp(1.25rem, 4vw, 1.65rem); line-height: 1.2; font-weight: 800; }
 .date { display: flex; align-items: center; gap: 7px; color: #5b5973; font-size: 14px; margin-bottom: 7px; }
 .date svg { width: 16px; height: 16px; }
-.demo { border: 1px solid #dfdef1; border-radius: 999px; padding: 5px 11px; color: #544878; background: #eeebfa; font-size: 14px; white-space: nowrap; }
+.demo { min-height: 44px; border: 1px solid #dfdef1; border-radius: 999px; padding: 5px 11px; color: #544878; background: #eeebfa; font-size: 14px; white-space: nowrap; }
 .layout { display: grid; grid-template-columns: minmax(0, 1.64fr) minmax(0, 1fr); align-items: stretch; gap: 18px; }
 .hero {
   padding: clamp(22px, 4vw, 34px);
@@ -50,7 +48,7 @@
 .calculation > div:last-child { border-top: 1px solid #e6e4ee; margin-top: 8px; padding-top: 16px; color: #473182; }
 .calculation > div:last-child dt { color: inherit; font-weight: 700; }
 .schedule { margin-top: 12px; }
-.schedule li { display: flex; align-items: center; gap: 11px; padding: 11px 0; }
+.schedule > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px 10px; padding: 11px 0; }
 .schedule li + li { border-top: 1px solid #ecebf2; }
 .schedule li > div { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .schedule small { display: block; font-size: 14px; color: #5b5973; }
@@ -61,14 +59,14 @@
 .submit:hover { background: #332559; }
 @media (max-width: 720px) {
   .header { height: 62px; }
-  .main { padding: 27px 16px 32px; }
+  .main { padding: 14px 16px 32px; }
   .layout { grid-template-columns: 1fr; gap: 13px; }
   .panel { padding: 19px; }
   .actions button { flex: 1 1 auto; }
 }
 
 .tabs { display: flex; gap: 5px; }
-.tabs button { padding: 9px 13px; border-radius: 9px; color: #53536d; font-size: 15px; font-weight: 650; white-space: nowrap; }
+.tabs button { min-height: 44px; padding: 9px 13px; border-radius: 9px; color: #53536d; font-size: 15px; font-weight: 650; white-space: nowrap; }
 .tabs button[aria-current] { background: #eeebfa; color: #473182; }
 .heroBalance { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px 28px; border-top: 1px solid #ffffff32; padding-top: 15px; }
 .heroBalance dt { color: #e6e0f4; font-size: 14px; }
@@ -76,7 +74,7 @@
 .shortage { color: #f9e3bd; font-size: clamp(1.55rem, 4vw, 2.6rem); font-weight: 800; margin: 18px 0; }
 .sectionHeading p, .detail { color: #595970; font-size: 14px; margin-top: 5px; }
 .week { margin-top: 12px; }
-.week button { width: 100%; display: grid; grid-template-columns: 70px minmax(35px, 1fr) 105px; align-items: center; gap: 4px 10px; text-align: left; padding: 8px; font-size: 14px; border-radius: 8px; }
+.week button { min-height: 44px; width: 100%; display: grid; grid-template-columns: 70px minmax(35px, 1fr) 105px; align-items: center; gap: 4px 10px; text-align: left; padding: 8px; font-size: 14px; border-radius: 8px; }
 .week button:hover, .currentDay { background: #f2effa; }
 .week button strong { text-align: right; }
 .week small { grid-column: 2 / -1; color: #57566e; overflow-wrap: anywhere; font-size: 13px; }
@@ -100,11 +98,11 @@
 
 .stack { display: grid; gap: 16px; min-width: 0; align-content: start; }
 .unset { font-size: clamp(2rem, 6vw, 3.3rem); color: #e3f6a7; font-weight: 800; margin: 12px 0; }
-.heroLink { text-align: left; text-decoration: underline; text-decoration-color: #d7caff80; text-underline-offset: 4px; }
+.heroLink { min-height: 44px; text-align: left; text-decoration: underline; text-decoration-color: #d7caff80; text-underline-offset: 4px; }
 .heroBalance .confirmed { font-size: 14px; color: #e6e0f4; font-weight: 500; }
 .quickEntry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
 .entryOptions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 6px; }
-.ghost { padding: 7px 9px; border-radius: 8px; color: #49377e; font-size: 14px; font-weight: 700; text-align: left; }
+.ghost { min-height: 44px; padding: 7px 9px; border-radius: 8px; color: #49377e; font-size: 14px; font-weight: 700; text-align: left; }
 .ghost:hover { background: #f0edf9; }
 .saved { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0 0; overflow-wrap: anywhere; }
 .saved strong { font-size: 21px; }
@@ -115,14 +113,14 @@
 .review, .followup { margin-top: 16px; padding: 15px; border-radius: 12px; background: #f3effa; }
 .review p, .followup p { font-size: 14px; margin-top: 4px; }
 .matches { display: grid; gap: 6px; margin-top: 8px; font-size: 14px; overflow-wrap: anywhere; }
-.sampleNotice { color: #595970; font-size: 14px; margin: -14px 0 15px; }
+.sampleNotice { color: #595970; font-size: 14px; margin: -10px 0 15px; }
 .past { margin: 12px 0; font-size: 14px; }
 @media (max-width: 420px) {
   .quickEntry { grid-template-columns: 1fr; }
   .schedule li { gap: 5px; }
 }
 .selectedEvent { outline: 2px solid #9784c8; outline-offset: 3px; border-radius: 6px; }
-.schedule li > .eventControls { flex: 0 0 auto; display: grid; justify-items: end; }
+.schedule li > .eventControls { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: start; justify-content: end; gap: 6px; }
 .eventControls .ghost { padding-inline: 6px; }
 
 .planLayout, .accountArea { display: grid; gap: 16px; min-width: 0; }
@@ -135,3 +133,111 @@
 .accountProgress progress { width: min(180px, 70%); accent-color: #655296; }
 .accountFields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr)); gap: 10px; }
 @media (max-width: 720px) { .accountGrid { grid-template-columns: 1fr; } }
+
+:global(.main-container):has(> .wallet) {
+  max-width: none;
+  padding: 0;
+  background: #f4f5fa;
+}
+
+.wallet :is(button, summary, input, textarea, select):focus-visible {
+  outline: 2px solid #7953cf;
+  outline-offset: 3px;
+}
+
+.wallet [tabindex="-1"] { scroll-margin-top: 16px; }
+.saveFeedback {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border: 1px solid #d7c9ef;
+  border-radius: 12px;
+  background: #f0eafa;
+  color: #443379;
+}
+
+.pocketHeading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pocketHeading h3 { font-size: 19px; font-weight: 750; }
+.pocketDetail h3 { font-size: 16px; }
+.pocketDaily { color: #504166; font-size: 14px; }
+.pocketDaily strong { color: #443379; font-size: 17px; }
+
+.pocketGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pocketGrid button {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  min-height: 84px;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid #ddd4ed;
+  border-radius: 12px;
+  background: #f2edfa;
+  color: #49377e;
+  text-align: left;
+}
+
+.pocketGrid button[data-pocket="save"] { background: #eef2e3; color: #415125; }
+.pocketGrid button[data-pocket="spend"] { background: #fbefdf; color: #684b2d; }
+.pocketGrid button[aria-expanded="true"] { border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; }
+.pocketGrid button span { font-size: .8125rem; font-weight: 700; white-space: nowrap; }
+.pocketGrid button strong { font-size: clamp(.8125rem, 2.4vw, 1.15rem); overflow-wrap: anywhere; }
+.pocketGrid button svg { width: 16px; height: 16px; }
+.pocketGrid button[aria-expanded="true"] svg { rotate: 180deg; }
+.pocketDetail { padding-top: 14px; }
+.pocketDetail[hidden] { display: none; }
+.pocketItems { margin-top: 6px; }
+.pocketItems li + li { border-top: 1px solid #e3e3ee; }
+.pocketItems button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.pocketItems small { display: block; color: #5b5973; }
+.pocketItems svg { width: 16px; height: 16px; }
+
+.past summary, .eventManage summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #ddd4ed;
+  border-radius: 9px;
+  background: #f7f4fd;
+  color: #49377e;
+  font-weight: 700;
+  cursor: pointer;
+}
+.past summary::-webkit-details-marker, .eventManage summary::-webkit-details-marker { display: none; }
+.past[open] summary svg { rotate: 180deg; }
+.eventManage { justify-items: end; }
+.eventManage summary { width: 44px; height: 44px; justify-content: center; }
+.eventManage button { display: inline-flex; align-items: center; gap: 5px; }
+.eventManage[open] summary { border-color: #7953cf; background: #eeebfa; }
+
+@media (max-width: 540px) {
+  .pockets { padding: 14px; }
+  .pocketGrid { gap: 5px; }
+  .pocketGrid button { padding: 7px 5px; }
+  .heading { gap: 8px; margin-bottom: 12px; }
+  .sampleNotice { margin: 0 0 10px; }
+  .hero { padding: 16px; }
+  .heroBalance { margin-top: 10px; padding-top: 8px; }
+}

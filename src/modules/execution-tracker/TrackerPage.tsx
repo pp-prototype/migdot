@@ -8,6 +8,7 @@ import { createJournal } from './model'
 import Experience from './Experience'
 import { useAuth } from '../../shared/auth/context'
 import CloudTracker from './CloudTracker'
+import TrackerHeader from './TrackerHeader'
 import ReminderSettingsPage from './ReminderSettingsPage'
 import TrackerNavigation from './TrackerNavigation'
 
@@ -37,8 +38,7 @@ function PreviewTracker() {
   }
   if (subpath === 'reminders') return <ReminderSettingsPage />
   return <div className={styles.tracker}>
-    <p className={styles.breadcrumb}><Link to="/">메인</Link> / 실행 트래커</p>
-    <div className={styles.heading}><div><p className={styles.eyebrow}>EXECUTIONER / 나의 하루 집행록</p><h1>익스큐셔너</h1><p>작은 과업에도 진지한 집행관과, 오늘의 나를 실행하다.</p></div><span className={styles.preview}>체험 모드</span></div>
+    <TrackerHeader day={sampleDay} preview />
     <div className={styles.notice}><Icon name="documentations" /><p>예시 데이터로 체험 중입니다. 변경 내용은 저장되지 않으며 새로고침하거나 모듈을 벗어나면 초기화됩니다. 예시 기준일: {sampleDay}.</p></div>
     <TrackerNavigation />
     {subpath !== '' && !isRecords ? <section className={styles.empty}><h2>페이지를 찾을 수 없습니다.</h2><Link to={root}>오늘 화면으로 이동</Link></section> : !isRecords ? <Experience journal={journal} setJournal={setJournal} /> : <>

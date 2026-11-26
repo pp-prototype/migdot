@@ -35,6 +35,26 @@ export default function RecordEditor({ records, draft, cancel, done }: {
   const busy = useRef(false)
   const active = useRef(false)
   const label = note ? '포스트잇' : '학습 주제'
+  const originalTitle = draft.kind === 'note' ? draft.record?.title : draft.record?.name
+  const originalBody = draft.kind === 'note' ? draft.record?.body : draft.record?.description
+  const originalTag = draft.kind === 'note' ? draft.record?.tag : undefined
+  const dirty = title !== (originalTitle ?? '') || body !== (originalBody ?? '')
+    || tag !== (originalTag ?? '') || Boolean(cover) || (image !== undefined && image !== savedImage)
+
+  function requestClose() {
+    if (busy.current) return
+    if ((!dirty && !processingImage) || window.confirm('저장하지 않은 변경 내용이 사라집니다. 편집을 닫을까요?')) cancel()
+  }
+
+  useEffect(() => {
+    if (!dirty && !processingImage) return
+    function warn(event: BeforeUnloadEvent) {
+      event.preventDefault()
+      event.returnValue = true
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty, processingImage])
 
   useEffect(() => {
     const node = dialog.current
@@ -127,7 +147,7 @@ export default function RecordEditor({ records, draft, cancel, done }: {
   const latestImage = latest && ('name' in latest ? latest.thumbnail_jpeg : latest.photo_jpeg)
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby="learning-editor-title" onCancel={event => {
     event.preventDefault()
-    if (!busy.current) cancel()
+    requestClose()
   }}>
     <h2 id="learning-editor-title">{label} {draft.record ? '수정' : '작성'}</h2>
     <form onSubmit={submit}>
@@ -176,7 +196,7 @@ export default function RecordEditor({ records, draft, cancel, done }: {
         </div>
       </div> : <div className={styles.actions}>
         {note && draft.record && <button type="button" className={styles.danger} disabled={pending || Boolean(conflict)} onClick={() => setConfirmDelete(true)}>삭제</button>}
-        <button type="button" disabled={pending} onClick={cancel}>닫기</button>
+        <button type="button" disabled={pending} onClick={requestClose}>닫기</button>
         <button type="submit" className={styles.primary} disabled={pending || processingImage || Boolean(conflict)}>{pending ? '저장 중…' : '저장'}</button>
       </div>}
     </form>

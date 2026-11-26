@@ -1,5 +1,6 @@
 import ActionButton from './ActionButton'
 import Executioner from './Executioner'
+import TrackerDisclosure from './TrackerDisclosure'
 import { effortLabels, FIRST_LEVEL_DAYS, type Routine, type RoutineCheck, type routineProgress } from './workspace'
 import styles from './workspace.module.css'
 
@@ -55,18 +56,25 @@ export default function RoutinePanel({ routines, readOnly, today, edit, editChec
               void change('check_routine', { id: routine.id, day: today, checked: !checked }, checked ? `${routine.title}의 오늘 실천을 취소했어요.` : `${routine.title}의 오늘 실천을 기록했어요.`)
             }} />
           <ActionButton icon="edit" label={`${routine.title} 상세 기록`} visibleLabel="상세 기록" disabled={readOnly} onClick={() => editCheck(routine, todayCheck)} />
-          <ActionButton icon="edit" label={`${routine.title} 루틴 수정`} disabled={readOnly} onClick={() => edit(routine)} />
-          <ActionButton icon="archive" label={`${routine.title} 보관`} tone="danger" disabled={readOnly} onClick={() => {
-            if (window.confirm('루틴을 보관할까요? 과거 실천 기록은 유지합니다.')) void change('archive_routine', { id: routine.id }, '루틴을 보관했습니다. 과거 기록은 유지합니다.')
-          }} />
+          <TrackerDisclosure label="루틴 관리" compact>
+            <div className={styles.actions}>
+              <ActionButton icon="edit" visibleLabel="루틴 수정" label={`${routine.title} 루틴 수정`} disabled={readOnly} onClick={() => edit(routine)} />
+              <ActionButton icon="archive" visibleLabel="보관" label={`${routine.title} 보관`} tone="danger" disabled={readOnly} onClick={() => {
+                if (window.confirm('루틴을 보관할까요? 과거 실천 기록은 유지합니다.')) {
+                  void change('archive_routine', { id: routine.id }, '루틴을 보관했습니다. 과거 기록은 유지합니다.')
+                }
+              }} />
+            </div>
+          </TrackerDisclosure>
         </div>
       </li>
     })}</ul> : <p className={styles.empty}>기르고 싶은 습관과 기대하는 변화를 적어 첫 루틴을 만들어 보세요.</p>}
-    {routines.length > 0 && <details className={styles.coachingHelp}>
-      <summary>습관 제안은 어떻게 정하나요?</summary>
-      <p>습관이 자동으로 자리 잡는 속도는 사람과 행동에 따라 달라요. 제안은 최근 실천 횟수와 직접 남긴 난이도를 바탕으로 지금 할 만한 다음 행동을 알려줘요.</p>
-      <p>같은 계획으로 7일 이상 실천하고 최근 두 번의 난이도 기록이 가벼우면 조금 늘려볼 수 있어요.</p>
-    </details>}
+    {routines.length > 0 && <div className={styles.coachingHelp}>
+      <TrackerDisclosure label="습관 제안은 어떻게 정하나요?">
+        <p>습관이 자동으로 자리 잡는 속도는 사람과 행동에 따라 달라요. 제안은 최근 실천 횟수와 직접 남긴 난이도를 바탕으로 지금 할 만한 다음 행동을 알려줘요.</p>
+        <p>같은 계획으로 7일 이상 실천하고 최근 두 번의 난이도 기록이 가벼우면 조금 늘려볼 수 있어요.</p>
+      </TrackerDisclosure>
+    </div>}
   </section>
 }
 

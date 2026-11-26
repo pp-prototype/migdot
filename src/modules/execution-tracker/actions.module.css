@@ -75,4 +75,5 @@ button.action.action[data-labeled] {
   border-radius: 10px;
   font-size: 14px;
   font-weight: 650;
+  white-space: nowrap;
 }

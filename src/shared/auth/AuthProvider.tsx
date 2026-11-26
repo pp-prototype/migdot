@@ -104,6 +104,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setState({ status: 'error', user: null, access: null, error: '로그아웃을 완료하지 못했습니다. 연결을 확인한 뒤 다시 시도해 주세요.' })
     } finally { logoutPending.current = false }
   }, [])
-  const canAccess = (moduleId: string) => state.status === 'preview' || (state.status === 'ready' && state.access?.approved === true && state.access.module_ids.includes(moduleId))
+  const canAccess = (moduleId: string) => (state.status === 'preview' && moduleId !== 'meta-wallet') || (state.status === 'ready' && state.access?.approved === true && state.access.module_ids.includes(moduleId))
   return <AuthContext.Provider value={{ ...state, refresh, signOut, canAccess }}>{children}{state.status === 'preview' && <div className="development-banner">로컬 개발 체험 · 실제 로그인과 접근 제한은 Supabase 설정 후 검증합니다. 배포 빌드에는 적용되지 않습니다.</div>}{!supabase && hasSupabaseSettings && <div className="development-banner">Supabase URL과 공개 키를 모두 설정해 주세요.</div>}</AuthContext.Provider>
 }
