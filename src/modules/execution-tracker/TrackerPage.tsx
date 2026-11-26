@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Icon } from '../../shared/Icon'
 import { days, routines, sampleDay, shiftDay, validDay, type Task } from './data'
 import styles from './tracker.module.css'
@@ -8,6 +8,7 @@ import { createJournal } from './model'
 import Experience from './Experience'
 import { useAuth } from '../../shared/auth/context'
 import CloudTracker from './CloudTracker'
+import TrackerHeader from './TrackerHeader'
 
 const root = '/execution-tracker'
 function TaskList({ items }: { items: Task[] }) {
@@ -15,7 +16,7 @@ function TaskList({ items }: { items: Task[] }) {
 }
 export default function TrackerPage() {
   const auth = useAuth()
-  return auth.status === 'preview' ? <PreviewTracker /> : <CloudTracker />
+  return <div className={styles.surface}>{auth.status === 'preview' ? <PreviewTracker /> : <CloudTracker />}</div>
 }
 function PreviewTracker() {
   const [journal, setJournal] = useState(createJournal)
@@ -32,10 +33,8 @@ function PreviewTracker() {
     setParams({ date: day, routine: selected.id })
   }
   return <div className={styles.tracker}>
-    <p className={styles.breadcrumb}><Link to="/">메인</Link> / 실행 트래커</p>
-    <div className={styles.heading}><div><p className={styles.eyebrow}>EXECUTIONER / 나의 하루 집행록</p><h1>익스큐셔너</h1><p>작은 과업에도 진지한 집행관과, 오늘의 나를 실행하다.</p></div><span className={styles.preview}>체험 모드</span></div>
+    <TrackerHeader day={sampleDay} preview />
     <div className={styles.notice}><Icon name="documentations" /><p>예시 데이터로 체험 중입니다. 변경 내용은 저장되지 않으며 새로고침하거나 모듈을 벗어나면 초기화됩니다. 예시 기준일: {sampleDay}.</p></div>
-    <nav className={styles.tabs} aria-label="실행 트래커 메뉴"><NavLink to={root} end>오늘</NavLink><NavLink to={`${root}/records`}>기록</NavLink></nav>
     {subpath !== '' && !isRecords ? <section className={styles.empty}><h2>페이지를 찾을 수 없습니다.</h2><Link to={root}>오늘 화면으로 이동</Link></section> : !isRecords ? <Experience journal={journal} setJournal={setJournal} /> : <>
       <div className={styles.recordHeading}><div><h2>꾸준함의 기록</h2><p>최근 28일의 루틴 실천과 날짜별 과업을 확인하세요.</p></div><span className={styles.period}>{days[0]} ~ {sampleDay}</span></div>
       <section className={styles.panel}><div className={styles.dateBrowser}><button aria-label="이전 날짜" disabled={date <= days[0]} onClick={() => selectDate(shiftDay(date, -1))}>←</button><label>조회 날짜<input type="date" aria-label="조회 날짜" min={days[0]} max={sampleDay} value={date} onChange={event => selectDate(event.target.value)} /></label><button aria-label="다음 날짜" disabled={date >= sampleDay} onClick={() => selectDate(shiftDay(date, 1))}>→</button><button onClick={() => selectDate(sampleDay)}>기준일</button></div>
