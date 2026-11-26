@@ -11,6 +11,7 @@ export const modules: Module[] = [
   { access: 'restricted', kind: 'app', id: 'execution-tracker', title: '익스큐셔너 · 실행 트래커', description: '귀여운 집행관과 작은 실행, 하루의 마감을 함께하세요.', path: '/execution-tracker', component: lazy(() => import('../modules/execution-tracker/TrackerPage')) },
   { access: 'restricted', kind: 'app', id: 'meta-wallet', title: '메타 월렛', description: '오늘 생활비를 확인하고 지출 일기와 돈 계획을 써 보세요.', path: '/meta-wallet', icon: 'wallet', component: lazy(() => import('../modules/meta-wallet/WalletPage')) },
   { access: 'restricted', kind: 'app', id: 'resolve-launch', title: '결심 출격 관제실', description: '내가 정한 조건을 확인하고 출격 여부를 결정하세요.', path: '/resolve-launch', component: lazy(() => import('../modules/resolve-launch/ResolveLaunchPage')) },
+  { access: 'restricted', kind: 'app', id: 'stilla', title: '스틸라', description: '내가 만난 말을 한 방울씩 담고, 문장과 함께 익혀보세요.', path: '/stilla', icon: 'stilla', component: lazy(() => import('../modules/stilla/StillaPage')) },
 ]
 
 export function availableApps(canAccess: (id: string) => boolean): AppShortcut[] {
