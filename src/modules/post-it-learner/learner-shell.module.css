@@ -1,0 +1,179 @@
+.app {
+  background: #f9f4e8;
+  color: #332c24;
+}
+
+:global(.main-container):has(> .app) {
+  max-width: none;
+  padding: 0;
+  background: #f9f4e8;
+}
+
+.content {
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: 0 28px 40px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding-block: 14px 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #ddccb1;
+}
+
+.header h1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: ui-rounded, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #ffe485 0 77%, #bf812e 78%);
+  box-shadow: 1px 2px 0 #9c6c3444;
+  rotate: -6deg;
+}
+
+.header a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #64401c;
+  font-size: .875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .content { padding-inline: 16px; }
+  .header { padding-block: 12px 8px; margin-bottom: 4px; }
+}
+
+.tools {
+  display: grid;
+  gap: 8px;
+  margin-block: 0 2px;
+  width: min(100%, 28rem);
+}
+
+.toolRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolRow button.create, .toolRow button.toolToggle, .toolPanel .manageActions button, button.detailAction.detailAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid #d8c4a7;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #4c331e;
+  cursor: pointer;
+  font-size: .875rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.toolRow button.create {
+  padding: 5px 12px 5px 8px;
+  border-color: #d7ad51;
+  background: #fff0bf;
+}
+
+.createPaper {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.createPaper svg { width: 16px; height: 16px; }
+.manageActions svg, .detailAction svg { width: 17px; height: 17px; }
+
+.toolRow button.toolToggle {
+  position: relative;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.toolRow button.toolToggle[aria-expanded="true"], .toolRow button.toolToggle[data-filtered="true"] {
+  background: #f4e4c8;
+  border-color: #a77a43;
+}
+
+.toolRow button.toolToggle[data-filtered="true"]::after {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8d4a20;
+  content: '';
+}
+
+.tools button:focus-visible, .tools input:focus-visible, button.detailAction.detailAction:focus-visible {
+  outline: 2px solid #85511f;
+  outline-offset: 2px;
+}
+
+.toolPanel {
+  padding: 6px;
+  border: 1px solid #d8c4a7;
+  border-radius: 12px;
+  background: #fffcf5;
+}
+
+.toolPanel[hidden] { display: none; }
+
+.searchField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 8px;
+  color: #795a36;
+}
+
+.searchField svg { flex-shrink: 0; }
+
+.searchField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #332c24;
+  font-size: 1rem;
+}
+
+.manageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.toolPanel .manageActions button { padding-inline: 10px; }
+
+@media (hover: hover) {
+  .toolRow button:hover, .toolPanel .manageActions button:hover, button.detailAction.detailAction:hover { border-color: #a77a43; background: #f8e8c7; }
+}

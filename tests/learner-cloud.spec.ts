@@ -68,6 +68,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await editor.getByLabel('이름').fill('웹 접근성')
   await editor.getByRole('button', { name: '저장', exact: true }).click()
   await expect(page.getByRole('heading', { name: '웹 접근성' })).toBeVisible()
+  await page.getByRole('button', { name: '보드 관리', exact: true }).click()
   await page.getByRole('button', { name: '주제 수정' }).click()
   await editor.getByLabel('설명 (선택)').fill('키보드 탐색 기록')
   const png = await page.evaluate(() => {
@@ -113,7 +114,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await expect(vertical).not.toHaveValue('-1')
   await editor.getByRole('button', { name: '저장', exact: true }).click()
   await expect(page.getByText('키보드 탐색 기록')).toBeVisible()
-  await page.locator('main').getByRole('link', { name: '포스트잇 러너', exact: true }).click()
+  await page.locator('main').getByRole('link', { name: '학습 주제 목록', exact: false }).click()
   const topicCard = page.getByRole('link', { name: /웹 접근성/ })
   const coverImage = topicCard.locator('img')
   await expect(coverImage).toHaveAttribute('src', /^data:image\/jpeg;base64,/)
@@ -142,6 +143,9 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await page.getByRole('button', { name: '새 포스트잇' }).click()
   await editor.getByLabel('제목').fill('보이는 포커스')
   await editor.getByLabel('내용').fill('키보드 포커스에 윤곽선을 표시한다.')
+  page.once('dialog', dialog => dialog.dismiss())
+  await editor.getByRole('button', { name: '닫기' }).click()
+  await expect(editor.getByLabel('내용')).toHaveValue('키보드 포커스에 윤곽선을 표시한다.')
   await editor.getByLabel('태그 (선택)').fill('키보드')
   await editor.getByLabel('사진 (선택)').setInputFiles({ name: 'note.png', mimeType: 'image/png', buffer: thumbnail })
   await expect(editor.getByRole('img', { name: '등록할 사진 미리보기' })).toBeVisible()
@@ -154,10 +158,18 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await expect(page.getByRole('button', { name: /보이는 포커스/ })).toHaveCount(1)
   expect(notes).toHaveLength(1)
   const board = page.getByRole('list', { name: '포스트잇 보드' })
-  await expect(board.getByRole('button').first()).toHaveAccessibleName('새 포스트잇')
-  await expect(board.getByRole('button').first()).toHaveCSS('border-top-style', 'dashed')
-  for (const width of [390, 1440]) {
+  await expect(page.getByRole('button', { name: '새 포스트잇' })).toBeInViewport()
+  for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    const create = page.getByRole('button', { name: '새 포스트잇' })
+    await expect(create).toBeInViewport()
+    const createRect = (await create.boundingBox())!
+    for (const name of ['검색', '보드 관리']) {
+      const control = (await page.getByRole('button', { name, exact: true }).boundingBox())!
+      expect(control.height).toBeGreaterThanOrEqual(44)
+      expect(control.y + control.height / 2).toBeCloseTo(createRect.y + createRect.height / 2)
+    }
     for (const tile of await board.getByRole('button').all()) {
       const size = await tile.boundingBox()
       expect(size).not.toBeNull()
@@ -173,7 +185,18 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await page.setViewportSize({ width: 390, height: 844 })
 
   await page.reload()
-  await page.getByRole('searchbox', { name: '포스트잇 검색' }).fill('윤곽선')
+  const searchToggle = page.getByRole('button', { name: /^검색/ })
+  await expect(page.getByRole('searchbox')).toHaveCount(0)
+  const searchSize = (await searchToggle.boundingBox())!
+  expect(searchSize.width).toBe(searchSize.height)
+  await searchToggle.click()
+  const search = page.getByRole('searchbox', { name: '포스트잇 검색' })
+  await expect(search).toBeFocused()
+  await search.fill('윤곽선')
+  await search.press('Escape')
+  await expect(searchToggle).toBeFocused()
+  await expect(searchToggle).toHaveAttribute('aria-expanded', 'false')
+  await expect(searchToggle).toHaveAccessibleName('검색 (필터 적용 중)')
   await noteCard.press('Enter')
   const detail = page.getByRole('region', { name: '포스트잇 상세' })
   await expect(detail).toBeFocused()

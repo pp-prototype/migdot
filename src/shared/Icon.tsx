@@ -22,6 +22,7 @@ const paths: Record<string, string> = {
   close: 'm6 6 12 12M18 6 6 18',
   unlock: 'M5 11h14v10H5Zm3 0V7a4 4 0 0 1 8 0m-4 8v2',
   search: 'M21 21l-5-5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
   chevron: 'm6 9 6 6 6-6',
 }
 export function Icon({ name, style }: { name: string; style?: CSSProperties }) {
