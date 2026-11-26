@@ -109,3 +109,122 @@ npm run test:ui
 로그인한 사용자가 포스트잇 러너 모듈 이용 권한을 가지고 있어야 조회와 저장이 가능합니다. 사용자마다 빈 목록으로 시작합니다. 다른 계정으로 주제 주소를 열어 개인 주제와 기록이 표시되지 않는지 확인합니다. 같은 기록을 두 창에 열고 편집한 뒤 두 번째 저장에서 충돌 안내가 표시되는지도 확인합니다.
 
 프로젝트 DB 백업의 복원은 별도 검증 환경에서 진행합니다. 테이블, RLS, 계정별 레코드 수를 확인한 뒤 운영 적용 여부를 결정합니다. 로컬 SQL 검증은 `npm run test:access`로 실행합니다.
+
+## 익스큐셔너 Web Push 설정
+
+처음 설정한다면 1번부터 진행하세요. 이미 **Cron → Jobs**에 활성 상태인 `send-execution-reminders`가 보이고 1~4번을 마쳤다면 [6번 웹사이트 배포](#6-웹사이트-배포)로 이어가면 됩니다.
+
+설정이 끝나면 한국 시간 오후 5시에 미완료 과업, 오후 9시에 오늘 실천 기록이 없는 루틴을 확인해 알림을 보냅니다. 서버가 발송할 수 있게 준비하는 곳은 **Supabase 대시보드**, 사용자의 알림 켜기 화면을 배포하는 곳은 **MIG DOT 웹사이트 호스팅 대시보드**입니다. 터미널은 키를 만들고 로컬 발송 함수를 Supabase에 올릴 때 사용합니다.
+
+### 1. 푸시 DB 마이그레이션
+
+**Supabase 대시보드 → MIG DOT 프로젝트 → SQL Editor → New query**를 엽니다. 저장소의 [푸시 마이그레이션 파일](migrations/202611220003_execution_push.sql) 전체를 붙여넣고 **Run**을 한 번 누릅니다. 기존 익스큐셔너 작업공간, 루틴 목표, 상세 기록 마이그레이션이 같은 프로젝트에 적용돼 있어야 합니다.
+
+**완료 확인** 새 쿼리에서 아래를 실행했을 때 두 결과에 테이블 이름이 나오면 됩니다. 이미 두 이름이 나오면 마이그레이션을 다시 실행할 필요는 없습니다.
+
+```sql
+select
+  to_regclass('public.execution_push_subscriptions') as subscriptions,
+  to_regclass('public.execution_push_deliveries') as deliveries;
+```
+
+### 2. 공개 키, 비공개 키, 예약 비밀값 만들기
+
+Mac의 **터미널**에서 아래 두 줄을 실행합니다. 첫 줄은 알림에 사용할 VAPID 키 쌍을, 두 번째 줄은 예약 작업만 발송 함수를 부를 수 있게 하는 비밀값을 만듭니다.
+
+```sh
+npx web-push@3.6.7 generate-vapid-keys
+openssl rand -hex 32
+```
+
+첫 번째 결과에서 `Public Key`와 `Private Key`를 각각 보관하고, 두 번째 결과의 한 줄도 별도로 보관합니다. 환경마다 키를 따로 발급합니다. 이미 운영 키를 발급했다면 이번 설정에서는 같은 키 쌍을 계속 사용하세요.
+
+**완료 확인** 공개 키, 비공개 키, 예약 비밀값 세 가지가 준비돼 있습니다. 비공개 키와 예약 비밀값은 비밀번호 관리자 같은 비공개 장소에 보관합니다.
+
+### 3. Edge Function에 사용할 값 저장
+
+**Supabase 대시보드 → Edge Functions → Secrets**에서 다음 네 항목을 추가하고 **Save**를 누릅니다. 이름을 그대로 입력하고, 값에는 백틱이나 따옴표 없이 실제 값만 붙여넣으세요.
+
+| Name | Value |
+| --- | --- |
+| `VAPID_SUBJECT` | 실제 운영 연락처. 형식은 `mailto:운영자이메일` |
+| `VAPID_PUBLIC_KEY` | 2번의 `Public Key` |
+| `VAPID_PRIVATE_KEY` | 2번의 `Private Key` |
+| `EXECUTION_PUSH_CRON_SECRET` | 2번의 `openssl` 출력 전체 |
+
+**완료 확인** 입력 폼을 저장한 뒤 **Secrets 목록**에 네 이름이 모두 보입니다. 함수에서 사용하는 `SUPABASE_URL`과 `SUPABASE_SERVICE_ROLE_KEY`는 호스팅된 Supabase가 제공합니다.
+
+### 4. 발송 함수를 Supabase에 배포
+
+Supabase 대시보드 주소에서 `/project/` 바로 뒤의 문자열을 복사합니다. 이 값이 **프로젝트 ID(project ref)**입니다. 데이터베이스 이름이나 비밀번호를 적는 곳이 아닙니다.
+
+`package.json`과 `supabase/` 폴더가 있는 **MIG DOT 저장소 루트**를 터미널에서 연 뒤 실행합니다.
+
+```sh
+npx supabase login
+```
+
+브라우저에서 로그인하고 터미널에 `You are now logged in`이 보이면, 아래 `YOUR_PROJECT_REF`를 복사한 프로젝트 ID로 바꿔 실행합니다.
+
+```sh
+npx supabase functions deploy send-execution-reminders --project-ref YOUR_PROJECT_REF
+```
+
+`--project-ref`가 이 배포의 대상을 직접 지정하므로 `supabase link`는 생략할 수 있습니다. 대시보드에 보이는 `hello-world`는 예시 함수입니다. MIG DOT의 발송 함수는 이미 [저장소에 있습니다](functions/send-execution-reminders/index.ts). [Supabase CLI 배포 안내](https://supabase.com/docs/guides/functions/deploy)
+
+**완료 확인** **Edge Functions → Functions** 목록을 새로고침했을 때 `send-execution-reminders`가 보이면 배포가 완료된 것입니다. CLI 로그인 성공 메시지는 이 목록을 확인하기 전까지 배포 완료 기준으로 사용하지 않습니다.
+
+### 5. Cron에 발송 시간 등록
+
+#### 5-1. Cron과 HTTP 확장 활성화
+
+1. Supabase 프로젝트 왼쪽 메뉴에서 **Integrations → Cron**으로 들어갑니다. [Supabase Cron 화면](https://supabase.com/dashboard/project/_/integrations/cron/overview)
+2. **Enable pg_cron**이 표시되면 누릅니다. 이미 **Jobs** 탭이 보이면 활성화된 상태입니다. [Cron 설치 안내](https://supabase.com/docs/guides/cron/install)
+3. **Database → Extensions**에서 `pg_net`을 검색해 켭니다. Cron이 발송 함수에 HTTP 요청을 보내는 데 사용합니다. [pg_net 활성화 안내](https://supabase.com/docs/guides/database/extensions/pg_net)
+
+#### 5-2. Vault에 예약 작업 값 저장
+
+같은 Supabase 프로젝트 대시보드의 검색창에서 **Vault**를 찾아 열고, 아래 두 항목을 각각 추가합니다. 이미 항목이 있다면 기존 값을 확인하거나 수정하면 됩니다. [Supabase Vault 안내](https://supabase.com/docs/guides/database/vault)
+
+| Vault의 Name | Value |
+| --- | --- |
+| `execution_push_url` | `https://YOUR_PROJECT_REF.supabase.co` 형식의 프로젝트 기본 주소. 실제 프로젝트 ID로 바꾸고 뒤에 슬래시나 함수 경로를 붙이지 않습니다. |
+| `execution_push_cron_secret` | 3번 Edge Functions → Secrets에 저장한 `EXECUTION_PUSH_CRON_SECRET`과 정확히 같은 값 |
+
+Edge Functions의 시크릿은 함수가 읽고, Vault의 시크릿은 Cron이 읽습니다. 두 화면에 같은 예약 비밀값이 있어야 요청이 인증됩니다.
+
+#### 5-3. 예약 SQL 실행과 확인
+
+1. **SQL Editor → New query**에서 `show cron.timezone;`을 실행해 예약 기준이 `UTC`인지 확인합니다.
+2. 새 쿼리에 [예약 등록 SQL 파일](operations/schedule-execution-reminders.sql) **전체**를 붙여넣고 **Run**을 누릅니다. 파일에서 시크릿 이름으로 값을 가져오므로 비밀값을 SQL 창에 직접 붙여넣을 필요는 없습니다.
+3. **Integrations → Cron → Jobs**로 돌아가 `send-execution-reminders`가 활성 상태인지 확인합니다.
+
+예약은 08:00 UTC와 12:00 UTC, 즉 한국 시간 오후 5시와 9시에 시작합니다. 밀린 대상은 시작 후 20분까지 5분 간격으로 나누어 조회합니다. 발송을 시도한 기기는 같은 날 같은 종류의 알림을 다시 요청하지 않습니다.
+
+### 6. 웹사이트 배포
+
+이 단계는 사용자의 **알림 켜기** 버튼에 필요한 공개 키를 MIG DOT 웹사이트 빌드에 넣는 과정입니다.
+
+1. 운영 MIG DOT 도메인을 배포하는 프로젝트를 엽니다.
+   - **Cloudflare Pages**를 사용하는 경우 **Workers & Pages → Pages 프로젝트 → Settings**의 환경 변수 메뉴에서 **Production**에 추가합니다. [Cloudflare 빌드 환경 변수 안내](https://developers.cloudflare.com/pages/configuration/build-configuration/)
+   - **Vercel**을 사용하는 경우 **Project → Settings → Environment Variables**에서 환경을 **Production**으로 선택합니다. [Vercel 환경 변수 안내](https://vercel.com/docs/environment-variables/managing-environment-variables)
+2. 이름은 `VITE_EXECUTION_VAPID_PUBLIC_KEY`, 값은 3번의 `VAPID_PUBLIC_KEY`로 저장합니다. 웹사이트에는 공개 키만 넣습니다.
+3. 푸시 기능 코드가 들어 있는 커밋으로 **새 운영 배포**를 실행합니다. 배포 화면에서 해당 커밋이 운영 도메인에 반영됐는지 확인합니다. 기존 배포는 환경 변수를 저장한 뒤에도 예전 빌드를 계속 사용합니다.
+
+**완료 확인** 배포된 HTTPS 사이트에서 **익스큐셔너 → 알림 설정**을 열었을 때 발송 설정이 연결되지 않았다는 안내가 사라집니다. iPhone·iPad는 Safari에서 **홈 화면에 추가**한 후 홈 화면 아이콘으로 앱을 다시 열어야 알림 권한을 요청할 수 있습니다. Android에서는 Chrome에서 앱을 설치해 확인할 수 있습니다. [Apple 홈 화면 Web Push 안내](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/)
+
+### 휴대전화에서 최종 확인
+
+1. 홈 화면에서 MIG DOT를 열고 익스큐셔너 권한이 있는 계정으로 로그인합니다.
+2. **익스큐셔너 → 알림 설정 → 알림 켜기**를 누르고 기기 권한을 허용합니다. 화면에 `이 기기에서 과업과 루틴 알림을 받습니다.`가 보이면 구독이 완료된 것입니다.
+3. 한국 시간 오후 5시 전에는 미완료 과업 1개, 오후 9시 전에는 오늘 실천 기록이 없는 활성 루틴 1개를 남겨 테스트합니다. 홈 화면으로 나간 뒤 각 알림을 받고, 알림을 눌러 익스큐셔너 **오늘** 화면이 열리는지 확인합니다.
+
+| 화면이나 로그에서 보이는 증상 | 확인할 부분 |
+| --- | --- |
+| 알림 설정 메뉴 자체가 없음 | 운영 배포에 푸시 기능이 들어 있는 커밋이 반영됐는지 확인합니다. |
+| ‘이 환경의 푸시 발송 설정이 아직 연결되지 않았습니다’ | 6번 변수의 이름, 배포 대상 환경, 변수 저장 후 새 빌드 여부를 확인합니다. |
+| 구독 저장에 실패함 | 1번 DB 마이그레이션, 로그인 계정의 익스큐셔너 권한, 기기 알림 권한을 확인합니다. |
+| Cron 작업이 목록에 없음 | 5번의 Vault 이름과 예약 등록 SQL의 실행 결과를 확인합니다. |
+| Cron 이력은 성공인데 알림이 없음 | Cron 성공은 HTTP 요청을 큐에 넣었다는 뜻일 수 있습니다. **Edge Functions → send-execution-reminders → Logs**에서 응답을 확인하세요. `401`이면 Vault와 함수의 예약 비밀값이 같은지 확인합니다. 정상 호출이어도 미완료·미기록 대상이 없거나 알림 권한이 꺼져 있으면 받을 알림이 없습니다. |
+
+발송 서비스가 만료된 구독에 `404` 또는 `410`을 반환하면 해당 구독을 제거합니다. 예약 발송을 멈추려면 **Cron → Jobs**에서 `send-execution-reminders`를 비활성화합니다.

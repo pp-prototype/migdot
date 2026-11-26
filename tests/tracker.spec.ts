@@ -157,3 +157,22 @@ test('미완료가 남아도 회고와 하루 마감, 다시 열기를 체험한
   await page.getByRole('button', { name: '건강한 한 끼 기록', exact: true }).click()
   await expect(page.getByRole('status')).toHaveText('2026-11-16 · 실천함')
 })
+
+
+test('알림 설정에서 오후 5시와 9시를 확인하고 임시 기록으로 돌아간다', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 })
+  await page.goto('/execution-tracker')
+  await page.getByRole('button', { name: '이번 주 기획안 완성하기 완료', exact: true }).click()
+  const tabs = page.getByRole('navigation', { name: '실행 트래커 메뉴' })
+  await tabs.getByRole('link', { name: '알림 설정' }).click()
+  await expect(page).toHaveURL('/execution-tracker/reminders')
+  await expect(tabs.getByRole('link', { name: '알림 설정' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.locator('time')).toHaveText(['오후 5시', '오후 9시'])
+  await expect(page.getByRole('button', { name: '알림 켜기' })).toBeDisabled()
+  await page.getByText('홈 화면에 추가하는 방법', { exact: true }).click()
+  await expect(page.getByText('iPhone·iPad', { exact: true })).toBeVisible()
+  await expect(page.getByText('Android', { exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await tabs.getByRole('link', { name: '오늘', exact: true }).click()
+  await expect(page.getByRole('progressbar', { name: '필수 과업 완료' })).toHaveAttribute('aria-valuenow', '2')
+})

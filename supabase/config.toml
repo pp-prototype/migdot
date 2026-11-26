@@ -1,0 +1,4 @@
+project_id = "migdot"
+
+[functions.send-execution-reminders]
+verify_jwt = false
