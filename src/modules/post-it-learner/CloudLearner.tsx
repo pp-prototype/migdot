@@ -7,6 +7,7 @@ import LearnerTools from './LearnerTools'
 import { Icon } from '../../shared/Icon'
 import shell from './learner-shell.module.css'
 import { type LearningRecords, type NoteRecord, type TopicRecord } from './records'
+import type { TopicActivity } from './topic-summaries'
 import { thumbnailUrl } from './thumbnail'
 import defaultCover from './assets/design.svg'
 import styles from './cloud.module.css'
@@ -15,7 +16,7 @@ const paperTones = ['yellow', 'mint', 'peach', 'blue'] as const
 
 const dateFormat = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' })
 
-type Library = { topics: TopicRecord[]; topic: TopicRecord | null; notes: NoteRecord[] }
+type Library = { topics: (TopicRecord & TopicActivity)[]; topic: TopicRecord | null; notes: NoteRecord[] }
 
 export default function CloudLearner({ records, trial = false }: { records: LearningRecords; trial?: boolean }) {
   const { '*': subpath = '' } = useParams()
@@ -207,6 +208,8 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
                     cover={item.thumbnail_jpeg ? thumbnailUrl(item.thumbnail_jpeg) : defaultCover}
                     name={item.name}
                     description={item.description}
+                    noteCount={item.noteCount}
+                    latestUpload={item.latestUpload}
                   />
                 </li>)}
               </ul>
