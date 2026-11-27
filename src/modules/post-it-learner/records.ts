@@ -5,7 +5,7 @@ export type TopicFields = { name: string; description: string; thumbnail_jpeg?: 
 export type NoteFields = { title: string; body: string; tag: string; photo_jpeg?: string | null }
 type Metadata = { id: string; version: number; created_at: string }
 export type TopicRecord = Metadata & TopicFields
-export type NoteRecord = Metadata & NoteFields & { topic_id: string }
+export type NoteRecord = Metadata & NoteFields & { topic_id: string; registration_number: number }
 
 const topics = 'learning_topics'
 const notes = 'learning_notes'
@@ -111,6 +111,7 @@ export function cloudRecords(owner: string): LearningRecords {
 export function trialRecords(): LearningRecords {
   const topics = new Map<string, TopicRecord>()
   const notes = new Map<string, NoteRecord>()
+  const lastNoteNumbers = new Map<string, number>()
   return {
     loadTopics: () => Promise.resolve(summarizeTopics([...topics.values()].reverse(), notes.values())),
     loadTopic: id => Promise.resolve(topics.get(id) ?? null),
@@ -123,8 +124,12 @@ export function trialRecords(): LearningRecords {
         version: (version ?? 0) + 1,
         created_at: previous?.created_at ?? new Date().toISOString(),
       }
-      if (topic && 'title' in fields) notes.set(id, { ...notes.get(id), ...metadata, ...fields, topic_id: topic })
-      else if (!topic && 'name' in fields) topics.set(id, { ...topics.get(id), ...metadata, ...fields })
+      if (topic && 'title' in fields) {
+        const existing = notes.get(id)
+        const registration_number = existing?.registration_number ?? (lastNoteNumbers.get(topic) ?? 0) + 1
+        if (!existing) lastNoteNumbers.set(topic, registration_number)
+        notes.set(id, { ...existing, ...metadata, ...fields, topic_id: topic, registration_number })
+      } else if (!topic && 'name' in fields) topics.set(id, { ...topics.get(id), ...metadata, ...fields })
       else return Promise.reject(new Error('저장할 기록을 확인해 주세요.'))
       return Promise.resolve()
     },

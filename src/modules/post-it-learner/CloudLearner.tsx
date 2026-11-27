@@ -176,7 +176,7 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
               {selected ? <>
                 {selected.photo_jpeg && <img className={styles.detailPhoto} src={thumbnailUrl(selected.photo_jpeg)} alt="포스트잇 첨부 사진" />}
                 <p className={styles.body}>{selected.body}</p>
-                <p className={styles.meta}>{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
+                <p className={styles.meta}>{selected.registration_number && <><span className={shell.noteNumber}>#{selected.registration_number}</span> · </>}{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
                 <button className={shell.detailAction} onClick={() => setDraft({ kind: 'note', id: selected.id, topic: selected.topic_id, record: selected })}><Icon name="edit" />포스트잇 수정</button>
               </> : <p role="status">포스트잇을 찾을 수 없습니다.</p>}
             </section>
@@ -192,6 +192,7 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
                   onClick={event => openNote(note.id, event.currentTarget)}
                 >
                   <span className={styles.pin} aria-hidden="true" />
+                  {note.registration_number && <span className={`${shell.noteNumber} ${shell.noteCorner}`}>#{note.registration_number}</span>}
                   {note.photo_jpeg && <img className={styles.notePhoto} src={thumbnailUrl(note.photo_jpeg)} alt="" />}
                   <strong>{note.title}</strong>
                   {!note.photo_jpeg && <span className={styles.noteExcerpt} aria-hidden="true">{note.body}</span>}
