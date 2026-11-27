@@ -177,3 +177,19 @@
 @media (hover: hover) {
   .toolRow button:hover, .toolPanel .manageActions button:hover, button.detailAction.detailAction:hover { border-color: #a77a43; background: #f8e8c7; }
 }
+
+.noteNumber {
+  color: #634727;
+  font-family: "Marker Felt", "Segoe Print", "Comic Sans MS", cursive;
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.noteCorner {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 8px;
+  rotate: -6deg;
+}

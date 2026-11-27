@@ -40,6 +40,7 @@ begin
   exception when insufficient_privilege then null;
   end;
   insert into public.learning_notes(id, owner_id, topic_id, title, body) values (note_id, auth.uid(), member_topic, 'My note', 'Body');
+  assert (select registration_number from public.learning_notes where id=note_id)=1;
   update public.learning_topics set description='My description' where id=member_topic and version=1;
   assert found;
   update public.learning_topics set thumbnail_jpeg='/9j/AQ==' where id=member_topic and version=2;
@@ -68,6 +69,11 @@ begin
     raise exception 'owner change accepted';
   exception when insufficient_privilege then null;
   end;
+  assert (select registration_number from public.learning_notes where id=note_id)=1;
+  delete from public.learning_notes where id=note_id;
+  insert into public.learning_notes(id, owner_id, topic_id, title, body)
+  values (note_id, auth.uid(), member_topic, 'Next note', 'Body');
+  assert (select registration_number from public.learning_notes where id=note_id)=2;
 end $$;
 
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);

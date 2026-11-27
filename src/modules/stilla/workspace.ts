@@ -1,6 +1,6 @@
 import { supabase } from '../../shared/lib/supabase'
 
-export type Word = { id: string; language: string; text: string; meaning: string }
+export type Word = { id: string; language: string; text: string; meaning: string; pronunciation?: string; notes?: string }
 export type Example = { id: string; text: string; translation: string; language?: string }
 export type Connection = { id: string; wordId: string; exampleId: string; gap: string; gapStart: number }
 export type Grade = 'again' | 'hard' | 'remembered' | 'easy'
@@ -89,17 +89,21 @@ export function gradeCard(workspace: Workspace, cardId: string, position: number
   }
 }
 
-export type WordCells = [text: string, meaning: string]
+export const wordColumns = ['원어', '발음', '뜻', '비고'] as const
+export type WordCells = [text: string, pronunciation: string, meaning: string, notes: string]
+export const emptyWordCells = (): WordCells => ['', '', '', '']
 
 export function classifyWords(cells: WordCells[], language: string, words: Word[]) {
   const seen = new Set(words.map(word => wordKey(word.language, word.text)))
-  return cells.map(([rawText, rawMeaning]) => {
+  return cells.map(([rawText, rawPronunciation, rawMeaning, rawNotes]) => {
     const text = rawText.trim()
+    const pronunciation = rawPronunciation.trim()
     const meaning = rawMeaning.trim()
+    const notes = rawNotes.trim()
     const key = wordKey(language, text)
-    const state = !text ? (meaning ? 'invalid' : 'empty') : seen.has(key) ? 'duplicate' : 'new'
+    const state = !text ? (pronunciation || meaning || notes ? 'invalid' : 'empty') : seen.has(key) ? 'duplicate' : 'new'
     if (state === 'new') seen.add(key)
-    return { text, meaning, state }
+    return { text, pronunciation, meaning, notes, state }
   })
 }
 

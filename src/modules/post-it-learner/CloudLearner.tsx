@@ -7,6 +7,7 @@ import LearnerTools from './LearnerTools'
 import { Icon } from '../../shared/Icon'
 import shell from './learner-shell.module.css'
 import { type LearningRecords, type NoteRecord, type TopicRecord } from './records'
+import type { TopicActivity } from './topic-summaries'
 import { thumbnailUrl } from './thumbnail'
 import defaultCover from './assets/design.svg'
 import styles from './cloud.module.css'
@@ -15,7 +16,7 @@ const paperTones = ['yellow', 'mint', 'peach', 'blue'] as const
 
 const dateFormat = new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' })
 
-type Library = { topics: TopicRecord[]; topic: TopicRecord | null; notes: NoteRecord[] }
+type Library = { topics: (TopicRecord & TopicActivity)[]; topic: TopicRecord | null; notes: NoteRecord[] }
 
 export default function CloudLearner({ records, trial = false }: { records: LearningRecords; trial?: boolean }) {
   const { '*': subpath = '' } = useParams()
@@ -175,7 +176,7 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
               {selected ? <>
                 {selected.photo_jpeg && <img className={styles.detailPhoto} src={thumbnailUrl(selected.photo_jpeg)} alt="포스트잇 첨부 사진" />}
                 <p className={styles.body}>{selected.body}</p>
-                <p className={styles.meta}>{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
+                <p className={styles.meta}>{selected.registration_number && <><span className={shell.noteNumber}>#{selected.registration_number}</span> · </>}{dateFormat.format(new Date(selected.created_at))}{selected.tag && ` · #${selected.tag}`}</p>
                 <button className={shell.detailAction} onClick={() => setDraft({ kind: 'note', id: selected.id, topic: selected.topic_id, record: selected })}><Icon name="edit" />포스트잇 수정</button>
               </> : <p role="status">포스트잇을 찾을 수 없습니다.</p>}
             </section>
@@ -191,6 +192,7 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
                   onClick={event => openNote(note.id, event.currentTarget)}
                 >
                   <span className={styles.pin} aria-hidden="true" />
+                  {note.registration_number && <span className={`${shell.noteNumber} ${shell.noteCorner}`}>#{note.registration_number}</span>}
                   {note.photo_jpeg && <img className={styles.notePhoto} src={thumbnailUrl(note.photo_jpeg)} alt="" />}
                   <strong>{note.title}</strong>
                   {!note.photo_jpeg && <span className={styles.noteExcerpt} aria-hidden="true">{note.body}</span>}
@@ -207,6 +209,8 @@ function LibraryView({ records, root, trial, topicId, invalid }: { records: Lear
                     cover={item.thumbnail_jpeg ? thumbnailUrl(item.thumbnail_jpeg) : defaultCover}
                     name={item.name}
                     description={item.description}
+                    noteCount={item.noteCount}
+                    latestUpload={item.latestUpload}
                   />
                 </li>)}
               </ul>

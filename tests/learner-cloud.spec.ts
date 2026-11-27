@@ -43,7 +43,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
     if (method === 'POST') {
       const row = request.postDataJSON() as Row
       if (rows.some(item => item.id === row.id)) return reply({ code: '23505', message: 'Duplicate ID' }, 409)
-      rows.push({ ...row, version: 1, created_at: '2026-11-18T00:00:00Z' })
+      rows.push({ ...row, ...(rows === notes ? { registration_number: 1 } : {}), version: 1, created_at: '2026-11-18T00:00:00Z' })
       if (loseResponse) {
         loseResponse = false
         return reply({ code: 'unavailable' }, 503)
@@ -179,6 +179,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   const noteCard = board.getByRole('button', { name: /보이는 포커스/ })
   await page.emulateMedia({ reducedMotion: 'no-preference' })
   await noteCard.hover()
+  await expect(noteCard.getByText('#1', { exact: true })).toBeVisible()
   await expect(noteCard).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -3)')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(noteCard).toHaveCSS('transform', 'none')
@@ -219,6 +220,15 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await expect(page.getByRole('img', { name: '포스트잇 첨부 사진' })).toBeVisible()
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.getByRole('link', { name: '← 학습 주제 목록' }).click()
+  await expect(topicCard.getByRole('img', { name: '포스트잇 1장' })).toHaveText('1')
+  await expect(topicCard.locator('time')).toHaveAttribute('datetime', '2026-11-18T00:00:00Z')
+  await topicCard.click()
+  await searchToggle.click()
+  await search.fill('선명한 포커스')
+  await search.press('Escape')
+  await board.getByRole('button', { name: /선명한 포커스/ }).click()
+  await expect(detail.getByText('#1', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '포스트잇 수정' }).click()
   await editor.getByRole('button', { name: '삭제', exact: true }).click()
   await editor.getByRole('button', { name: '삭제 확인' }).click()
@@ -227,4 +237,7 @@ test('개인 주제와 기록을 저장하고 응답 유실과 동시 수정을 
   await page.getByRole('button', { name: '검색어 지우기' }).click()
   await expect(page.getByText(/아직 포스트잇이 없습니다/)).toBeVisible()
   expect(notes).toHaveLength(0)
+  await page.getByRole('link', { name: '← 학습 주제 목록' }).click()
+  await expect(topicCard.getByRole('img', { name: '포스트잇 0장' })).toHaveText('0')
+  await expect(topicCard).toContainText('업로드 없음')
 })

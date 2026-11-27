@@ -54,6 +54,30 @@
   font-size: .8125rem;
 }
 
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.count {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: #526057;
+  font-size: .875rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.count .countIcon {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+}
+
 .action {
   display: inline-flex;
   align-items: center;

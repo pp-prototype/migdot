@@ -218,3 +218,9 @@
 @media (min-width: 560px) {
   .flashGrades { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+.captureScroll { min-width: 0; overflow-x: auto; }
+.captureScroll .captureTable { min-width: 480px; }
+.wordFields { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 0; }
+.wordFields dt { color: var(--muted); font-weight: 650; }
+.wordFields dd { margin: 0; white-space: pre-wrap; }

@@ -10,7 +10,7 @@ type Props = {
   openWord: (id: string) => void
 }
 
-type DraftWord = Pick<Word, 'text' | 'meaning'>
+type DraftWord = Pick<Word, 'text' | 'meaning' | 'pronunciation' | 'notes'>
 
 export default function Sentences({ workspace, busy, commit, openWord }: Props) {
   const [language, setLanguage] = useState('영어')
@@ -20,6 +20,8 @@ export default function Sentences({ workspace, busy, commit, openWord }: Props) 
   const [selected, setSelected] = useState<string[]>([])
   const [added, setAdded] = useState<DraftWord[]>([])
   const [newText, setNewText] = useState('')
+  const [newPronunciation, setNewPronunciation] = useState('')
+  const [newNotes, setNewNotes] = useState('')
   const [newMeaning, setNewMeaning] = useState('')
   const [saved, setSaved] = useState(false)
   const languageKey = wordKey(language, '')
@@ -28,19 +30,25 @@ export default function Sentences({ workspace, busy, commit, openWord }: Props) 
   const found = languageWords.filter(word => [word.text, word.meaning].some(value => value.normalize('NFC').toLowerCase().includes(search)))
   const matchingWord = newText.trim() && languageWords.find(word => wordKey(language, newText) === wordKey(language, word.text))
   const repeatedDraft = added.some(word => wordKey(language, newText) === wordKey(language, word.text))
-  const pendingWord = Boolean(newText.trim() || newMeaning.trim())
+  const pendingWord = [newText, newPronunciation, newMeaning, newNotes].some(value => value.trim())
 
   function toggle(id: string, checked: boolean) {
     setSelected(current => checked ? [...new Set([...current, id])] : current.filter(item => item !== id))
     setSaved(false)
   }
 
+  function clearNewWord() {
+    setNewText('')
+    setNewPronunciation('')
+    setNewMeaning('')
+    setNewNotes('')
+  }
+
   function addWord() {
     if (!newText.trim() || repeatedDraft) return
     if (matchingWord) toggle(matchingWord.id, true)
-    else setAdded(current => [...current, { text: newText.trim(), meaning: newMeaning.trim() }])
-    setNewText('')
-    setNewMeaning('')
+    else setAdded(current => [...current, { text: newText.trim(), meaning: newMeaning.trim(), pronunciation: newPronunciation.trim(), notes: newNotes.trim() }])
+    clearNewWord()
     setSaved(false)
   }
 
@@ -100,11 +108,13 @@ export default function Sentences({ workspace, busy, commit, openWord }: Props) 
             <summary>단어장에 없는 단어 추가</summary>
             <div className={styles.form}>
               <label>새 단어<input value={newText} onChange={event => setNewText(event.target.value)} /></label>
+              <label>새 단어의 발음 (선택)<input value={newPronunciation} onChange={event => setNewPronunciation(event.target.value)} /></label>
               <label>새 단어의 뜻 (선택)<input value={newMeaning} onChange={event => setNewMeaning(event.target.value)} /></label>
+              <label>새 단어의 비고 (선택)<textarea rows={2} value={newNotes} onChange={event => setNewNotes(event.target.value)} /></label>
               {repeatedDraft && <p className={styles.muted}>이미 아래 목록에 담은 단어예요.</p>}
               <div className={styles.grades}>
                 <button type="button" disabled={!newText.trim() || repeatedDraft} onClick={addWord}>{matchingWord ? '기존 단어 연결' : '새 단어 담기'}</button>
-                {pendingWord && <button type="button" onClick={() => { setNewText(''); setNewMeaning('') }}>입력 지우기</button>}
+                {pendingWord && <button type="button" onClick={clearNewWord}>입력 지우기</button>}
               </div>
             </div>
           </details>
